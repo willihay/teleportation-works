@@ -1,0 +1,28 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "tpworks:items/teleportation_wand"
+	},
+	"display": {
+	    "thirdperson_righthand": {
+	        "rotation": [ 34, 110, 12 ],
+	        "translation": [ -0.50, 2.25, 2.25 ],
+	        "scale": [ 0.75, 0.75, 0.75 ]
+	    },
+	    "thirdperson_lefthand": {
+	        "rotation": [ 354, 280, 310 ],
+	        "translation": [ 0.00, 2.25, 2.25 ],
+	        "scale": [ 0.75, 0.75, 0.75 ]
+	    },
+	    "firstperson_righthand": {
+	        "rotation": [ 346, 100, 28 ],
+	        "translation": [ 0.00, 0.00, 0.00 ],
+	        "scale": [ 0.75, 0.75, 0.75 ]
+	    },
+	    "firstperson_lefthand": {
+	        "rotation": [ 332, 280, 318 ],
+	        "translation": [ 0.00, 0.00, 0.00 ],
+	        "scale": [ 0.75, 0.75, 0.75 ]
+	    }
+    }
+}

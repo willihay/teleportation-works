@@ -1,0 +1,33 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"LOL",
+		"SES",
+		"LOL"
+	],
+	"key": {
+		"E": {
+			"item": "minecraft:ender_pearl"
+		},
+		"O": {
+			"item": "minecraft:obsidian"
+		},
+		"L": {
+			"item": "minecraft:dye",
+			"data": 4
+		},
+		"S": [
+		  {
+			"item": "minecraft:stone_slab",
+			"data": 0
+		  },
+		  {
+			"item": "minecraft:stone_slab",
+			"data": 5
+		  }
+		]
+	},
+	"result": {
+		"item": "tpworks:teleport_beacon"
+	}
+}

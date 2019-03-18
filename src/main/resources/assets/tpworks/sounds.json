@@ -1,0 +1,12 @@
+{
+  "activate_teleport_beacon": {
+    "category": "block",
+    "subtitle": "subtitle.activate_teleport_beacon",
+    "sounds": [ "tpworks:activate_teleport_beacon" ]
+    },
+  "deactivate_teleport_beacon": {
+    "category": "block",
+    "subtitle": "subtitle.deactivate_teleport_beacon",
+    "sounds": [ "tpworks:deactivate_teleport_beacon" ]
+    }
+}

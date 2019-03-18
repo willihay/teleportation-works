@@ -1,0 +1,31 @@
+# English US language file
+
+# Creative Tab
+itemGroup.tpworks=Teleportation Works
+
+# Commands
+commands.td.usage=/td <prev | next | list | delete> [count/destination#]
+commands.td.destination.missing=Must include teleport destination number
+commands.td.destination.none=Player has no known teleport destinations
+commands.td.destination.notFound=%s is an invalid teleport destination number in your network
+commands.td.delete.spawnBed.invalid=Cannot remove Overworld spawn bed - this is a fixed teleport destination
+
+# Items
+item.ender_eye_shard.name=Eye of Ender Shard
+item.teleportation_splash_potion.name=Splash Potion of Teleportation
+item.teleportation_tipped_arrow.name=Arrow of Teleportation
+item.teleportation_wand.name=Wand of Teleportation
+item.teleportation_wand.tipLine1=%1$s- Sleep in a bed or use your wand on a Teleport Beacon to add teleport destinations.
+item.teleportation_wand.tipLine2=%1$s- Click Use button to show active destination.
+item.teleportation_wand.tipLine3=%1$s- Sneak and Use to change destination.
+item.teleportation_wand.tipLine4=%1$s- Hold down Use button to teleport.
+
+# Blocks
+tile.teleport_beacon.name=Teleport Beacon
+
+# Potions
+effect.teleportation_potion=Teleportation
+
+# Sounds
+subtitle.activate_teleport_beacon=Teleport Beacon Activated
+subtitle.deactivate_teleport_beacon=Teleport Beacon Deactivated

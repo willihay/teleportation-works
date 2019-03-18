@@ -1,0 +1,16 @@
+[
+{
+  "modid": "tpworks",
+  "name": "Teleportation Works",
+  "description": "Adds new teleportation possiblities to your world using wands, beacons, potions, and arrows!",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "http://projects.bensam.org",
+  "updateUrl": "",
+  "authorList": ["WilliHay"],
+  "credits": "Thanks to the Forge Modder Support forums and the helpful tutorials and example mods by Cadiboo, ShadowFacts, McJty, CubiCoder, and TheGreyGhost. Also thanks to MrCrayfish for the awesome Model Creator tool!",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

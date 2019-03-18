@@ -1,0 +1,177 @@
+{
+    "__comment": "Model generated using MrCrayfish's Model Creator (https://mrcrayfish.com/tools?id=mc)",
+    "ambientocclusion": false,
+    "textures": {
+        "particle": "minecraft:blocks/obsidian",
+        "beacon_obsidian_base": "tpworks:blocks/beacon_obsidian_base",
+        "stonebrick": "minecraft:blocks/stonebrick",
+        "stone": "minecraft:blocks/stone",
+        "lapis_block": "minecraft:blocks/lapis_block"
+    },
+    "display": {
+        "gui": {
+            "rotation": [ 50, 225, 0 ],
+            "translation": [ 0, 2, 0 ],
+            "scale": [ 0.625, 0.625, 0.625 ]
+        },
+        "ground": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 3, 0 ],
+            "scale": [ 0.25, 0.25, 0.25 ]
+        },
+        "fixed": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.5, 0.5, 0.5 ]
+        },
+        "firstperson_righthand": {
+            "rotation": [ 0, 45, 0 ],
+            "translation": [ 0, 4.5, 0 ],
+            "scale": [ 0.4, 0.4, 0.4 ]
+        },
+        "thirdperson_righthand": {
+            "rotation": [ 60, 45, 0 ],
+            "translation": [ 0, 2.5, 0.5 ],
+            "scale": [ 0.375, 0.375, 0.375 ]
+        }
+    },
+    "elements": [
+        {
+            "name": "Base",
+            "from": [ 0, 0, 0 ], 
+            "to": [ 16, 1, 16 ], 
+            "faces": {
+                "north": { "texture": "#stonebrick", "uv": [ 0, 0, 16, 1 ] },
+                "east": { "texture": "#stonebrick", "uv": [ 0, 0, 16, 1 ] },
+                "south": { "texture": "#stonebrick", "uv": [ 0, 0, 16, 1 ] },
+                "west": { "texture": "#stonebrick", "uv": [ 0, 0, 16, 1 ] },
+                "up": { "texture": "#stone", "uv": [ 0, 0, 16, 16 ] },
+                "down": { "texture": "#stonebrick", "uv": [ 0, 0, 16, 16 ], "cullface": "down" }
+            }
+        },
+        {
+            "name": "Base_Lvl2_NW",
+            "from": [ 0, 1, 0 ], 
+            "to": [ 4, 2, 4 ], 
+            "faces": {
+                "north": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "east": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "south": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "west": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "up": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 4 ] }
+            }
+        },
+        {
+            "name": "Base_Lvl2_NE",
+            "from": [ 12, 1, 0 ], 
+            "to": [ 16, 2, 4 ], 
+            "faces": {
+                "north": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "east": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "south": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "west": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "up": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 4 ], "rotation": 90 }
+            }
+        },
+        {
+            "name": "Base_Lvl2_SW",
+            "from": [ 0, 1, 12 ], 
+            "to": [ 4, 2, 16 ], 
+            "faces": {
+                "north": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "east": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "south": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "west": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "up": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 4 ], "rotation": 270 }
+            }
+        },
+        {
+            "name": "Base_Lvl2_SE",
+            "from": [ 12, 1, 12 ], 
+            "to": [ 16, 2, 16 ], 
+            "faces": {
+                "north": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "east": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "south": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 1 ] },
+                "west": { "texture": "#stonebrick", "uv": [ 1, 0, 5, 1 ] },
+                "up": { "texture": "#stonebrick", "uv": [ 0, 0, 4, 4 ], "rotation": 180 }
+            }
+        },
+        {
+            "name": "Lapis_NW",
+            "from": [ 1, 2, 1 ], 
+            "to": [ 3, 3, 3 ], 
+            "faces": {
+                "north": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "east": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "south": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "west": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "up": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 2 ] }
+            }
+        },
+        {
+            "name": "Lapis_NE",
+            "from": [ 13, 2, 1 ], 
+            "to": [ 15, 3, 3 ], 
+            "faces": {
+                "north": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "east": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "south": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "west": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "up": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 2 ] }
+            }
+        },
+        {
+            "name": "Lapis_SW",
+            "from": [ 1, 2, 13 ], 
+            "to": [ 3, 3, 15 ], 
+            "faces": {
+                "north": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "east": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "south": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "west": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "up": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 2 ] }
+            }
+        },
+        {
+            "name": "Lapis_SE",
+            "from": [ 13, 2, 13 ], 
+            "to": [ 15, 3, 15 ], 
+            "faces": {
+                "north": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "east": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "south": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "west": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 1 ] },
+                "up": { "texture": "#lapis_block", "uv": [ 0, 0, 2, 2 ] }
+            }
+        },
+        {
+            "name": "Step_North",
+            "from": [ 4, 1, 2 ], 
+            "to": [ 12, 2, 4 ], 
+            "faces": {
+                "north": { "texture": "#stone", "uv": [ 0, 0, 8, 1 ] },
+                "up": { "texture": "#stone", "uv": [ 1, 0, 9, 2 ] }
+            }
+        },
+        {
+            "name": "Step_South",
+            "from": [ 4, 1, 12 ], 
+            "to": [ 12, 2, 14 ], 
+            "faces": {
+                "south": { "texture": "#stone", "uv": [ 0, 0, 8, 1 ] },
+                "up": { "texture": "#stone", "uv": [ 0, 0, 8, 2 ] }
+            }
+        },
+        {
+            "name": "Obsidian_Base",
+            "from": [ 2, 1, 4 ], 
+            "to": [ 14, 2, 12 ], 
+            "faces": {
+                "east": { "texture": "#stone", "uv": [ 0, 0, 8, 1 ] },
+                "west": { "texture": "#stone", "uv": [ 0, 1, 8, 2 ] },
+                "up": { "texture": "#beacon_obsidian_base", "uv": [ 2, 4, 14, 12 ] }
+            }
+        }
+    ]
+}

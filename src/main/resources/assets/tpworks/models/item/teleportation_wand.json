@@ -1,0 +1,13 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "tpworks:items/teleportation_wand"
+	},
+	"overrides": [
+		{ "predicate": { "animationIndex": 0.000 }, "model": "tpworks:item/teleportation_wand_animation_0" },
+		{ "predicate": { "animationIndex": 0.200 }, "model": "tpworks:item/teleportation_wand_animation_1" },
+		{ "predicate": { "animationIndex": 0.400 }, "model": "tpworks:item/teleportation_wand_animation_2" },
+		{ "predicate": { "animationIndex": 0.600 }, "model": "tpworks:item/teleportation_wand_animation_3" },
+		{ "predicate": { "animationIndex": 0.800 }, "model": "tpworks:item/teleportation_wand_animation_4" }
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"AAA",
+		"ATA",
+		"AAA"
+	],
+	"key": {
+		"A": {
+			"item": "minecraft:arrow"
+		},
+		"T": {
+			"item": "tpworks:teleportation_splash_potion"
+		}
+	},
+	"result": {
+		"item": "tpworks:teleportation_tipped_arrow",
+		"count": 8
+	}
+}
