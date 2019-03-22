@@ -81,10 +81,10 @@ public interface ITeleportationHandler
     public String getLongFormattedName(EntityPlayer player, TeleportDestination destination, TextFormatting defaultFormat);
     
     /*
-     * Adds a TeleportDestination to the collection.
-     * Note: if a destination with the same uuid is already in the collection, it should get replaced with this new one.
+     * Adds a TeleportDestination to the collection, or updates an existing one if it already exists in the collection (matched by uuid).
+     * Returns true if destination was added or replaced, false if it could not be added.
      */
-    void addOrReplaceDestination(TeleportDestination destination);
+    boolean addOrReplaceDestination(TeleportDestination destination);
     
     /*
      * Returns TRUE if destination list has a TeleportDestination matching the specified uuid.
@@ -100,7 +100,13 @@ public interface ITeleportationHandler
      * Removes a TeleportDestination from the list, given its index in the container.
      */
     void removeDestination(int index);
-    
+
+    /*
+     * Removes all TeleportDestinations from the list, excepting the Overworld spawn bed unless directed.
+     * If player is not null, also sends a PacketUpdateTeleportBeacon to inform the client side it has been removed.
+     */
+    void removeAllDestinations(EntityPlayer player, boolean includeOverworldSpawnBed);
+
     /*
      * Updates a TeleportDestination at the given index.
      * Creates a new TeleportDestination if the uuid could not be found.

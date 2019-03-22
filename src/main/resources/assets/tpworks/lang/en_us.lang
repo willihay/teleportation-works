@@ -3,12 +3,24 @@
 # Creative Tab
 itemGroup.tpworks=Teleportation Works
 
-# Commands
-commands.td.usage=/td <prev | next | list | delete> [count/destination#]
-commands.td.destination.missing=Must include teleport destination number
-commands.td.destination.none=Player has no known teleport destinations
-commands.td.destination.notFound=%s is an invalid teleport destination number in your network
-commands.td.delete.spawnBed.invalid=Cannot remove Overworld spawn bed - this is a fixed teleport destination
+# Commands and Messages
+command.td.usage=/td <prev | next | list | delete> [count/destination#/all]
+command.td.destination.missing=Must include teleport destination number
+command.td.destination.none=Player has no known teleport destinations
+command.td.destination.notFound=%s is an invalid teleport destination number in your network
+command.td.active.confirmation=Active teleport beacon: %s
+command.td.delete.confirmation=Teleport beacon %s REMOVED from your network
+command.td.delete.spawnBed.invalid=Cannot remove Overworld spawn bed - this is a fixed teleport destination
+command.td.deleteAll.confirmation=All teleport beacons REMOVED from your network
+command.td.invalid_removed.confirmation=INVALID teleport beacon: %s REMOVED from your network
+message.td.add.confirmation=Teleport beacon %s ADDED to your network
+message.td.dispenser.beacon.active.confirmation=Active teleport for dispenser: %s
+message.td.dispenser.beacon.cleared.confirmation=Teleport beacon CLEARED for dispenser
+message.td.dispenser.beacon.set.confirmation=Teleport beacon %s SET for dispenser
+message.td.dispenser.beacon.none=No teleport beacon set for dispenser
+message.td.found=Teleport beacon: %s FOUND in your network
+message.td.show=Teleport beacon: %s
+message.td.network.full=Teleport destination network full (limit: %s)
 
 # Items
 item.ender_eye_shard.name=Eye of Ender Shard

@@ -42,7 +42,7 @@ public class CommandTeleportation extends CommandBase
     @Override
     public String getUsage(ICommandSender sender)
     {
-        return "commands.td.usage";
+        return "command.td.usage";
     }
 
     /**
@@ -53,16 +53,24 @@ public class CommandTeleportation extends CommandBase
     {
         if (args.length <= 0)
         {
-            throw new WrongUsageException("commands.td.usage", new Object[0]);
+            throw new WrongUsageException("command.td.usage", new Object[0]);
         }
         
         String cmd = args[0];
         int index = -1;
+        boolean affectAll = false;
         
         // Get the target destination array index, if any.
         if (args.length >= 2)
         {
-            index = parseInt(args[1], 1);
+            if (args[1].equals("*") || args[1].equalsIgnoreCase("all"))
+            {
+                affectAll = true;
+            }
+            else
+            {
+                index = parseInt(args[1], 1);
+            }
         }
         
         if (cmd.equalsIgnoreCase("list"))
@@ -74,10 +82,18 @@ public class CommandTeleportation extends CommandBase
         {
             if (args.length < 2)
             {
-                throw new CommandException("commands.td.destination.missing");
+                throw new CommandException("command.td.destination.missing");
             }
-            index--; // need zero-based index
-            executeDeleteCommand(sender, index);
+            
+            if (affectAll)
+            {
+                executeDeleteAllCommand(sender, false);
+            }
+            else
+            {
+                index--; // need zero-based index
+                executeDeleteCommand(sender, index);
+            }
         }
         else if (cmd.equalsIgnoreCase("prev"))
         {
@@ -89,7 +105,7 @@ public class CommandTeleportation extends CommandBase
         }
         else
         {
-            throw new WrongUsageException("commands.td.usage", new Object[0]);
+            throw new WrongUsageException("command.td.usage", new Object[0]);
         }
     }
 
@@ -103,7 +119,7 @@ public class CommandTeleportation extends CommandBase
             int destinationCount = teleportationHandler.getDestinationCount();
             if (destinationCount == 0)
             {
-                player.sendMessage(new TextComponentTranslation("commands.td.destination.none"));
+                player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                 return;
             }
             
@@ -124,7 +140,7 @@ public class CommandTeleportation extends CommandBase
                 TeleportDestination destination = teleportationHandler.getDestinationFromIndex(destinationIndex);
                 if (destination == null)
                 {
-                    throw new CommandException("commands.td.destination.notFound", new Object[] {(destinationIndex + 1)});
+                    throw new CommandException("command.td.destination.notFound", new Object[] {(destinationIndex + 1)});
                 }
                 
                 player.sendMessage(new TextComponentString(teleportationHandler.getLongFormattedName(player, destination)));
@@ -142,7 +158,7 @@ public class CommandTeleportation extends CommandBase
             int destinationCount = teleportationHandler.getDestinationCount();
             if (destinationCount == 0)
             {
-                player.sendMessage(new TextComponentTranslation("commands.td.destination.none"));
+                player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                 return;
             }
             
@@ -150,18 +166,17 @@ public class CommandTeleportation extends CommandBase
             TeleportDestination destination = teleportationHandler.getDestinationFromIndex(destinationIndex);
             if (destination == null)
             {
-                throw new CommandException("commands.td.destination.notFound", new Object[] {(destinationIndex + 1)});
+                throw new CommandException("command.td.destination.notFound", new Object[] {(destinationIndex + 1)});
             }
             
             // Check destination - we don't want to remove an Overworld spawn bed from the network because this is supposed to be a fixed destination.
             if (destination.destinationType == DestinationType.SPAWNBED && destination.dimension == 0)
             {
-                throw new CommandException("commands.td.delete.spawnBed.invalid");
+                throw new CommandException("command.td.delete.spawnBed.invalid");
             }
             
             // Notify the player what's getting removed.
-            String name = destination.friendlyName;
-            player.sendMessage(new TextComponentString("Teleport: " + TextFormatting.DARK_GREEN + name + TextFormatting.RESET + " REMOVED from your network"));
+            player.sendMessage(new TextComponentTranslation("command.td.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + destination.friendlyName + TextFormatting.RESET}));
 
             // Only need to send a packet update to the client if we can still find the destination in the world.
             if (teleportationHandler.validateDestination(player, destination))
@@ -171,6 +186,28 @@ public class CommandTeleportation extends CommandBase
 
             // Finally, remove the destination from the player's network.
             teleportationHandler.removeDestination(destinationIndex);
+        }
+    }
+
+    public void executeDeleteAllCommand(ICommandSender sender, boolean forceDeleteSpawnBed) throws CommandException
+    {
+        EntityPlayerMP player = getCommandSenderAsPlayer(sender);        
+        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+        
+        if (teleportationHandler != null)
+        {
+            int destinationCount = teleportationHandler.getDestinationCount();
+            if (destinationCount == 0)
+            {
+                player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
+                return;
+            }
+            
+            // Remove the destinations, sending packet updates to the client as needed.
+            teleportationHandler.removeAllDestinations(player, forceDeleteSpawnBed);
+            
+            // Notify the player.
+            player.sendMessage(new TextComponentTranslation("command.td.deleteAll.confirmation"));
         }
     }
 
@@ -184,7 +221,7 @@ public class CommandTeleportation extends CommandBase
             int destinationCount = teleportationHandler.getDestinationCount();
             if (destinationCount == 0)
             {
-                player.sendMessage(new TextComponentTranslation("commands.td.destination.none"));
+                player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                 return;
             }
 
@@ -205,7 +242,7 @@ public class CommandTeleportation extends CommandBase
                 }
             }
             
-            player.sendMessage(new TextComponentString("Active Teleport: " + teleportationHandler.getShortFormattedName(player, destination)));
+            player.sendMessage(new TextComponentTranslation("command.td.active.confirmation", new Object[] {teleportationHandler.getShortFormattedName(player, destination)}));
         }
     }
     

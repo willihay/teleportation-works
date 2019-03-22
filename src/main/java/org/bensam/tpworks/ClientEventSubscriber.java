@@ -21,7 +21,7 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
  * handler methods to run when certain events occur. This class is concerned with client-side registry events.
  */
 @Mod.EventBusSubscriber(modid = TeleportationWorks.MODID, value = CLIENT)
-public final class ClientEventSubscriber
+public class ClientEventSubscriber
 {
 
     @SubscribeEvent

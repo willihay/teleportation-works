@@ -20,7 +20,7 @@ import net.minecraftforge.fml.common.registry.EntityEntry;
  * handler methods to run when certain events occur. This class is concerned with common (i.e. non-sided) registry events.
  */
 @Mod.EventBusSubscriber(modid = TeleportationWorks.MODID)
-public final class CommonEventSubscriber
+public class CommonEventSubscriber
 {
 
     @SubscribeEvent

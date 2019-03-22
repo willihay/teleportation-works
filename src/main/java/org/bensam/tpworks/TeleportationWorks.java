@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.capability.teleportation.CommandTeleportation;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
+import org.bensam.tpworks.client.particle.ModParticlesBase;
 import org.bensam.tpworks.entity.EntityTeleportationSplashPotion;
 import org.bensam.tpworks.entity.EntityTeleportationTippedArrow;
 import org.bensam.tpworks.item.ModItems;
@@ -51,7 +52,8 @@ public class TeleportationWorks
 {
     public static final String MODID = "tpworks";
     public static final String NAME = "Teleportation Works";
-    public static final String VERSION = "@VERSION@";
+    //public static final String VERSION = "@VERSION@";
+    public static final String VERSION = "0.2.1";
     public static final String ACCEPTED_MINECRAFT_VERSIONS = "[1.12.2]";
     public static final String DEPENDENCIES = "" +
             "required-after:minecraft;" +
@@ -61,6 +63,9 @@ public class TeleportationWorks
     @SidedProxy(clientSide = "org.bensam.tpworks.proxy.ClientProxy", serverSide = "org.bensam.tpworks.proxy.ServerProxy")
     public static IProxy proxy; // proxies help run code on the right side (client or server)
 
+    @SidedProxy(clientSide = "org.bensam.tpworks.client.particle.ModParticlesClient", serverSide = "org.bensam.tpworks.client.particle.ModParticlesBase")
+    public static ModParticlesBase particles;
+    
     @Instance(MODID)
     public static TeleportationWorks instance; // needed for GUIs and entities; set by FML 
 

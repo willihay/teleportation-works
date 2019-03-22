@@ -31,7 +31,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
@@ -73,8 +73,11 @@ public class BlockTeleportBeacon extends Block
     public TileEntityTeleportBeacon createTileEntity(World world, IBlockState state)
     {
         TileEntityTeleportBeacon te = new TileEntityTeleportBeacon();
-        te.isActive = state.getValue(IS_ACTIVE).booleanValue();
-        te.particleSpawnStartTime = world.getTotalWorldTime();
+        //if (world.isRemote)
+        {
+            te.isActive = state.getValue(IS_ACTIVE).booleanValue();
+            te.particleSpawnStartTime = world.getTotalWorldTime();
+        }
         return te;
     }
     
@@ -188,7 +191,7 @@ public class BlockTeleportBeacon extends Block
             // Send the name of the beacon to the player if they're not using a teleport wand.
             if (player.getHeldItem(hand).getItem() != ModItems.TELEPORTATION_WAND)
             {
-                player.sendMessage(new TextComponentString("Teleport Beacon: " + TextFormatting.DARK_GREEN + name));
+                player.sendMessage(new TextComponentTranslation("message.td.show", new Object[] {TextFormatting.DARK_GREEN + name}));
             }
         }
 
@@ -204,7 +207,7 @@ public class BlockTeleportBeacon extends Block
         if (!world.isRemote)
         {
             TileEntityTeleportBeacon te = getTileEntity(world, pos);
-            player.sendMessage(new TextComponentString("Teleport Beacon: " + TextFormatting.DARK_GREEN + te.getBeaconName()));
+            player.sendMessage(new TextComponentTranslation("message.td.show", new Object[] {TextFormatting.DARK_GREEN + te.getBeaconName()}));
         }
     }
 
@@ -250,7 +253,7 @@ public class BlockTeleportBeacon extends Block
                         {
                             TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, true), (EntityPlayerMP) placer);
                         }
-                        placer.sendMessage(new TextComponentString("Teleport Beacon " + TextFormatting.DARK_GREEN + name + TextFormatting.RESET + " FOUND in your network"));
+                        placer.sendMessage(new TextComponentTranslation("message.td.found", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                     }
                 }
             }

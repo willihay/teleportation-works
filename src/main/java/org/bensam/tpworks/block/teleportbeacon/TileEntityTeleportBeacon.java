@@ -93,19 +93,19 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
                 // Particle 1:
                 double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
                 double zCoord = blockCenterZ + (Math.sin(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                Minecraft.getMinecraft().effectRenderer.addEffect(new ParticleTeleportationMagic(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier));
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
                 
                 // Particle 3:
-                Minecraft.getMinecraft().effectRenderer.addEffect(new ParticleTeleportationMagic(world, xCoord, yCoordGroup2, zCoord, group2ScaleModifier));
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup2, zCoord, group2ScaleModifier);
                 
                 // Particle 2:
                 double particle2SpawnAngle = particleSpawnAngle + Math.PI;
                 xCoord = blockCenterX + (Math.cos(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
                 zCoord = blockCenterZ + (Math.sin(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                Minecraft.getMinecraft().effectRenderer.addEffect(new ParticleTeleportationMagic(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier));
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
                 
                 // Particle 4:
-                Minecraft.getMinecraft().effectRenderer.addEffect(new ParticleTeleportationMagic(world, xCoord, yCoordGroup2, zCoord, group2ScaleModifier));
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup2, zCoord, group2ScaleModifier);
             }
         }
     }

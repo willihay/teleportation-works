@@ -47,7 +47,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -184,7 +185,7 @@ public class ItemTeleportationWand extends Item
                                 // Cannot set dispensers to teleport to player beds.
                                 // Instead, this is how a player can remove a teleport destination from a dispenser without disturbing it. 
                                 dispenserTeleportationHandler.removeDestination(0);
-                                player.sendMessage(new TextComponentString("Teleport CLEARED for this dispenser"));
+                                player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.cleared.confirmation"));
 
                             }
                             else
@@ -200,7 +201,7 @@ public class ItemTeleportationWand extends Item
                                     dispenserTeleportationHandler.addOrReplaceDestination(activePlayerDestination);
                                 }
                                 
-                                player.sendMessage(new TextComponentString("Teleport: " + TextFormatting.DARK_GREEN + activePlayerDestination.friendlyName + TextFormatting.RESET + " SET for this dispenser"));
+                                player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + activePlayerDestination.friendlyName + TextFormatting.RESET}));
                             }
                         }
                         else
@@ -211,11 +212,11 @@ public class ItemTeleportationWand extends Item
                             
                             if (dispenserDestination == null)
                             {
-                                player.sendMessage(new TextComponentString("No Active Teleports for Dispenser"));
+                                player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.none"));
                             }
                             else
                             {
-                                player.sendMessage(new TextComponentString("Active Teleport for Dispenser: " + playerTeleportationHandler.getShortFormattedName(null, dispenserDestination)));
+                                player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.active.confirmation", new Object[] {playerTeleportationHandler.getShortFormattedName(player, dispenserDestination)}));
                             }
                         }
                     }
@@ -240,22 +241,32 @@ public class ItemTeleportationWand extends Item
                         
                         // Send a packet update so the client can get word that this beacon is no longer active for this player.
                         TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), false), (EntityPlayerMP) player);
-                        player.sendMessage(new TextComponentString("Teleport: " + TextFormatting.DARK_GREEN + name + TextFormatting.RESET + " REMOVED from your network"));
+                        player.sendMessage(new TextComponentTranslation("command.td.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                     }
                     else
                     {
-                        // Add this beacon to the player's network.
-                        TeleportDestination destination = new TeleportDestination(uuid, name, DestinationType.BEACON, world.provider.getDimension(), pos);
-                        playerTeleportationHandler.addOrReplaceDestination(destination);
-                        
-                        // Send a packet update so the client can get word that this beacon is active for this player.
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), true), (EntityPlayerMP) player);
-                        player.sendMessage(new TextComponentString("Teleport: " + TextFormatting.DARK_GREEN + name + TextFormatting.RESET + " ADDED to your network"));
+                        if (playerTeleportationHandler.getDestinationCount() < playerTeleportationHandler.getDestinationLimit())
+                        {
+                            // Add this beacon to the player's network.
+                            TeleportDestination destination = new TeleportDestination(uuid, name, DestinationType.BEACON, world.provider.getDimension(), pos);
+                            if (playerTeleportationHandler.addOrReplaceDestination(destination))
+                            {
+                                // Send a packet update so the client can get word that this beacon is active for this player.
+                                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), true), (EntityPlayerMP) player);
+                                player.sendMessage(new TextComponentTranslation("message.td.add.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
+                            }
+                        }
+                        else
+                        {
+                            TextComponentTranslation message = new TextComponentTranslation("message.td.network.full", new Object[] {playerTeleportationHandler.getDestinationLimit()});
+                            message.getStyle().setColor(TextFormatting.RED);
+                            player.sendMessage(message);
+                        }
                     }
                 }
             }
         }
-        else if (clickedBlock == ModBlocks.TELEPORT_BEACON) // running on client
+        else if (clickedBlock == ModBlocks.TELEPORT_BEACON) // and running on client
         {
             double centerX = pos.getX() + 0.5D;
             double centerY = pos.getY() + 1.0D;
@@ -371,7 +382,7 @@ public class ItemTeleportationWand extends Item
                     else if (activeTeleportDestination.destinationType != DestinationType.SPAWNBED || activeTeleportDestination.dimension != 0)
                     {
                         // Remove invalid destinations that are not SpawnBeds from the Overworld.
-                        entityLiving.sendMessage(new TextComponentString("INVALID Teleport: " + TextFormatting.DARK_GRAY + activeTeleportDestination.friendlyName + TextFormatting.RED + " REMOVED " + TextFormatting.RESET + "from your network"));
+                        entityLiving.sendMessage(new TextComponentTranslation("command.td.invalid_removed.confirmation", new Object[] {TextFormatting.DARK_GRAY + activeTeleportDestination.friendlyName + TextFormatting.RESET}));
                         teleportationHandler.removeDestination(activeTeleportDestination.getUUID());
                     }
                     
@@ -415,11 +426,11 @@ public class ItemTeleportationWand extends Item
                     
                     if (activeDestination == null)
                     {
-                        entityLiving.sendMessage(new TextComponentString("No Active Teleports"));
+                        entityLiving.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                     }
                     else
                     {
-                        entityLiving.sendMessage(new TextComponentString("Active Teleport: " + teleportationHandler.getShortFormattedName((EntityPlayer) entityLiving, activeDestination)));
+                        entityLiving.sendMessage(new TextComponentTranslation("command.td.active.confirmation", new Object[] {teleportationHandler.getShortFormattedName((EntityPlayer) entityLiving, activeDestination)}));
                     }
                 }
             }

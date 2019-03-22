@@ -11,12 +11,14 @@ import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
+import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -162,25 +164,39 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
-    public void addOrReplaceDestination(TeleportDestination destination)
+    public boolean addOrReplaceDestination(TeleportDestination destination)
     {
         int index = destinations.indexOf(destination);
         if (index == -1) // destination UUID is not already in the destinations list
         {
-            destinations.add(destination);
-            if (activeDestinationIndex < 0)
+            if (destinations.size() < getDestinationLimit())
             {
-                activeDestinationIndex = 0;
+                destinations.add(destination);
+                if (activeDestinationIndex < 0)
+                {
+                    activeDestinationIndex = 0;
+                }
+            }
+            else
+            {
+                return false;
             }
         }
         else // update the existing destination
         {
             replaceDestination(index, destination);
         }
+        
+        return true;
     }
 
-    protected void insertDestination(int index, TeleportDestination destination)
+    protected boolean insertDestination(int index, TeleportDestination destination)
     {
+        if (destinations.size() >= getDestinationLimit())
+        {
+            return false;
+        }
+        
         destinations.add(index, destination);
         
         if (activeDestinationIndex >= index)
@@ -191,6 +207,8 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         {
             activeDestinationIndex = 0;
         }
+        
+        return true;
     }
     
     @Override
@@ -237,6 +255,40 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 activeDestinationIndex--;
             }
         }
+    }
+
+    @Override
+    public void removeAllDestinations(@Nullable EntityPlayer player, boolean includeOverworldSpawnBed)
+    {
+        if (player == null && includeOverworldSpawnBed)
+        {
+            destinations.clear();
+        }
+        else
+        {
+            Iterator<TeleportDestination> it = destinations.iterator();
+            while (it.hasNext())
+            {
+                TeleportDestination destination = it.next();
+                if (!includeOverworldSpawnBed && destination.destinationType == DestinationType.SPAWNBED && destination.dimension == 0)
+                {
+                    continue;
+                }
+                
+                if (player instanceof EntityPlayerMP)
+                {
+                    // Only need to send a packet update to the client if we can still find the destination in the world.
+                    if (validateDestination(player, destination))
+                    {
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, false), (EntityPlayerMP) player);
+                    }
+                }
+                
+                it.remove();
+            }
+        }
+    
+        activeDestinationIndex = (destinations.size() >= 1) ? 0 : -1; 
     }
 
     @Override
