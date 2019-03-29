@@ -28,10 +28,10 @@ public class ClientEventSubscriber
     public static void onRegisterModels(ModelRegistryEvent event)
     {
         ModBlocks.registerItemBlockModels();
-        TeleportationWorks.MOD_LOGGER.info("ModBlocks ItemBlock models registered");
+        TeleportationWorks.MOD_LOGGER.debug("ModBlocks ItemBlock models registered");
         
         ModItems.registerItemModels();
-        TeleportationWorks.MOD_LOGGER.info("ModItems Item models registered");
+        TeleportationWorks.MOD_LOGGER.debug("ModItems Item models registered");
     }
 
     @SubscribeEvent
@@ -45,6 +45,6 @@ public class ClientEventSubscriber
             }
         }, ModItems.TELEPORTATION_SPLASH_POTION, ModItems.TELEPORTATION_TIPPED_ARROW);
         
-        TeleportationWorks.MOD_LOGGER.info("Teleportation Potion color registered");
+        TeleportationWorks.MOD_LOGGER.debug("Teleportation Potion color registered");
     }
 }

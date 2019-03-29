@@ -10,7 +10,7 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 
-/*
+/**
  * @author WilliHay
  * 
  * A class to provide the teleportation handler capability

@@ -2,6 +2,10 @@ package org.bensam.tpworks.client.particle;
 
 import net.minecraft.world.World;
 
+/**
+ * @author WilliHay
+ * 
+ */
 public class ModParticlesBase
 {
     

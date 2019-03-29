@@ -73,11 +73,9 @@ public class BlockTeleportBeacon extends Block
     public TileEntityTeleportBeacon createTileEntity(World world, IBlockState state)
     {
         TileEntityTeleportBeacon te = new TileEntityTeleportBeacon();
-        //if (world.isRemote)
-        {
-            te.isActive = state.getValue(IS_ACTIVE).booleanValue();
-            te.particleSpawnStartTime = world.getTotalWorldTime();
-        }
+        te.isActive = state.getValue(IS_ACTIVE).booleanValue();
+        te.particleSpawnStartTime = world.getTotalWorldTime();
+        // TODO: do we need to set beaconName and uniqueID for server side?
         return te;
     }
     
@@ -93,18 +91,21 @@ public class BlockTeleportBeacon extends Block
     }
 
     @Override
+    @Deprecated
     public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
     {
         return BlockFaceShape.UNDEFINED;
     }
 
     @Override
+    @Deprecated
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
         return BLOCK_AABB;
     }
 
     @Override
+    @Deprecated
     public MapColor getMapColor(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
         return MapColor.OBSIDIAN;
@@ -131,6 +132,7 @@ public class BlockTeleportBeacon extends Block
     }
 
     @Override
+    @Deprecated
     public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos)
     {
         TileEntity te = world instanceof ChunkCache ? ((ChunkCache) world).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : world.getTileEntity(pos);

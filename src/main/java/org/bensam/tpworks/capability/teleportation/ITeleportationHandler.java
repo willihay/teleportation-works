@@ -9,10 +9,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 
-/*
+/**
  * @author WilliHay
  * 
  * Implemented by TeleportationHandler
+ * 
  */
 public interface ITeleportationHandler
 {

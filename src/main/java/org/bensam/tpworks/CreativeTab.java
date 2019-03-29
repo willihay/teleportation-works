@@ -1,6 +1,3 @@
-/**
- * CreativeTab - provides a new tab in Creative mode
- */
 package org.bensam.tpworks;
 
 import org.bensam.tpworks.item.ModItems;
@@ -12,7 +9,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * @author WilliHay
- *
+ * 
+ * Put all mod items in a new Creative Tab.
  */
 public class CreativeTab extends CreativeTabs
 {

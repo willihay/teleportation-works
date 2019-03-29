@@ -7,9 +7,13 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+/**
+ * @author WilliHay
+ * 
+ */
 public final class ModUtil
 {
-    public static final Random random = new Random();
+    public static final Random RANDOM = new Random();
     
     /*
      * Lookup the friendly name (registered type) for the indicated dimension.
@@ -24,7 +28,7 @@ public final class ModUtil
      */
     public static String getRandomLetter()
     {
-        return Character.toString((char) (65 + random.nextInt(26)));
+        return Character.toString((char) (65 + RANDOM.nextInt(26)));
     }
     
     /*

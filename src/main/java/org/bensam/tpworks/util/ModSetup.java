@@ -11,6 +11,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 /**
+ * @author Cadiboo
+ * 
  * Thanks to Cadiboo for this registration code!
  *
  */

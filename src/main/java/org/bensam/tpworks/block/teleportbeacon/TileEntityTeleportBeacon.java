@@ -6,12 +6,10 @@ import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
-import org.bensam.tpworks.client.particle.ParticleTeleportationMagic;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -57,7 +55,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
         if (world.isRemote) // running on client
         {
             // Set an initial, random spawn angle for particles.
-            particleSpawnAngle = ModUtil.random.nextDouble() * Math.PI;
+            particleSpawnAngle = ModUtil.RANDOM.nextDouble() * Math.PI;
             
             // Request an update from the server on the "active" status for this TE for the current player (i.e. client).
             // If TE is active, response logic will also set the particleSpawnStartTime.
@@ -178,7 +176,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
     {
         if (name == null || name.isEmpty())
         {
-            beaconName = "Beacon " + ModUtil.getRandomLetter() + String.format("%02d", ModUtil.random.nextInt(100));
+            beaconName = "Beacon " + ModUtil.getRandomLetter() + String.format("%02d", ModUtil.RANDOM.nextInt(100));
         }
         else
         {

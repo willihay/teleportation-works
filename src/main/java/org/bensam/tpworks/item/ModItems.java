@@ -14,6 +14,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 
 /**
  * @author WilliHay
+ * 
  * Thanks to Cadiboo for the registration code examples!
  *
  */

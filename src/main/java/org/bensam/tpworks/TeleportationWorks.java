@@ -11,9 +11,7 @@ import org.bensam.tpworks.entity.EntityTeleportationTippedArrow;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
-import org.bensam.tpworks.potion.ModPotions;
 import org.bensam.tpworks.proxy.IProxy;
-import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.dispenser.BehaviorProjectileDispense;
@@ -30,6 +28,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLFingerprintViolationEvent;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -47,21 +46,23 @@ import net.minecraftforge.fml.relauncher.Side;
         name = TeleportationWorks.NAME, 
         version = TeleportationWorks.VERSION,
         acceptedMinecraftVersions = TeleportationWorks.ACCEPTED_MINECRAFT_VERSIONS,
+        certificateFingerprint = TeleportationWorks.FINGERPRINT,
         dependencies = TeleportationWorks.DEPENDENCIES)
 public class TeleportationWorks
 {
     public static final String MODID = "tpworks";
     public static final String NAME = "Teleportation Works";
-    //public static final String VERSION = "@VERSION@";
-    public static final String VERSION = "0.2.1";
+    public static final String VERSION = "@VERSION@";
+    //public static final String VERSION = "0.3.0";
     public static final String ACCEPTED_MINECRAFT_VERSIONS = "[1.12.2]";
+    public static final String FINGERPRINT = "@FINGERPRINT@";
     public static final String DEPENDENCIES = "" +
             "required-after:minecraft;" +
             "required-after:forge@[14.23.5.2768,);" +
             "";
     
     @SidedProxy(clientSide = "org.bensam.tpworks.proxy.ClientProxy", serverSide = "org.bensam.tpworks.proxy.ServerProxy")
-    public static IProxy proxy; // proxies help run code on the right side (client or server)
+    public static IProxy proxy;
 
     @SidedProxy(clientSide = "org.bensam.tpworks.client.particle.ModParticlesClient", serverSide = "org.bensam.tpworks.client.particle.ModParticlesBase")
     public static ModParticlesBase particles;
@@ -75,7 +76,7 @@ public class TeleportationWorks
     private static int networkPacketID;
 
     /**
-     * Read your config and register anything else that doesn't have its own FML event (e.g. world gen, networking, loot tables).
+     * FMLPreInitializationEvent - Read your config and register anything else that doesn't have its own FML event (e.g. world gen, networking, loot tables).
      */
     @EventHandler
     public void onPreInit(FMLPreInitializationEvent event)
@@ -96,7 +97,7 @@ public class TeleportationWorks
     }
 
     /**
-     * Register recipes, things that depend on preInit from other mods (e.g. recipes, advancements), send FMLInterModComms messages to other mods.
+     * FMLInitializationEvent - Register recipes, things that depend on preInit from other mods (e.g. recipes, advancements), send FMLInterModComms messages to other mods.
      */
     @EventHandler
     public void onInit(FMLInitializationEvent event)
@@ -157,15 +158,10 @@ public class TeleportationWorks
                 }).dispense(source, stack);
             }
         });
-
-        // Miscellaneous debug output...
-        MOD_LOGGER.info("TELEPORTATION_POTION POTION ITEM >> {}", ModPotions.TELEPORTATION_POTION.getRegistryName());
-        MOD_LOGGER.info("Teleport Beacon translation key: {}", ModBlocks.TELEPORT_BEACON.getTranslationKey());
-        MOD_LOGGER.info("Random letters: {} {} {}", ModUtil.getRandomLetter(), ModUtil.getRandomLetter(), ModUtil.getRandomLetter());
     }
 
     /**
-     * Handle interaction with other mods. You can check which ones are loaded here.
+     * FMLPostInitializationEvent - Handle interaction with other mods. You can check which ones are loaded here.
      */
     @EventHandler
     public void onPostInit(FMLPostInitializationEvent event)
@@ -174,7 +170,28 @@ public class TeleportationWorks
     }
     
     /**
-     * Called after FMLServerAboutToStartEvent and before FMLServerStartedEvent.
+     * FMLFingerprintViolationEvent - A special event used when the Mod.certificateFingerprint() doesn't match the certificate loaded 
+     * from the JARfile.
+     */
+    @EventHandler
+    public void onFingerprintViolation(FMLFingerprintViolationEvent event)
+    {
+        if (event.isDirectory())
+        {
+            MOD_LOGGER.info("Fingerprint Violation detected in '{}' though this is expected because we're in a development environment", event.getSource().getName());
+        }
+        else
+        {
+            MOD_LOGGER.warn("*****          WARNING!");
+            MOD_LOGGER.warn("***** The signature of the mod file '{}' does not match the expected", event.getSource().getName());
+            MOD_LOGGER.warn("***** value! This means the mod file has been tampered with since its official release");
+            MOD_LOGGER.warn("***** by the author. The mod may not work, may contain malware, or may in general");
+            MOD_LOGGER.warn("***** not function as expected or advertised.");
+        }
+    }
+    
+    /**
+     * FMLServerStartingEvent - Called after FMLServerAboutToStartEvent and before FMLServerStartedEvent.
      * This event allows for customizations of the server, such as loading custom commands, perhaps customizing recipes or other activities.
      */
     @EventHandler

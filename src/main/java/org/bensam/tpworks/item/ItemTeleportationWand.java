@@ -47,7 +47,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -276,9 +275,9 @@ public class ItemTeleportationWand extends Item
             {
                 for (int i = 0; i < 64; ++i)
                 {
-                    double xSpeed = (ModUtil.random.nextBoolean() ? 1.0D : -1.0D);
-                    double ySpeed = (ModUtil.random.nextBoolean() ? 1.0D : -1.0D) * (1.0D + ModUtil.random.nextDouble());
-                    double zSpeed = (ModUtil.random.nextBoolean() ? 1.0D : -1.0D);
+                    double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
+                    double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + ModUtil.RANDOM.nextDouble());
+                    double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
                     
                     world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
                 }
@@ -291,9 +290,9 @@ public class ItemTeleportationWand extends Item
             {
                 for (int i = 0; i < 64; ++i)
                 {
-                    double xSpeed = (ModUtil.random.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.random.nextDouble() * 3.0D));
-                    double ySpeed = (ModUtil.random.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.random.nextDouble() * 3.0D));
-                    double zSpeed = (ModUtil.random.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.random.nextDouble() * 3.0D));
+                    double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
+                    double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
+                    double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                     
                     world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
                 }
@@ -315,7 +314,7 @@ public class ItemTeleportationWand extends Item
         if (world.isRemote && ((getMaxItemUseDuration(stack) - count) > CHARGE_ANIMATION_DELAY_TICKS))
         {
             // Create portal-type particles around the player's wand when it's being charged up.
-            Random rand = ModUtil.random;
+            Random rand = ModUtil.RANDOM;
             Vec3d playerPos = player.getPositionVector();
             
             // Use an offset vector in front of the player, in the approximate location of the wand, where the particles will tend to be centered.

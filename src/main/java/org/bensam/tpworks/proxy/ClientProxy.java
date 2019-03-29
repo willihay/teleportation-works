@@ -20,10 +20,10 @@ public class ClientProxy implements IProxy
     public void preInit(FMLPreInitializationEvent event)
     {
         ModEntities.registerRenderer();
-        TeleportationWorks.MOD_LOGGER.info("ModEntities renderers registered");
+        TeleportationWorks.MOD_LOGGER.debug("ModEntities renderers registered");
         
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityTeleportBeacon.class, new RendererTeleportBeacon());
-        TeleportationWorks.MOD_LOGGER.info("TileEntity renderers registered");
+        TeleportationWorks.MOD_LOGGER.debug("TileEntity renderers registered");
     }
 
     @Override
