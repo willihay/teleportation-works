@@ -31,6 +31,7 @@ public class ModPotions
     
     private static void registerRecipes()
     {
+        // Brew an awkward potion with an ender eye shard to get a splash potion of teleportation.
         ItemStack inputPotion = PotionUtils.addPotionToItemStack(new ItemStack(Items.POTIONITEM), PotionTypes.AWKWARD);
         ItemStack ingredient = new ItemStack(ModItems.ENDER_EYE_SHARD);
         ItemStack outputPotion = PotionUtils.addPotionToItemStack(new ItemStack(ModItems.TELEPORTATION_SPLASH_POTION), PotionTypes.EMPTY);

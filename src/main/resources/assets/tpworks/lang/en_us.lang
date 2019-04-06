@@ -10,11 +10,11 @@ config.tpworks.world.spawn_chest.tooltip=Add basic Teleportation items to Spawn 
 itemGroup.tpworks=Teleportation Works
 
 # Commands and Messages
-command.td.usage=/td <prev | next | list | delete> [count/destination#/all]
+command.td.usage=/td <list | # | prev | next | delete> [count/destination#/all]
 command.td.destination.missing=Must include teleport destination number
 command.td.destination.none=Player has no known teleport destinations
 command.td.destination.notFound=%s is an invalid teleport destination number in your network
-command.td.active.confirmation=Active teleport beacon: %s
+command.td.active.confirmation=Active teleport destination: %s
 command.td.delete.confirmation=Teleport beacon %s REMOVED from your network
 command.td.delete.spawnBed.invalid=Cannot remove Overworld spawn bed - this is a fixed teleport destination
 command.td.deleteAll.confirmation=All teleport beacons REMOVED from your network

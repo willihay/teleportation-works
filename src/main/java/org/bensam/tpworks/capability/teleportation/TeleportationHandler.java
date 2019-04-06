@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
@@ -72,7 +73,19 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
-    public TeleportDestination getPreviousActiveDestination()
+    public TeleportDestination setActiveDestination(int index)
+    {
+        if (index >= 0 && index < destinations.size())
+        {
+            activeDestinationIndex = index;
+            return getActiveDestination();
+        }
+        else
+            return null;
+    }
+
+    @Override
+    public TeleportDestination setActiveDestinationToPrevious()
     {
         if (destinations.size() > 0)
         {
@@ -84,7 +97,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
-    public TeleportDestination getNextActiveDestination()
+    public TeleportDestination setActiveDestinationToNext()
     {
         if (destinations.size() > 0)
         {
@@ -201,9 +214,9 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         
         if (activeDestinationIndex >= index)
         {
-            activeDestinationIndex++;
+            activeDestinationIndex++; // preserves the active destination when a new destination is inserted before it
         }
-        else
+        else if (activeDestinationIndex < 0)
         {
             activeDestinationIndex = 0;
         }
@@ -236,7 +249,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 it.remove();
                 if (activeDestinationIndex > index || activeDestinationIndex >= destinations.size())
                 {
-                    activeDestinationIndex--;
+                    activeDestinationIndex--; // preserve the active destination when a destination before it is removed
                 }
                 break;
             }
@@ -252,7 +265,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             destinations.remove(index);
             if (activeDestinationIndex > index || activeDestinationIndex >= destinations.size())
             {
-                activeDestinationIndex--;
+                activeDestinationIndex--; // preserve the active destination when a destination before it is removed
             }
         }
     }
@@ -262,6 +275,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     {
         if (player == null && includeOverworldSpawnBed)
         {
+            // Simple case where no packet updates need to be sent to a player client and no spawn beds need to be preserved.
             destinations.clear();
         }
         else
@@ -272,6 +286,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 TeleportDestination destination = it.next();
                 if (!includeOverworldSpawnBed && destination.destinationType == DestinationType.SPAWNBED && destination.dimension == 0)
                 {
+                    // Keep the Overworld spawn bed.
                     continue;
                 }
                 
@@ -308,15 +323,15 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         {
             if (destination.getUUID().equals(uuid))
             {
-                destination.dimension = newDimension;
+                destination.dimension = newDimension; // update the dimension
                 
                 if (newName != null)
                 {
-                    destination.friendlyName = newName;
+                    destination.friendlyName = newName; // update the friendly name
                 }
                 if (newPos != null)
                 {
-                    destination.position = newPos;
+                    destination.position = newPos; // update the position
                 }
                 
                 break;
@@ -331,7 +346,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         {
             if (destination.getUUID().equals(uuid))
             {
-                destination.position = BlockPos.ORIGIN;
+                destination.position = BlockPos.ORIGIN; // set to a non-valid position
                 break;
             }
         }
@@ -340,6 +355,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     @Override
     public void updateSpawnBed(EntityPlayer player, int dimension)
     {
+        // Find the player's spawn bed location.
         BlockPos spawnBed = player.getBedLocation(dimension);
         if (spawnBed == null)
         {
@@ -354,7 +370,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     {
         TeleportDestination spawnBedDestination = null;
         
-        // Look for an existing SpawnBed for the specified dimension.
+        // Look for an existing spawn bed for the specified dimension.
         for (TeleportDestination destination : destinations)
         {
             if (destination.destinationType == DestinationType.SPAWNBED && destination.dimension == dimension)
@@ -370,22 +386,22 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         }
         else
         {
-            // Add a new SpawnBed for this dimension.
+            // Add a new spawn bed for this dimension.
             if (dimension == 0)
             {
                 spawnBedDestination = new TeleportDestination(OVERWORLD_SPAWNBED_DISPLAY_NAME, DestinationType.SPAWNBED, dimension, position);
                 
-                // For the Overworld, the SpawnBed should appear in the first position in the list.
+                // For the Overworld, the spawn bed should appear in the first position in the list.
                 insertDestination(0, spawnBedDestination);
             }
             else
             {
                 spawnBedDestination = new TeleportDestination(DestinationType.SPAWNBED.toString(), DestinationType.SPAWNBED, dimension, position);
                 
-                // For other dimensions, the SpawnBed should appear after the Overworld SpawnBed.
+                // For other dimensions, the spawn bed should appear after the Overworld spawn bed.
                 if (destinations.size() > 0)
                 {
-                    // Normally an Overworld SpawnBed should exist before a SpawnBed can be added in some other dimension, so add this new one after it.
+                    // Normally an Overworld spawn bed should exist before a spawn bed can be added in some other dimension, so add this new one after it.
                     insertDestination(1, spawnBedDestination);
                 }
                 else
@@ -454,7 +470,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                     || !(te instanceof TileEntityTeleportBeacon)
                     || !(((TileEntityTeleportBeacon) te).getUniqueID().equals(destinationUUID)))
             {
-                // Something unexpected must have happened to the beacon. (Moved by another player?)
+                // Something must have happened to the beacon. (Moved by another player?)
                 // Try to find it somewhere else.
                 destination.position = BlockPos.ORIGIN;
                 BlockPos beaconPos = null;
@@ -501,7 +517,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     @Override
     public NBTTagCompound serializeNBT()
     {
-        TeleportationWorks.MOD_LOGGER.info("TeleportationHandler.serializeNBT called");
         NBTTagCompound compound = new NBTTagCompound();
         this.writeToNBT(compound);
         return compound;
@@ -524,7 +539,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     @Override
     public void deserializeNBT(NBTTagCompound nbt)
     {
-        TeleportationWorks.MOD_LOGGER.info("TeleportationHandler.deserializeNBT called");
         this.readFromNBT(nbt);        
     }
     
@@ -552,5 +566,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     protected void onDestinationValuesChanged(int index)
     {
         // TODO: Call this when values have changed.
+        throw new NotImplementedException("To help the mod author prioritize their work, contact the author if you wish to override this method in your mod");
     }
 }

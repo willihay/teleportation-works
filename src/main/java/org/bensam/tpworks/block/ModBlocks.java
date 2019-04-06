@@ -30,14 +30,14 @@ public class ModBlocks
 {
     public static final BlockTeleportBeacon TELEPORT_BEACON = null;
 
-    // @formatter:off
     public static void register(IForgeRegistry<Block> registry)
     {
         registry.register(new BlockTeleportBeacon("teleport_beacon"));
-        
+
         GameRegistry.registerTileEntity(TileEntityTeleportBeacon.class, new ResourceLocation(TeleportationWorks.MODID, "teleport_beacon"));
     }
-    
+
+    // @formatter:off
     public static void registerItemBlocks(IForgeRegistry<Item> registry)
     {
         Arrays.stream(new Block[]
@@ -46,10 +46,9 @@ public class ModBlocks
                 }).forEach(block -> 
                 {
                     registry.register(
-                            ModSetup.setCreativeTab(
-                                    ModSetup.setRegistryNames(
-                                            new ItemBlock(block),
-                                            block.getRegistryName())));
+                            ModSetup.setRegistryNames(
+                                    new ItemBlock(block),
+                                    block.getRegistryName()));
                 });
     }
 
@@ -66,8 +65,7 @@ public class ModBlocks
                 });
     }
     // @formatter:on
-    
+
     public static void registerOreDictionaryEntries()
-    {
-    }
+    {}
 }

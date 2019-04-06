@@ -29,6 +29,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.IItemPropertyGetter;
 import net.minecraft.item.Item;
@@ -92,6 +93,21 @@ public class ItemTeleportationWand extends Item
     }
 
     /**
+     * Return whether this item is reparable in an anvil.
+     *  
+     * @param toRepair the {@code ItemStack} being repaired
+     * @param repair the {@code ItemStack} being used to perform the repair
+     */
+    @Override
+    public boolean getIsRepairable(ItemStack toRepair, ItemStack repair)
+    {
+        Item repairIngredient = repair.getItem();
+        return repairIngredient == Items.ENDER_PEARL 
+                || repairIngredient == Items.ENDER_EYE
+                || (repairIngredient == Items.DYE && repair.getMetadata() == 4); // lapis
+    }
+
+    /**
      * Returns 1 so that wand can be enchanted with Unbreakable or Mending (since it is a damageable item).
      */
     @Override
@@ -124,7 +140,7 @@ public class ItemTeleportationWand extends Item
     @Override
     public boolean hasEffect(ItemStack stack)
     {
-        return true;
+        return true; // this item always looks enchanted
     }
 
     /**
@@ -135,16 +151,16 @@ public class ItemTeleportationWand extends Item
     {
         player.setActiveHand(hand);
 
-        if (world.isRemote && player.isSneaking())
-        {
-            RayTraceResult mouseOverResult = Minecraft.getMinecraft().objectMouseOver;
-            if (mouseOverResult.typeOfHit == Type.ENTITY)
-            {
-                Entity entityHit = mouseOverResult.entityHit;
-                player.sendMessage(entityHit.getDisplayName().appendText(entityHit.hasCustomName() ? " (" + entityHit.getCustomNameTag() + ")" : ""));
-                return new ActionResult<ItemStack>(EnumActionResult.FAIL, player.getHeldItem(hand));
-            }
-        }
+//        if (world.isRemote && player.isSneaking())
+//        {
+//            RayTraceResult mouseOverResult = Minecraft.getMinecraft().objectMouseOver;
+//            if (mouseOverResult.typeOfHit == Type.ENTITY)
+//            {
+//                Entity entityHit = mouseOverResult.entityHit;
+//                player.sendMessage(entityHit.getDisplayName().appendText(entityHit.hasCustomName() ? " (" + entityHit.getCustomNameTag() + ")" : ""));
+//                return new ActionResult<ItemStack>(EnumActionResult.FAIL, player.getHeldItem(hand));
+//            }
+//        }
         
         return new ActionResult<ItemStack>(EnumActionResult.PASS, player.getHeldItem(hand));
     }
@@ -265,13 +281,13 @@ public class ItemTeleportationWand extends Item
                 }
             }
         }
-        else if (clickedBlock == ModBlocks.TELEPORT_BEACON) // and running on client
+        else if (clickedBlock == ModBlocks.TELEPORT_BEACON) // (and running on client)
         {
             double centerX = pos.getX() + 0.5D;
             double centerY = pos.getY() + 1.0D;
             double centerZ = pos.getZ() + 0.5D;
             TileEntityTeleportBeacon te = (TileEntityTeleportBeacon) world.getTileEntity(pos);
-            if (te.isActive)
+            if (te.isActive) // beacon will begin deactivating
             {
                 for (int i = 0; i < 64; ++i)
                 {
@@ -282,11 +298,10 @@ public class ItemTeleportationWand extends Item
                     world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
                 }
 
-                // Beacon is deactivating.
                 world.playSound(player, pos, ModSounds.DEACTIVATE_TELEPORT_BEACON,
                         SoundCategory.BLOCKS, 1.0F, 1.0F);
             }
-            else
+            else // beacon will begin activating
             {
                 for (int i = 0; i < 64; ++i)
                 {
@@ -297,7 +312,6 @@ public class ItemTeleportationWand extends Item
                     world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
                 }
 
-                // Beacon is about to activate.
                 world.playSound(player, pos, ModSounds.ACTIVATE_TELEPORT_BEACON,
                         SoundCategory.BLOCKS, 1.0F, 1.0F);
             }
@@ -341,18 +355,6 @@ public class ItemTeleportationWand extends Item
         }
     }
 
-    /**
-     * Called when a Block is right-clicked with this Item
-     */
-    @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing,
-                                      float hitX, float hitY, float hitZ)
-    {
-        //Block clickedBlock = world.getBlockState(pos).getBlock();
-        //TeleportationWorks.MOD_LOGGER.info("onItemUse: Wand right-clicked on block " + clickedBlock.getLocalizedName() + " at " + pos);
-        return super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
-    }
-
     @Override
     public ItemStack onItemUseFinish(ItemStack stack, World world, EntityLivingBase entityLiving)
     {
@@ -364,15 +366,17 @@ public class ItemTeleportationWand extends Item
                 TeleportDestination activeTeleportDestination = teleportationHandler.getActiveDestination();
                 if (activeTeleportDestination != null)
                 {
+                    // Teleport player to the active destination (if it is valid).
                     if (teleportationHandler.validateDestination(entityLiving, activeTeleportDestination))
                     {
+                        // If player is riding a living entity, teleport them both and remount them once teleported.
                         if (entityLiving.isRiding() && (entityLiving.getRidingEntity() instanceof EntityLivingBase))
                         {
                             Entity entityRidden = TeleportationHelper.teleport(entityLiving.getRidingEntity(), activeTeleportDestination);
                             TeleportationHelper.teleport(entityLiving, activeTeleportDestination);
                             TeleportationHelper.remountRider(entityLiving, entityRidden);
                         }
-                        else
+                        else // just teleport the player
                         {
                             TeleportationHelper.teleport(entityLiving, activeTeleportDestination);
                         }
@@ -416,10 +420,12 @@ public class ItemTeleportationWand extends Item
                     TeleportDestination activeDestination;
                     if (entityLiving.isSneaking())
                     {
-                        activeDestination = teleportationHandler.getNextActiveDestination();
+                        // Sneaking and using a wand advances the active destination to the next one in the list.
+                        activeDestination = teleportationHandler.setActiveDestinationToNext();
                     }
                     else
                     {
+                        // A simple use-click of the wand will display the active destination to the player.
                         activeDestination = teleportationHandler.getActiveDestination();
                     }
                     
@@ -429,6 +435,7 @@ public class ItemTeleportationWand extends Item
                     }
                     else
                     {
+                        // Tell the player what the current active destination is.
                         entityLiving.sendMessage(new TextComponentTranslation("command.td.active.confirmation", new Object[] {teleportationHandler.getShortFormattedName((EntityPlayer) entityLiving, activeDestination)}));
                     }
                 }

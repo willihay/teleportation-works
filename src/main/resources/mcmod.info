@@ -9,7 +9,7 @@
   "updateUrl": "",
   "authorList": ["WilliHay"],
   "credits": "Thanks to the Forge Modder Support forums and the helpful tutorials and example mods by Cadiboo, ShadowFacts, McJty, CubiCoder, and TheGreyGhost. Also thanks to MrCrayfish for the awesome Model Creator tool!",
-  "logoFile": "",
+  "logoFile": "assets/tpworks/textures/tpworks_logo.png",
   "screenshots": [],
   "dependencies": []
 }

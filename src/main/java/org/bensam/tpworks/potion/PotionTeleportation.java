@@ -16,7 +16,7 @@ public class PotionTeleportation extends Potion
 {
     public PotionTeleportation()
     {
-        super(false, 3121697);
+        super(false, 0x8552BC); // liquid color 0x8552BC == a shade of deep purple
         setBeneficial();
     }
 

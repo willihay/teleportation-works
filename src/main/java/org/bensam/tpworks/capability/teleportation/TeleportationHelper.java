@@ -83,6 +83,9 @@ public class TeleportationHelper
         }
     }
 
+    /**
+     * A Tile Entity is teleporting another Entity.
+     */
     public static Entity teleportOther(Entity entityToTeleport, TileEntity tileEntityInitiatingTeleport)
     {
         ITeleportationHandler teleportationHandler = tileEntityInitiatingTeleport.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
@@ -101,6 +104,9 @@ public class TeleportationHelper
         return entityToTeleport;
     }
     
+    /**
+     * An Entity is teleporting another Entity.
+     */
     public static Entity teleportOther(Entity entityToTeleport, Entity entityInitiatingTeleport)
     {
         ITeleportationHandler teleportationHandler = entityInitiatingTeleport.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
@@ -127,6 +133,7 @@ public class TeleportationHelper
         BlockPos safePos = null;
         float rotationYaw = entityToTeleport.rotationYaw;
 
+        // Calculate a safe position at the teleport destination to which the entity can be teleported.
         switch (destination.destinationType)
         {
         case SPAWNBED:
@@ -151,7 +158,7 @@ public class TeleportationHelper
         }
         
         if (safePos == null)
-            return entityToTeleport;
+            return entityToTeleport; // no safe position found - do an early return instead of the requested teleport
         
         return teleport(currentWorld, entityToTeleport, teleportDimension, safePos, rotationYaw);
     }
@@ -182,16 +189,18 @@ public class TeleportationHelper
 
         if (entityCurrentDimension != teleportDimension)
         {
-            // Transfer teleporting entity to teleport position in different dimension.
+            TeleportationWorks.MOD_LOGGER.info("Using CustomTeleporter to teleport {} to dimension {}",
+                    entityToTeleport.getDisplayName().getFormattedText(),
+                    teleportDimension);
+
+            // Transfer teleporting entity to teleport destination in different dimension.
             if (entityToTeleport instanceof EntityPlayerMP)
             {
-                TeleportationWorks.MOD_LOGGER.info("Using CustomTeleporter to teleport " + entityToTeleport.getDisplayName().getFormattedText() + " to dimension " + teleportDimension);
                 teleportWorld.getMinecraftServer().getPlayerList().transferPlayerToDimension(
                         (EntityPlayerMP) entityToTeleport, teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
             }
-            else if (entityToTeleport instanceof EntityLivingBase)
+            else
             {
-                TeleportationWorks.MOD_LOGGER.info("Using CustomTeleporter to teleport " + entityToTeleport.getDisplayName().getFormattedText() + " to dimension " + teleportDimension);
                 entityToTeleport = entityToTeleport.changeDimension(teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
             }
         }
@@ -200,7 +209,7 @@ public class TeleportationHelper
             // Teleport entity to destination.
 
             // Try attemptTeleport first because it has some extra, interesting render effects.
-            // Note that the Y-coordinate is specified one block higher because of how the attemptTeleport function
+            // Note that the Y-coordinate is specified one block HIGHER because of how the attemptTeleport function
             //   starts looking for safe teleport positions one block BELOW the specified Y-coordinate.
             if (entityToTeleport instanceof EntityLivingBase && ((EntityLivingBase) entityToTeleport)
                     .attemptTeleport(teleportPos.getX() + 0.5D, teleportPos.up().getY() + 0.25D, teleportPos.getZ() + 0.5D))
@@ -209,7 +218,7 @@ public class TeleportationHelper
             }
             else
             {
-                // If we can't do it the "pretty way", just force it! Hopefully they survive teh magiks. :P
+                // If we can't do it the "pretty way", just force it! This should be a safe teleport position. Hopefully they survive teh magiks. :P
                 TeleportationWorks.MOD_LOGGER.info("Calling setPositionAndUpdate...");
                 entityToTeleport.setPositionAndUpdate(teleportPos.getX() + 0.5D, teleportPos.getY() + 0.25D,
                         teleportPos.getZ() + 0.5D);

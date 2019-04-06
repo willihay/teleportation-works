@@ -52,6 +52,7 @@ public class BlockTeleportBeacon extends Block
         super(Material.ROCK);
         
         ModSetup.setRegistryNames(this, name);
+        ModSetup.setCreativeTab(this);
         setDefaultState(this.blockState.getBaseState().withProperty(IS_ACTIVE, false));
         setHardness(5.0F); // enchantment table = 5.0F
         setResistance(2000.F); // enchantment table = 2000.F
@@ -73,9 +74,12 @@ public class BlockTeleportBeacon extends Block
     public TileEntityTeleportBeacon createTileEntity(World world, IBlockState state)
     {
         TileEntityTeleportBeacon te = new TileEntityTeleportBeacon();
-        te.isActive = state.getValue(IS_ACTIVE).booleanValue();
-        te.particleSpawnStartTime = world.getTotalWorldTime();
-        // TODO: do we need to set beaconName and uniqueID for server side?
+        if (world.isRemote)
+        {
+            // read client-only data from state
+            te.isActive = state.getValue(IS_ACTIVE).booleanValue();
+            te.particleSpawnStartTime = world.getTotalWorldTime();
+        }
         return te;
     }
     

@@ -93,6 +93,7 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
 
     protected void applySplash(RayTraceResult result, PotionTeleportation potion)
     {
+        // Find all the teleportable entities within a 4x4x2 block box around the potion. 
         AxisAlignedBB axisalignedbb = this.getEntityBoundingBox().grow(4.0D, 2.0D, 4.0D);
         List<Entity> list = this.world.<Entity>getEntitiesWithinAABB(Entity.class, axisalignedbb, TELEPORTABLE_DEFAULT);
 
@@ -102,9 +103,11 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
         }
         else 
         {
+            // Get a collection of all the entities that are riding other entities, so the pair can be remounted later, after teleportation.
             HashMap<Entity, Entity> riderMap = getRiders(list);
             
-            // Add any entities being ridden by the entities in the list, if they aren't already included in that list. 
+            // Find all entities being ridden by the entities who are about to be teleported.
+            // Make sure both are included in the list of entities to be teleported. (Perhaps one was just outside the bounding box.)
             for (Entity entityRidden : riderMap.values())
             {
                 if (!list.contains(entityRidden))
@@ -113,6 +116,7 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
                 }
             }
             
+            // Teleport each entity in the list.
             for (Entity entityToTeleport : list)
             {
                 Entity teleportedEntity = null;
@@ -128,9 +132,11 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
                     teleportedEntity = potion.affectEntity(this, sourceTileEntity, entityToTeleport);
                 }
                 
+                // Non-player entities get cloned when they teleport across dimensions.
+                // If the teleported entity had passengers, see if the object changed.
                 if (hasPassengers && (entityToTeleport != teleportedEntity))
                 {
-                    // Non-player entities get cloned when they teleport across dimensions. Update the riderMap with the new object.
+                    // Update the riderMap with the new object.
                     for (Map.Entry<Entity, Entity> riderSet : riderMap.entrySet())
                     {
                         if (riderSet.getValue() == entityToTeleport)
@@ -141,6 +147,7 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
                 }
             }
             
+            // Take care of any remounting of rider to entity ridden.
             for (Map.Entry<Entity, Entity> riderSet : riderMap.entrySet())
             {
                 Entity rider = riderSet.getKey();
@@ -166,6 +173,9 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
         }
     };
 
+    /**
+     * From a list of entities, find all that are riding some other entity and return a map of riders to ridden.
+     */
     protected HashMap<Entity, Entity> getRiders(List<Entity> list)
     {
         HashMap<Entity, Entity> riderMap = new HashMap<Entity, Entity>();

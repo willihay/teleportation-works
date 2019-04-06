@@ -11,6 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 /**
  * @author WilliHay
  *
+ * These purple-ish particles will stay where they spawn (unless given an initial velocity) and fade out over a few seconds.
  */
 @SideOnly(Side.CLIENT)
 public class ParticleTeleportationMagic extends Particle
@@ -36,11 +37,14 @@ public class ParticleTeleportationMagic extends Particle
         this.motionX = xSpeedIn;
         this.motionY = ySpeedIn;
         this.motionZ = zSpeedIn;
+        // Create a "purple-ish" color.
         float f = this.rand.nextFloat() * 0.6F + 0.4F;
         this.particleRed = f * 0.9F;
         this.particleGreen = f * 0.3F;
         this.particleBlue = f;
+        // No gravity - we want these to stay where they spawn unless given a speed in the Y-direction.
         this.particleGravity = 0.0F;
+        // Particles live between 2 and 2.5 seconds.
         this.particleMaxAge = (int)(this.rand.nextFloat() * 10.0F) + 40;
     }
 

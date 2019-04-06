@@ -23,6 +23,7 @@ public class CapabilityHandler
     @SubscribeEvent
     public static void attachCapabilityToEntity(AttachCapabilitiesEvent<Entity> event)
     {
+        // Attaching the teleportation capability to a player allows them to maintain a teleport destination list.
         if (event.getObject() instanceof EntityPlayer)
         {
             event.addCapability(TELEPORTATION_CAPABILITY_ID, new TeleportationHandlerCapabilityProvider());
@@ -32,6 +33,7 @@ public class CapabilityHandler
     @SubscribeEvent
     public static void attachCapabilityToTileEntity(AttachCapabilitiesEvent<TileEntity> event)
     {
+        // Vanilla dispensers can store a teleport destination to use when they throw a teleporation splash potion or tipped arrow.  
         if (event.getObject() instanceof TileEntityDispenser)
         {
             event.addCapability(TELEPORTATION_CAPABILITY_ID, new TeleportationHandlerCapabilityProvider());

@@ -27,7 +27,6 @@ public final class ModConfig
     
     public static class WorldSettings
     {
-        @Name("addItemsToSpawnChest")
         @Comment({"Add basic Teleportation items to Spawn Chest", "Must be set BEFORE generating a new world"})
         @LangKey(LANG_PREFIX + ".world.spawn_chest")
         @RequiresWorldRestart

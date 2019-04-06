@@ -3,6 +3,7 @@ package org.bensam.tpworks.capability.teleportation;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
@@ -26,7 +27,7 @@ import net.minecraft.util.text.TextFormatting;
  */
 public class CommandTeleportation extends CommandBase
 {
-    
+
     /**
      * Gets the name of the command.
      */
@@ -52,14 +53,12 @@ public class CommandTeleportation extends CommandBase
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
     {
         if (args.length <= 0)
-        {
             throw new WrongUsageException("command.td.usage", new Object[0]);
-        }
-        
+
         String cmd = args[0];
         int index = -1;
         boolean affectAll = false;
-        
+
         // Get the target destination array index, if any.
         if (args.length >= 2)
         {
@@ -72,8 +71,13 @@ public class CommandTeleportation extends CommandBase
                 index = parseInt(args[1], 1);
             }
         }
-        
-        if (cmd.equalsIgnoreCase("list"))
+
+        if (StringUtils.isNumeric(cmd))
+        {
+            index = parseInt(args[0], 1);
+            executeSetDestinationCommand(sender, --index); // need zero-based index
+        }
+        else if (cmd.equalsIgnoreCase("list"))
         {
             index--; // need zero-based index
             executeListCommand(sender, index);
@@ -81,10 +85,8 @@ public class CommandTeleportation extends CommandBase
         else if (cmd.equalsIgnoreCase("delete"))
         {
             if (args.length < 2)
-            {
                 throw new CommandException("command.td.destination.missing");
-            }
-            
+
             if (affectAll)
             {
                 executeDeleteAllCommand(sender, false);
@@ -104,15 +106,14 @@ public class CommandTeleportation extends CommandBase
             executeNextCommand(sender, index == -1 ? 1 : index);
         }
         else
-        {
             throw new WrongUsageException("command.td.usage", new Object[0]);
-        }
     }
 
-    public void executeListCommand(ICommandSender sender, int destinationIndex) throws CommandException
+    public void executeSetDestinationCommand(ICommandSender sender, int destinationIndex) throws CommandException
     {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
-        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
+                null);
 
         if (teleportationHandler != null)
         {
@@ -122,7 +123,32 @@ public class CommandTeleportation extends CommandBase
                 player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                 return;
             }
-            
+
+            if (destinationIndex >= destinationCount)
+                throw new CommandException("command.td.destination.notFound", new Object[] { (destinationIndex + 1) });
+
+            TeleportDestination destination = teleportationHandler.setActiveDestination(destinationIndex);
+
+            player.sendMessage(new TextComponentTranslation("command.td.active.confirmation",
+                    new Object[] { teleportationHandler.getShortFormattedName(player, destination) }));
+        }
+    }
+
+    public void executeListCommand(ICommandSender sender, int destinationIndex) throws CommandException
+    {
+        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
+                null);
+
+        if (teleportationHandler != null)
+        {
+            int destinationCount = teleportationHandler.getDestinationCount();
+            if (destinationCount == 0)
+            {
+                player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
+                return;
+            }
+
             if (destinationIndex < 0)
             {
                 // List all the teleport destinations in this player's network.
@@ -131,7 +157,8 @@ public class CommandTeleportation extends CommandBase
                 {
                     TeleportDestination destination = teleportationHandler.getDestinationFromIndex(i);
                     TextFormatting destinationFormat = (i == activeDestinationIndex) ? TextFormatting.GOLD : TextFormatting.RESET;
-                    player.sendMessage(new TextComponentString(destinationFormat + Integer.toString(i + 1) + ") " + teleportationHandler.getLongFormattedName(player, destination, destinationFormat)));
+                    player.sendMessage(new TextComponentString(destinationFormat + Integer.toString(i + 1) + ") "
+                            + teleportationHandler.getLongFormattedName(player, destination, destinationFormat)));
                 }
             }
             else
@@ -139,10 +166,8 @@ public class CommandTeleportation extends CommandBase
                 // Display the name of the selected teleport destination.
                 TeleportDestination destination = teleportationHandler.getDestinationFromIndex(destinationIndex);
                 if (destination == null)
-                {
-                    throw new CommandException("command.td.destination.notFound", new Object[] {(destinationIndex + 1)});
-                }
-                
+                    throw new CommandException("command.td.destination.notFound", new Object[] { (destinationIndex + 1) });
+
                 player.sendMessage(new TextComponentString(teleportationHandler.getLongFormattedName(player, destination)));
             }
         }
@@ -150,9 +175,10 @@ public class CommandTeleportation extends CommandBase
 
     public void executeDeleteCommand(ICommandSender sender, int destinationIndex) throws CommandException
     {
-        EntityPlayerMP player = getCommandSenderAsPlayer(sender);        
-        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
-        
+        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
+                null);
+
         if (teleportationHandler != null)
         {
             int destinationCount = teleportationHandler.getDestinationCount();
@@ -161,22 +187,19 @@ public class CommandTeleportation extends CommandBase
                 player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                 return;
             }
-            
+
             // Get the TeleportDestination.
             TeleportDestination destination = teleportationHandler.getDestinationFromIndex(destinationIndex);
             if (destination == null)
-            {
-                throw new CommandException("command.td.destination.notFound", new Object[] {(destinationIndex + 1)});
-            }
-            
+                throw new CommandException("command.td.destination.notFound", new Object[] { (destinationIndex + 1) });
+
             // Check destination - we don't want to remove an Overworld spawn bed from the network because this is supposed to be a fixed destination.
             if (destination.destinationType == DestinationType.SPAWNBED && destination.dimension == 0)
-            {
                 throw new CommandException("command.td.delete.spawnBed.invalid");
-            }
-            
+
             // Notify the player what's getting removed.
-            player.sendMessage(new TextComponentTranslation("command.td.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + destination.friendlyName + TextFormatting.RESET}));
+            player.sendMessage(new TextComponentTranslation("command.td.delete.confirmation",
+                    new Object[] { TextFormatting.DARK_GREEN + destination.friendlyName + TextFormatting.RESET }));
 
             // Only need to send a packet update to the client if we can still find the destination in the world.
             if (teleportationHandler.validateDestination(player, destination))
@@ -191,9 +214,10 @@ public class CommandTeleportation extends CommandBase
 
     public void executeDeleteAllCommand(ICommandSender sender, boolean forceDeleteSpawnBed) throws CommandException
     {
-        EntityPlayerMP player = getCommandSenderAsPlayer(sender);        
-        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
-        
+        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
+                null);
+
         if (teleportationHandler != null)
         {
             int destinationCount = teleportationHandler.getDestinationCount();
@@ -202,10 +226,10 @@ public class CommandTeleportation extends CommandBase
                 player.sendMessage(new TextComponentTranslation("command.td.destination.none"));
                 return;
             }
-            
+
             // Remove the destinations, sending packet updates to the client as needed.
             teleportationHandler.removeAllDestinations(player, forceDeleteSpawnBed);
-            
+
             // Notify the player.
             player.sendMessage(new TextComponentTranslation("command.td.deleteAll.confirmation"));
         }
@@ -214,7 +238,8 @@ public class CommandTeleportation extends CommandBase
     private void executeNextCommand(ICommandSender sender, int count) throws CommandException
     {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
-        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+        ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
+                null);
 
         if (teleportationHandler != null)
         {
@@ -231,21 +256,22 @@ public class CommandTeleportation extends CommandBase
                 count = Math.abs(count);
                 for (int i = 1; i <= count; ++i)
                 {
-                    destination = teleportationHandler.getPreviousActiveDestination();
+                    destination = teleportationHandler.setActiveDestinationToPrevious();
                 }
             }
             else
             {
                 for (int i = 1; i <= count; ++i)
                 {
-                    destination = teleportationHandler.getNextActiveDestination();
+                    destination = teleportationHandler.setActiveDestinationToNext();
                 }
             }
-            
-            player.sendMessage(new TextComponentTranslation("command.td.active.confirmation", new Object[] {teleportationHandler.getShortFormattedName(player, destination)}));
+
+            player.sendMessage(new TextComponentTranslation("command.td.active.confirmation",
+                    new Object[] { teleportationHandler.getShortFormattedName(player, destination) }));
         }
     }
-    
+
     /**
      * Check if the given ICommandSender has permission to execute this command.
      */
@@ -259,17 +285,12 @@ public class CommandTeleportation extends CommandBase
      * Get a list of options for when the user presses the TAB key
      */
     @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args,
-                                          BlockPos targetPos)
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos)
     {
         if (args.length == 1)
-        {
-            return getListOfStringsMatchingLastWord(args, new String[] {"delete", "list", "next", "prev"});
-        }
-        else if (args.length == 2)
-        {
+            return getListOfStringsMatchingLastWord(args, new String[] { "delete", "list", "next", "prev", "<num>" });
+        else if (args.length == 2 && !StringUtils.isNumeric(args[0]))
             return Lists.newArrayList("2");
-        }
 
         return Collections.<String>emptyList();
     }

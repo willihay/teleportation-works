@@ -45,6 +45,7 @@ public class ItemTeleportationTippedArrow extends ItemArrow
     @Override
     public EntityArrow createArrow(World world, ItemStack stack, EntityLivingBase shooter)
     {
+        // Create the tipped arrow entity.
         EntityTeleportationTippedArrow entityArrow = new EntityTeleportationTippedArrow(world, shooter);
         
         return entityArrow;

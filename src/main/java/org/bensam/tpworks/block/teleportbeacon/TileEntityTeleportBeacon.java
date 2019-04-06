@@ -18,6 +18,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.IWorldNameable;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 /**
  * @author WilliHay
@@ -111,9 +112,16 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
     @Override
     public void readFromNBT(NBTTagCompound compound)
     {
-        beaconName = compound.getString("beaconName");
-        uniqueID = compound.getUniqueId("uniqueID");
-        TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportBeacon.readFromNBT: beaconName = {}, uniqueID = {}", beaconName, uniqueID);
+        if (FMLCommonHandler.instance().getEffectiveSide().isServer())
+        {
+            beaconName = compound.getString("beaconName");
+            uniqueID = compound.getUniqueId("uniqueID");
+            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: beaconName = {}, uniqueID = {}", beaconName, uniqueID);
+        }
+        else
+        {
+            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: no NBT data to read on client side");
+        }
 
         super.readFromNBT(compound);
     }
@@ -121,34 +129,14 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        boolean isDataValid = true;
-        
-        if (beaconName.isEmpty())
-        {
-            isDataValid = false;
-        }
-        else
+        if (!beaconName.isEmpty())
         {
             compound.setString("beaconName", beaconName);
         }
 
-        if (uniqueID.equals(new UUID(0, 0)))
-        {
-            isDataValid = false;
-        }
-        else
-        {
-            compound.setUniqueId("uniqueID", uniqueID);
-        }
+        compound.setUniqueId("uniqueID", uniqueID);
         
-        if (isDataValid)
-        {
-            TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportBeacon.writeToNBT: beaconName = {}, uniqueID = {}, {}", beaconName, uniqueID, pos);
-        }
-        else
-        {
-            TeleportationWorks.MOD_LOGGER.warn("TileEntityTeleportBeacon.writeToNBT: TE contains invalid data... beaconName = {}, uniqueID = {}, {}", beaconName, uniqueID, pos);
-        }
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.writeToNBT: beaconName = {}, uniqueID = {}, {}", beaconName, uniqueID, pos);
 
         return super.writeToNBT(compound);
     }
@@ -170,19 +158,23 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
     }
 
     /*
-     * Pass in null or empty string to set a random name, of the format [A-Z][0-99].
+     * Passing in a null or empty string will set a random name of the format [A-Z][0-99].
      */
     public void setBeaconName(@Nullable String name)
     {
         if (name == null || name.isEmpty())
         {
             beaconName = "Beacon " + ModUtil.getRandomLetter() + String.format("%02d", ModUtil.RANDOM.nextInt(100));
+            markDirty();
         }
         else
         {
-            beaconName = name;
+            if (!beaconName.equals(name))
+            {
+                beaconName = name;
+                markDirty();
+            }
         }
-        markDirty();
     }
 
     @Override

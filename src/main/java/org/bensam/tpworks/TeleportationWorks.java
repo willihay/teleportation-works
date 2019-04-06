@@ -53,19 +53,18 @@ public class TeleportationWorks
     public static final String MODID = "tpworks";
     public static final String NAME = "Teleportation Works";
     public static final String VERSION = "@VERSION@";
-    //public static final String VERSION = "0.3.0";
+    //public static final String VERSION = "1.12.2-0.3.0"; // used when debugging dedicated server
     public static final String ACCEPTED_MINECRAFT_VERSIONS = "[1.12.2]";
     public static final String FINGERPRINT = "@FINGERPRINT@";
     public static final String DEPENDENCIES = "" +
             "required-after:minecraft;" +
-            "required-after:forge@[14.23.5.2768,);" +
-            "";
+            "required-after:forge@[14.23.5.2768,);";
     
     @SidedProxy(clientSide = "org.bensam.tpworks.proxy.ClientProxy", serverSide = "org.bensam.tpworks.proxy.ServerProxy")
     public static IProxy proxy;
 
     @SidedProxy(clientSide = "org.bensam.tpworks.client.particle.ModParticlesClient", serverSide = "org.bensam.tpworks.client.particle.ModParticlesBase")
-    public static ModParticlesBase particles;
+    public static ModParticlesBase particles; // separate particle logic that's run client side from the server
     
     @Instance(MODID)
     public static TeleportationWorks instance; // needed for GUIs and entities; set by FML 
@@ -92,7 +91,7 @@ public class TeleportationWorks
         network.registerMessage(new PacketRequestUpdateTeleportBeacon.Handler(), PacketRequestUpdateTeleportBeacon.class, networkPacketID++,
                 Side.SERVER);
 
-        // Register miscellaneous loot tables.
+        // Register additional loot tables.
         LootTableList.register(new ResourceLocation(MODID, "chests/spawn_bonus_chest"));
     }
 
@@ -108,7 +107,7 @@ public class TeleportationWorks
         ModBlocks.registerOreDictionaryEntries();
         ModItems.registerOreDictionaryEntries();
 
-        // Register dispenser behaviors.
+        // Register dispenser behaviors for the splash potion and tipped arrow.
         BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(ModItems.TELEPORTATION_SPLASH_POTION, new IBehaviorDispenseItem()
         {
             /**

@@ -18,6 +18,7 @@ public class ModEntities
     
     public static void register(IForgeRegistry<EntityEntry> registry)
     {
+        // Register the teleportation splash potion entity.
         EntityEntry entryTeleportationSplashPotion = EntityEntryBuilder.create()
                 .id(new ResourceLocation(TeleportationWorks.MODID, "teleportation_splash_potion"), networkID++)
                 .name(TeleportationWorks.MODID + ":teleportation_splash_potion")
@@ -26,6 +27,7 @@ public class ModEntities
                 .build();
         registry.register(entryTeleportationSplashPotion);
 
+        // Register the teleportation arrow entity.
         EntityEntry entryTeleportationTippedArrow = EntityEntryBuilder.create()
                 .id(new ResourceLocation(TeleportationWorks.MODID, "teleportation_tipped_arrow"), networkID++)
                 .name(TeleportationWorks.MODID + ":teleportation_tipped_arrow")

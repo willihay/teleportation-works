@@ -10,6 +10,8 @@ import net.minecraftforge.common.util.ITeleporter;
 /**
  * @author WilliHay
  *
+ * Used when teleporting entities across dimensions via the mod's teleportation capability.
+ * 
  */
 public class CustomTeleporter implements ITeleporter
 {

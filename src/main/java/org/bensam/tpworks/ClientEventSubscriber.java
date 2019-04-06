@@ -37,6 +37,7 @@ public class ClientEventSubscriber
     @SubscribeEvent
     public static void onRegisterItemColorHandlers(ColorHandlerEvent.Item event)
     {
+        // Register the teleportation potion color for the tinting on the potion and tipped arrow item model overlay.
         event.getItemColors().registerItemColorHandler(new IItemColor()
         {
             public int colorMultiplier(ItemStack stack, int tintIndex)

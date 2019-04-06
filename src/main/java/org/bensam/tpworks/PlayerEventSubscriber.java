@@ -42,11 +42,11 @@ public class PlayerEventSubscriber
     {
         EntityPlayer player = event.player;
 
-        // Validate the data in this player's TeleportationHandler.
         ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
         if (teleportationHandler == null)
             return;
         
+        // Validate the data in this player's TeleportationHandler.
         teleportationHandler.updateSpawnBed(player, 0); // make sure there is a SpawnBed destination in the Overworld and update its position
         teleportationHandler.validateAllDestinations(player);
     }
@@ -57,7 +57,7 @@ public class PlayerEventSubscriber
         EntityPlayer player = event.getEntityPlayer();
         
         if (player.world.isRemote)
-            return; // ignore what the client thinks, we only trust the server on this
+            return; // ignore what the client thinks, we only rely on the server about spawn events
         
         int dimension = player.dimension;
         BlockPos newSpawnPos = event.getNewSpawn();
@@ -76,7 +76,7 @@ public class PlayerEventSubscriber
         
         if (dimension == 0 && isForced)
         {
-            // We do not allow teleportation to non-bed positions in the Overworld. 
+            // We do not allow teleportation to non-bed positions in the Overworld, so reset it to a non-valid position. 
             teleportationHandler.updateSpawnBed(BlockPos.ORIGIN, dimension);
         }
         else

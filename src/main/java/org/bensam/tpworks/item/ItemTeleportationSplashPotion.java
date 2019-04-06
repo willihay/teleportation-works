@@ -67,6 +67,7 @@ public class ItemTeleportationSplashPotion extends Item
         itemStack.splitStack(1);
         world.playSound((EntityPlayer)null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_SPLASH_POTION_THROW, SoundCategory.PLAYERS, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
 
+        // Throw it! Create the splash potion entity.
         if (!world.isRemote)
         {
             EntityTeleportationSplashPotion entityPotion = new EntityTeleportationSplashPotion(world, player);

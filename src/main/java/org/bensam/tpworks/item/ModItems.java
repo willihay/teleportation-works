@@ -27,7 +27,6 @@ public class ModItems
     public static final ItemTeleportationSplashPotion TELEPORTATION_SPLASH_POTION = null;
     public static final ItemTeleportationTippedArrow TELEPORTATION_TIPPED_ARROW = null;
     
-    // @formatter:off
     public static void register(IForgeRegistry<Item> registry)
     {
         registry.register(new ItemGeneric("ender_eye_shard", true));
@@ -37,6 +36,7 @@ public class ModItems
         registry.register(new ItemTeleportationTippedArrow("teleportation_tipped_arrow"));
     }
 
+    // @formatter:off
     public static void registerItemModels()
     {
         Arrays.stream(new Item[]

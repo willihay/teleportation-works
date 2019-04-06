@@ -35,11 +35,11 @@ public class CommonEventSubscriber
     @SubscribeEvent
     public static void onRegisterItems(RegistryEvent.Register<Item> event)
     {
-        ModItems.register(event.getRegistry());
-        TeleportationWorks.MOD_LOGGER.debug("ModItems registered");
-        
         ModBlocks.registerItemBlocks(event.getRegistry());
         TeleportationWorks.MOD_LOGGER.debug("ModBlocks ItemBlocks registered");
+
+        ModItems.register(event.getRegistry());
+        TeleportationWorks.MOD_LOGGER.debug("ModItems registered");
     }
 
     @SubscribeEvent

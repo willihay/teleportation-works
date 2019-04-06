@@ -1,7 +1,6 @@
 package org.bensam.tpworks;
 
 import org.bensam.tpworks.util.ModConfig;
-import org.bensam.tpworks.util.ModConfig.WorldSettings;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootEntry;
