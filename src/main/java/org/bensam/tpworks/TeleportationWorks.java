@@ -47,7 +47,8 @@ import net.minecraftforge.fml.relauncher.Side;
         version = TeleportationWorks.VERSION,
         acceptedMinecraftVersions = TeleportationWorks.ACCEPTED_MINECRAFT_VERSIONS,
         certificateFingerprint = TeleportationWorks.FINGERPRINT,
-        dependencies = TeleportationWorks.DEPENDENCIES)
+        dependencies = TeleportationWorks.DEPENDENCIES,
+        updateJSON = "https://raw.githubusercontent.com/willihay/teleportation-works/master/update.json")
 public class TeleportationWorks
 {
     public static final String MODID = "tpworks";

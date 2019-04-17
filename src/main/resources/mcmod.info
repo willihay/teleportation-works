@@ -5,11 +5,11 @@
   "description": "Adds new teleportation possiblities to your world using wands, beacons, potions, and arrows!",
   "version": "${version}",
   "mcversion": "${mcversion}",
-  "url": "http://projects.bensam.org",
+  "url": "https://minecraft.curseforge.com/projects/teleportation-works",
   "updateUrl": "",
   "authorList": ["WilliHay"],
   "credits": "Thanks to the Forge Modder Support forums and the helpful tutorials and example mods by Cadiboo, ShadowFacts, McJty, CubiCoder, and TheGreyGhost. Also thanks to MrCrayfish for the awesome Model Creator tool!",
-  "logoFile": "assets/tpworks/textures/tpworks_logo.png",
+  "logoFile": "assets/tpworks/textures/tpworks_banner.png",
   "screenshots": [],
   "dependencies": []
 }
