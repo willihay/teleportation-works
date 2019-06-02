@@ -1,5 +1,6 @@
 package org.bensam.tpworks.block.teleportbeacon;
 
+import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -19,6 +20,8 @@ import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -37,6 +40,8 @@ import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * @author WilliHay
@@ -308,5 +313,16 @@ public class BlockTeleportBeacon extends Block
         itemStack.setTagInfo("BlockEntityTag", te.serializeNBT());
         
         drops.add(itemStack);
+    }
+
+    /**
+     * Add custom lines of information to the mouseover description.
+     */
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+    {
+        tooltip.add(I18n.format("tile.teleport_beacon.tipLine1", TextFormatting.DARK_GREEN));
+        tooltip.add(I18n.format("tile.teleport_beacon.tipLine2", TextFormatting.DARK_GREEN));
     }
 }

@@ -54,7 +54,7 @@ public class TeleportationWorks
     public static final String MODID = "tpworks";
     public static final String NAME = "Teleportation Works";
     public static final String VERSION = "@VERSION@";
-    //public static final String VERSION = "1.12.2-1.0.0"; // used when debugging dedicated server
+    //public static final String VERSION = "1.12.2-2.0.0"; // used when debugging dedicated server
     public static final String ACCEPTED_MINECRAFT_VERSIONS = "[1.12.2]";
     public static final String FINGERPRINT = "@FINGERPRINT@";
     public static final String DEPENDENCIES = "" +
@@ -123,7 +123,35 @@ public class TeleportationWorks
                      */
                     protected IProjectile getProjectileEntity(World world, IPosition position, ItemStack stack)
                     {
-                        return new EntityTeleportationSplashPotion(world, position.getX(), position.getY(), position.getZ(), source);
+                        return new EntityTeleportationSplashPotion(world, position.getX(), position.getY(), position.getZ(), source, false);
+                    }
+                    protected float getProjectileInaccuracy()
+                    {
+                        return super.getProjectileInaccuracy() * 0.5F;
+                    }
+                    protected float getProjectileVelocity()
+                    {
+                        return super.getProjectileVelocity() * 1.25F;
+                    }
+                }).dispense(source, stack);
+            }
+        });
+
+        BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(ModItems.TELEPORTATION_SPLASH_POTION_EXTENDED, new IBehaviorDispenseItem()
+        {
+            /**
+             * Dispenses the specified ItemStack from a dispenser.
+             */
+            public ItemStack dispense(IBlockSource source, final ItemStack stack)
+            {
+                return (new BehaviorProjectileDispense()
+                {
+                    /**
+                     * Return the projectile entity spawned by this dispense behavior.
+                     */
+                    protected IProjectile getProjectileEntity(World world, IPosition position, ItemStack stack)
+                    {
+                        return new EntityTeleportationSplashPotion(world, position.getX(), position.getY(), position.getZ(), source, true);
                     }
                     protected float getProjectileInaccuracy()
                     {

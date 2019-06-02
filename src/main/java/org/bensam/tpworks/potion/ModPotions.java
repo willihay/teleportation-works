@@ -36,6 +36,12 @@ public class ModPotions
         ItemStack ingredient = new ItemStack(ModItems.ENDER_EYE_SHARD);
         ItemStack outputPotion = PotionUtils.addPotionToItemStack(new ItemStack(ModItems.TELEPORTATION_SPLASH_POTION), PotionTypes.EMPTY);
         BrewingRecipeRegistry.addRecipe(new CustomBrewingRecipe(inputPotion, ingredient, outputPotion));
+
+        // Brew a splash potion of teleportation with glowstone dust to get an extended splash potion of teleportation.
+        inputPotion = PotionUtils.addPotionToItemStack(new ItemStack(ModItems.TELEPORTATION_SPLASH_POTION), PotionTypes.EMPTY);
+        ingredient = new ItemStack(Items.GLOWSTONE_DUST);
+        outputPotion = PotionUtils.addPotionToItemStack(new ItemStack(ModItems.TELEPORTATION_SPLASH_POTION_EXTENDED), PotionTypes.EMPTY);
+        BrewingRecipeRegistry.addRecipe(new CustomBrewingRecipe(inputPotion, ingredient, outputPotion));
     }
 }
 

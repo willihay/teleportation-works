@@ -25,6 +25,7 @@ public class ModItems
     public static final ItemGeneric ENDER_EYE_TRANSLUCENT = null;
     public static final ItemTeleportationWand TELEPORTATION_WAND = null;
     public static final ItemTeleportationSplashPotion TELEPORTATION_SPLASH_POTION = null;
+    public static final ItemTeleportationSplashPotion TELEPORTATION_SPLASH_POTION_EXTENDED = null;
     public static final ItemTeleportationTippedArrow TELEPORTATION_TIPPED_ARROW = null;
     
     public static void register(IForgeRegistry<Item> registry)
@@ -32,7 +33,8 @@ public class ModItems
         registry.register(new ItemGeneric("ender_eye_shard", true));
         registry.register(new ItemGeneric("ender_eye_translucent", false));
         registry.register(new ItemTeleportationWand("teleportation_wand"));
-        registry.register(new ItemTeleportationSplashPotion("teleportation_splash_potion"));
+        registry.register(new ItemTeleportationSplashPotion("teleportation_splash_potion", false));
+        registry.register(new ItemTeleportationSplashPotion("teleportation_splash_potion_extended", true));
         registry.register(new ItemTeleportationTippedArrow("teleportation_tipped_arrow"));
     }
 
@@ -45,6 +47,7 @@ public class ModItems
                     ENDER_EYE_TRANSLUCENT,
                     TELEPORTATION_WAND,
                     TELEPORTATION_SPLASH_POTION,
+                    TELEPORTATION_SPLASH_POTION_EXTENDED,
                     TELEPORTATION_TIPPED_ARROW
                 }).forEach(item -> 
                 {

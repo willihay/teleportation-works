@@ -1,10 +1,11 @@
 {
   "homepage": "https://minecraft.curseforge.com/projects/teleportation-works",
   "promos": {
-    "1.12.2-latest": "1.0.0",
+    "1.12.2-latest": "2.0.0",
     "1.12.2-recommended": "1.0.0"
   },
   "1.12.2": {
     "1.0.0": "INITIAL PUBLIC RELEASE"
+    "2.0.0": "Feature expansion includes extended range splash potion, and new mod config options"
   }
 }

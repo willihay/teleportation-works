@@ -1,14 +1,19 @@
 {
-	"type": "minecraft:crafting_shaped",
+	"type": "tpworks:teleportation_item_factory",
 	"pattern": [
 		"LOL",
 		"SES",
 		"LOL"
 	],
 	"key": {
-		"E": {
-			"item": "minecraft:ender_pearl"
-		},
+		"E": [
+			{
+				"item": "minecraft:ender_pearl"
+			},
+			{
+				"item": "minecraft:ender_eye"
+			}
+		],
 		"O": {
 			"item": "minecraft:obsidian"
 		},

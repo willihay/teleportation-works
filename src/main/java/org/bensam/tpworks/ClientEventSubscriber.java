@@ -44,7 +44,7 @@ public class ClientEventSubscriber
             {
                 return tintIndex > 0 ? -1 : ModPotions.TELEPORTATION_POTION.getLiquidColor();
             }
-        }, ModItems.TELEPORTATION_SPLASH_POTION, ModItems.TELEPORTATION_TIPPED_ARROW);
+        }, ModItems.TELEPORTATION_SPLASH_POTION, ModItems.TELEPORTATION_SPLASH_POTION_EXTENDED, ModItems.TELEPORTATION_TIPPED_ARROW);
         
         TeleportationWorks.MOD_LOGGER.debug("Teleportation Potion color registered");
     }

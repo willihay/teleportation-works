@@ -21,6 +21,49 @@ public final class ModConfig
 {
     private static final String LANG_PREFIX = "config." + TeleportationWorks.MODID;
     
+    @Name("Splash Potion Settings")
+    @LangKey(LANG_PREFIX + ".splash_potion")
+    public static SplashPotionSettings splashPotionSettings = new SplashPotionSettings();
+    
+    public static class SplashPotionSettings
+    {
+        @Comment("Teleport any boats within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_boats")
+        public boolean teleportBoats = true;
+        
+        @Comment("Teleport boats only when they have passengers who can also be teleported")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_boats_when_ridden")
+        public boolean teleportBoatsOnlyWhenRiddenByTeleportableEntity = true;
+        
+        @Comment("Teleport any hostile creatures (mobs) within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_hostiles")
+        public boolean teleportHostileCreatures = true;
+        
+        @Comment("Teleport any minecarts within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_minecarts")
+        public boolean teleportMinecarts = true;
+        
+        @Comment("Teleport minecarts only when they have passengers who can also be teleported")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_minecarts_when_ridden")
+        public boolean teleportMinecartsOnlyWhenRiddenByTeleportableEntity = true;
+        
+        @Comment("Teleport any passive creatures within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_passives")
+        public boolean teleportPassiveCreatures = true;
+        
+        @Comment("Teleport thrower if within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_player_thrower")
+        public boolean teleportPlayerThrower = true;
+        
+        @Comment("Teleport other players within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_players_other")
+        public boolean teleportPlayersOther = true;
+        
+        @Comment("Teleport any projectiles within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_projectiles")
+        public boolean teleportProjectiles = false;
+    }
+    
     @Name("World Settings")
     @LangKey(LANG_PREFIX + ".world")
     public static WorldSettings worldSettings = new WorldSettings();
@@ -30,7 +73,12 @@ public final class ModConfig
         @Comment({"Add basic Teleportation items to Spawn Chest", "Must be set BEFORE generating a new world"})
         @LangKey(LANG_PREFIX + ".world.spawn_chest")
         @RequiresWorldRestart
-        public boolean addItemsToSpawnChest = false;        
+        public boolean addItemsToSpawnChest = false;
+        
+        public enum CraftingDifficulty { NORMAL, HARD };
+        @Comment("HARD difficulty requires an Eye of Ender instead of an Ender Pearl in wands and beacons")
+        @LangKey(LANG_PREFIX + ".world.crafting_difficulty")
+        public CraftingDifficulty craftingDifficulty = CraftingDifficulty.NORMAL;
     }
     
     @Mod.EventBusSubscriber(modid = TeleportationWorks.MODID)

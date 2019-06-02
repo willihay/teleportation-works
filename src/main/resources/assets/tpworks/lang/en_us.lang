@@ -1,10 +1,32 @@
 # English US language file
 
 # Config
+config.tpworks.splash_potion=Splash Potion Settings
+config.tpworks.splash_potion.tooltip=Settings specific to the Splash Potion of Teleportation
+config.tpworks.splash_potion.teleport_boats=Teleport Boats
+config.tpworks.splash_potion.teleport_boats.tooltip=Teleport any boats within the potion splash radius.
+config.tpworks.splash_potion.teleport_boats_when_ridden=Selectively Teleport Boats
+config.tpworks.splash_potion.teleport_boats_when_ridden.tooltip=Teleport boats only when they have passengers who can also be teleported.
+config.tpworks.splash_potion.teleport_hostiles=Teleport Hostile Creatures
+config.tpworks.splash_potion.teleport_hostiles.tooltip=Teleport any hostile creatures (mobs) within the potion splash radius.
+config.tpworks.splash_potion.teleport_minecarts=Teleport Minecarts
+config.tpworks.splash_potion.teleport_minecarts.tooltip=Teleport any minecarts within the potion splash radius.
+config.tpworks.splash_potion.teleport_minecarts_when_ridden=Selectively Teleport Minecarts
+config.tpworks.splash_potion.teleport_minecarts_when_ridden.tooltip=Teleport minecarts only when they have passengers who can also be teleported.
+config.tpworks.splash_potion.teleport_passives=Teleport Passive Creatures
+config.tpworks.splash_potion.teleport_passives.tooltip=Teleport any passive creatures within the potion splash radius.
+config.tpworks.splash_potion.teleport_player_thrower=Teleport Thrower
+config.tpworks.splash_potion.teleport_player_thrower.tooltip=Teleport thrower if within the potion splash radius.
+config.tpworks.splash_potion.teleport_players_other=Teleport Other Players
+config.tpworks.splash_potion.teleport_players_other.tooltip=Teleport other players within the potion splash radius.
+config.tpworks.splash_potion.teleport_projectiles=Teleport Projectiles
+config.tpworks.splash_potion.teleport_projectiles.tooltip=Teleport any projectiles within the potion splash radius.
 config.tpworks.world=World Settings
 config.tpworks.world.tooltip=General settings for how this mod affects your world
 config.tpworks.world.spawn_chest=Add Items to Spawn Chest
 config.tpworks.world.spawn_chest.tooltip=Add basic Teleportation items to Spawn Chest. Must set BEFORE generating a new world.
+config.tpworks.world.crafting_difficulty=Crafting Difficulty
+config.tpworks.world.crafting_difficulty.tooltip=HARD difficulty requires an Eye of Ender instead of an Ender Pearl in wands and beacons.
 
 # Creative Tab
 itemGroup.tpworks=Teleportation Works
@@ -31,6 +53,7 @@ message.td.network.full=Teleport destination network full (limit: %s)
 # Items
 item.ender_eye_shard.name=Eye of Ender Shard
 item.teleportation_splash_potion.name=Splash Potion of Teleportation
+item.teleportation_splash_potion_extended.name=Splash Potion of Teleportation II
 item.teleportation_tipped_arrow.name=Arrow of Teleportation
 item.teleportation_wand.name=Wand of Teleportation
 item.teleportation_wand.tipLine1=%1$s- Sleep in a bed or use your wand on a Teleport Beacon to add teleport destinations.
@@ -40,9 +63,12 @@ item.teleportation_wand.tipLine4=%1$s- Sneak while using to change destination.
 
 # Blocks
 tile.teleport_beacon.name=Teleport Beacon
+tile.teleport_beacon.tipLine1=%1$s- Toggle activation using a Wand of Teleportation.
+tile.teleport_beacon.tipLine2=%1$s- Rename a beacon in an anvil.
 
 # Potions
 effect.teleportation_potion=Teleportation
+effect.teleportation_splash_potion=Teleportation (%s x %s x %s)
 
 # Sounds
 subtitle.activate_teleport_beacon=Teleport Beacon Activated
