@@ -1,6 +1,7 @@
 package org.bensam.tpworks.capability.teleportation;
 
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
@@ -48,37 +49,43 @@ public interface ITeleportationHandler
     TeleportDestination getDestinationFromIndex(int index);
     
     /**
+     * Returns the next destination after the one specified by afterDestination, applying the filter if supplied.
+     * Uses active destination index if afterDestination is null.
+     */
+    TeleportDestination getNextDestination(@Nullable TeleportDestination afterDestination, @Nullable Predicate<TeleportDestination> filter);
+    
+    /**
+     * Returns the next destination after the one specified by afterIndex, applying the filter if supplied.
+     * Uses active destination index if afterIndex is null.
+     */
+    TeleportDestination getNextDestination(@Nullable Integer afterIndex, @Nullable Predicate<TeleportDestination> filter);
+    
+    /**
      * Returns the short version of the formatted destination, including friendly name and formatted dimension name. 
      * Includes color formatting to indicate validation status of TeleportDestination.
      */
-    public String getShortFormattedName(EntityPlayer player, TeleportDestination destination);
+    String getShortFormattedName(EntityPlayer player, TeleportDestination destination);
     
     /**
      * Returns the short version of the formatted destination, including friendly name and formatted dimension name. 
      * Includes color formatting to indicate validation status of TeleportDestination and a default format for the rest of the text.
      */
-    public String getShortFormattedName(EntityPlayer player, TeleportDestination destination, TextFormatting defaultFormat);
+    String getShortFormattedName(EntityPlayer player, TeleportDestination destination, TextFormatting defaultFormat);
     
     /**
      * Returns the long version of the formatted destination, including friendly name, formatted dimension name, position, and facing orientation. 
      * Includes color formatting to indicate validation status of TeleportDestination.
      */
-    public String getLongFormattedName(EntityPlayer player, TeleportDestination destination);
+    String getLongFormattedName(EntityPlayer player, TeleportDestination destination);
     
     /**
      * Returns the long version of the formatted destination, including friendly name, formatted dimension name, position, and facing orientation. 
      * Includes color formatting to indicate validation status of TeleportDestination and a default format for the rest of the text.
      */
-    public String getLongFormattedName(EntityPlayer player, TeleportDestination destination, TextFormatting defaultFormat);
+    String getLongFormattedName(EntityPlayer player, TeleportDestination destination, TextFormatting defaultFormat);
     
     /**
-     * Adds a TeleportDestination to the collection, or updates an existing one if it already exists in the collection (matched by uuid).
-     * Returns true if destination was added or replaced, false if it could not be added.
-     */
-    boolean addOrReplaceDestination(TeleportDestination destination);
-    
-    /**
-     * Returns TRUE if destination list has a TeleportDestination matching the specified uuid.
+     * Returns true if destination list has a TeleportDestination matching the specified uuid.
      */
     boolean hasDestination(UUID uuid);
     
@@ -99,10 +106,21 @@ public interface ITeleportationHandler
     void removeAllDestinations(EntityPlayer player, boolean includeOverworldSpawnBed);
 
     /**
-     * Updates a TeleportDestination at the given index.
-     * Creates a new TeleportDestination if the uuid could not be found.
+     * Updates a TeleportDestination at the given index if the index is valid.
      */
     void replaceDestination(int index, TeleportDestination destination);
+    
+    /**
+     * Updates an existing TeleportDestination (matched by uuid) or adds it to the list.
+     * Returns true if destination was added or replaced, false if it could not be added.
+     */
+    boolean replaceOrAddDestination(TeleportDestination destination);
+    
+    /**
+     * Replaces the first TeleportDestination with the one passed in.
+     * If the list is empty, the specified destination will become the first one in the list.
+     */
+    void replaceOrAddFirstDestination(TeleportDestination destination);
     
     /**
      * Update an existing TeleportDestination in the list to indicate it has been placed (possibly in a new location) in the world.

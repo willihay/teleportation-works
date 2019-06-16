@@ -1,0 +1,23 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"LOL",
+		"LBL",
+		"LOL"
+	],
+	"key": {
+		"B": {
+			"item": "tpworks:teleport_beacon"
+		},
+		"O": {
+			"item": "minecraft:obsidian"
+		},
+		"L": {
+			"item": "minecraft:dye",
+			"data": 4
+		}
+	},
+	"result": {
+		"item": "tpworks:teleport_rail"
+	}
+}

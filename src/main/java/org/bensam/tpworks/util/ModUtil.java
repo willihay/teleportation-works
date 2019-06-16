@@ -1,7 +1,10 @@
 package org.bensam.tpworks.util;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
@@ -15,7 +18,7 @@ public final class ModUtil
 {
     public static final Random RANDOM = new Random();
     
-    /*
+    /**
      * Lookup the friendly name (registered type) for the indicated dimension.
      */
     public static String getDimensionName(int dimension)
@@ -23,15 +26,33 @@ public final class ModUtil
         return DimensionManager.getProviderType(dimension).toString();
     }
     
-    /*
+    /**
      * Get random letter between [A-Z].
      */
     public static String getRandomLetter()
     {
         return Character.toString((char) (65 + RANDOM.nextInt(26)));
     }
+
+    /**
+     * From a list of entities, find all that are riding some other entity and return a map of riders to ridden.
+     */
+    public static HashMap<Entity, Entity> getRiders(List<Entity> list)
+    {
+        HashMap<Entity, Entity> riderMap = new HashMap<Entity, Entity>();
+        
+        for (Entity entity : list)
+        {
+            if (entity.isRiding())
+            {
+                riderMap.put(entity, entity.getRidingEntity());
+            }
+        }
+        
+        return riderMap;
+    }
     
-    /*
+    /**
      * Returns an angle (in degrees):
      * For EnumFacing.UP or DOWN, returns an appropriate angle for rotationPitch.
      * For other EnumFacing values, returns an appropriate angle for rotationYaw.
@@ -56,7 +77,7 @@ public final class ModUtil
         return 0.0F;
     }
 
-    /*
+    /**
      * Returns the World/WorldServer object for the indicated dimension.
      */
     public static WorldServer getWorldServerForDimension(int dimension)

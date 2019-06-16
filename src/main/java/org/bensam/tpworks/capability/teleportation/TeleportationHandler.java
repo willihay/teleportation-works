@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
@@ -70,6 +72,59 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             return destinations.get(activeDestinationIndex);
         else
             return null;
+    }
+    
+    @Nullable
+    public TeleportDestination getNextDestination(@Nullable TeleportDestination afterDestination, @Nullable Predicate<TeleportDestination> filter)
+    {
+        if (afterDestination == null)
+            return getNextDestination(activeDestinationIndex, filter);
+        else
+            return getNextDestination(destinations.indexOf(afterDestination), filter);
+    }
+
+    @Nullable
+    public TeleportDestination getNextDestination(@Nullable Integer afterIndex, @Nullable Predicate<TeleportDestination> filter)
+    {
+        if (destinations.size() == 0 || activeDestinationIndex < 0)
+            return null;
+        
+        int index = 0;
+        int endIndex = 0;
+        
+        if (afterIndex == null || afterIndex.intValue() == -1)
+        {
+            index = endIndex = activeDestinationIndex;
+        }
+        else if (afterIndex >= 0 && afterIndex < destinations.size())
+        {
+            index = endIndex = afterIndex.intValue();
+        }
+        else
+        {
+            return null;
+        }
+        
+        index = (index + 1) % destinations.size();
+        TeleportDestination destination = destinations.get(index);
+        
+        if (filter == null)
+        {
+            return destination;
+        }
+        
+        do
+        {
+            if (filter.test(destination))
+            {
+                return destination;
+            }
+            
+            index = (index + 1) % destinations.size();
+            destination = destinations.get(index);
+        } while (index != endIndex);
+        
+        return null;
     }
 
     @Override
@@ -174,33 +229,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 + destination.position.getY() + ", " 
                 + destination.position.getZ() + "} in " 
                 + ModUtil.getDimensionName(destination.dimension);
-    }
-
-    @Override
-    public boolean addOrReplaceDestination(TeleportDestination destination)
-    {
-        int index = destinations.indexOf(destination);
-        if (index == -1) // destination UUID is not already in the destinations list
-        {
-            if (destinations.size() < getDestinationLimit())
-            {
-                destinations.add(destination);
-                if (activeDestinationIndex < 0)
-                {
-                    activeDestinationIndex = 0;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else // update the existing destination
-        {
-            replaceDestination(index, destination);
-        }
-        
-        return true;
     }
 
     protected boolean insertDestination(int index, TeleportDestination destination)
@@ -313,6 +341,46 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         {
             destinations.remove(index);
             destinations.add(index, destination);
+        }
+    }
+
+    @Override
+    public boolean replaceOrAddDestination(TeleportDestination destination)
+    {
+        int index = destinations.indexOf(destination);
+        if (index == -1) // destination UUID is not already in the destinations list
+        {
+            if (destinations.size() < getDestinationLimit())
+            {
+                destinations.add(destination);
+                if (activeDestinationIndex < 0)
+                {
+                    activeDestinationIndex = 0;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else // update the existing destination
+        {
+            replaceDestination(index, destination);
+        }
+        
+        return true;
+    }
+
+    @Override
+    public void replaceOrAddFirstDestination(TeleportDestination destination)
+    {
+        if (destinations.isEmpty())
+        {
+            insertDestination(0, destination);
+        }
+        else
+        {
+            replaceDestination(0, destination);
         }
     }
 
@@ -463,38 +531,78 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             break;
             
         case BEACON:
-            TileEntity te = destinationWorld.getTileEntity(destination.position);
-            UUID destinationUUID = destination.getUUID();
-            if (destination.position.equals(BlockPos.ORIGIN) 
-                    || destinationBlock != ModBlocks.TELEPORT_BEACON
-                    || !(te instanceof TileEntityTeleportBeacon)
-                    || !(((TileEntityTeleportBeacon) te).getUniqueID().equals(destinationUUID)))
             {
-                // Something must have happened to the beacon. (Moved by another player?)
-                // Try to find it somewhere else.
-                destination.position = BlockPos.ORIGIN;
-                BlockPos beaconPos = null;
-                // Integer[] dimensions = DimensionManager.getStaticDimensionIDs(); // not using because for some reason, even though getStaticDimensionIDs is public and appears to work, it has a comment that says "not for public use" 
-                int[] dimensions = DimensionManager.getRegisteredDimensions().values().stream().flatMap(Collection::stream).mapToInt(Integer::intValue).toArray();
-                for (int dimension : dimensions)
+                TileEntity teBeacon = destinationWorld.getTileEntity(destination.position);
+                UUID destinationUUID = destination.getUUID();
+                if (destination.position.equals(BlockPos.ORIGIN) 
+                        || destinationBlock != ModBlocks.TELEPORT_BEACON
+                        || !(teBeacon instanceof TileEntityTeleportBeacon)
+                        || !(((TileEntityTeleportBeacon) teBeacon).getUniqueID().equals(destinationUUID)))
                 {
-                    World world = ModUtil.getWorldServerForDimension(dimension);
-                    beaconPos = TeleportationHelper.findTeleportBeacon(world, destinationUUID);
-                    if (beaconPos != null)
+                    // Something must have happened to the beacon. (Moved by another player?)
+                    // Try to find it somewhere else.
+                    destination.position = BlockPos.ORIGIN;
+                    BlockPos beaconPos = null;
+                    // Integer[] dimensions = DimensionManager.getStaticDimensionIDs(); // not using because for some reason, even though getStaticDimensionIDs is public and appears to work, it has a comment that says "not for public use" 
+                    int[] dimensions = DimensionManager.getRegisteredDimensions().values().stream().flatMap(Collection::stream).mapToInt(Integer::intValue).toArray();
+                    for (int dimension : dimensions)
                     {
-                        te = world.getTileEntity(beaconPos);
-                        destination.position = beaconPos;
-                        destination.dimension = dimension;
-                        break;
+                        World world = ModUtil.getWorldServerForDimension(dimension);
+                        beaconPos = TeleportationHelper.findTeleportBeacon(world, destinationUUID);
+                        if (beaconPos != null)
+                        {
+                            teBeacon = world.getTileEntity(beaconPos);
+                            destination.position = beaconPos;
+                            destination.dimension = dimension;
+                            break;
+                        }
                     }
                 }
+                
+                isValid = !(destination.position.equals(BlockPos.ORIGIN));
+                if (isValid)
+                {
+                    // Make sure friendly name is correct.
+                    destination.friendlyName = ((TileEntityTeleportBeacon)teBeacon).getBeaconName();
+                }
             }
+            break;
             
-            isValid = !(destination.position.equals(BlockPos.ORIGIN));
-            if (isValid)
+        case RAIL:
             {
-                // Make sure friendly name is correct.
-                destination.friendlyName = ((TileEntityTeleportBeacon)te).getBeaconName();
+                TileEntity teRail = destinationWorld.getTileEntity(destination.position);
+                UUID destinationUUID = destination.getUUID();
+                if (destination.position.equals(BlockPos.ORIGIN) 
+                        || destinationBlock != ModBlocks.TELEPORT_RAIL
+                        || !(teRail instanceof TileEntityTeleportRail)
+                        || !(((TileEntityTeleportRail) teRail).getUniqueID().equals(destinationUUID)))
+                {
+                    // Something must have happened to the rail. (Moved by another player?)
+                    // Try to find it somewhere else.
+                    destination.position = BlockPos.ORIGIN;
+                    BlockPos railPos = null;
+                    // Integer[] dimensions = DimensionManager.getStaticDimensionIDs(); // not using because for some reason, even though getStaticDimensionIDs is public and appears to work, it has a comment that says "not for public use" 
+                    int[] dimensions = DimensionManager.getRegisteredDimensions().values().stream().flatMap(Collection::stream).mapToInt(Integer::intValue).toArray();
+                    for (int dimension : dimensions)
+                    {
+                        World world = ModUtil.getWorldServerForDimension(dimension);
+                        railPos = TeleportationHelper.findTeleportRail(world, destinationUUID);
+                        if (railPos != null)
+                        {
+                            teRail = world.getTileEntity(railPos);
+                            destination.position = railPos;
+                            destination.dimension = dimension;
+                            break;
+                        }
+                    }
+                }
+                
+                isValid = !(destination.position.equals(BlockPos.ORIGIN));
+                if (isValid)
+                {
+                    // Make sure friendly name is correct.
+                    destination.friendlyName = ((TileEntityTeleportRail)teRail).getRailName();
+                }
             }
             break;
             
@@ -555,7 +663,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             for (int i = 0; i < nbtTagList.tagCount(); ++i)
             {
                 NBTTagCompound destinationTag = nbtTagList.getCompoundTagAt(i);
-                this.addOrReplaceDestination(new TeleportDestination(destinationTag));
+                this.replaceOrAddDestination(new TeleportDestination(destinationTag));
             }
         }
     }

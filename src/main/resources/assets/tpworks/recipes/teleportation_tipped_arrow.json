@@ -9,9 +9,14 @@
 		"A": {
 			"item": "minecraft:arrow"
 		},
-		"T": {
-			"item": "tpworks:teleportation_splash_potion"
-		}
+		"T": [
+			{
+				"item": "tpworks:teleportation_splash_potion"
+			},
+			{
+				"item": "tpworks:teleportation_splash_potion_extended"
+			}
+		]
 	},
 	"result": {
 		"item": "tpworks:teleportation_tipped_arrow",

@@ -1,12 +1,17 @@
 package org.bensam.tpworks.capability.teleportation;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
+import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -24,6 +29,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 
 /**
  * @author WilliHay
@@ -61,6 +67,74 @@ public class TeleportationHelper
                     && ((TileEntityTeleportBeacon) te).getUniqueID().equals(beaconUUID))
             {
                 return te.getPos();
+            }
+        }
+        
+        return null;
+    }
+
+    @Nullable
+    public static BlockPos findTeleportRail(World world, UUID railUUID)
+    {
+        if (world == null)
+            return null;
+        
+        List<TileEntity> tileEntityList = world.loadedTileEntityList;
+
+        for (TileEntity te : tileEntityList)
+        {
+            if (te instanceof TileEntityTeleportRail
+                    && ((TileEntityTeleportRail) te).getUniqueID().equals(railUUID))
+            {
+                return te.getPos();
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get the NEXT teleport rail of the specified direction, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
+     * Will return afterDestination if that destination is of the specified direction and it is the only one that can be found. 
+     * Returns null if no rails can be found of the specified direction in the entity's network.
+     */
+    @Nullable
+    public static TeleportDestination getNextTeleportRail(Entity entity, TeleportDirection direction, @Nullable TeleportDestination afterDestination)
+    {
+        ITeleportationHandler teleportationHandler = entity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+        if (teleportationHandler != null)
+        {
+            if (afterDestination == null)
+            {
+                afterDestination = teleportationHandler.getDestinationFromIndex(0);
+                if (afterDestination == null)
+                {
+                    return null;
+                }
+            }
+            
+            Predicate<TeleportDestination> filter = d -> d.destinationType == DestinationType.RAIL;
+            TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);;
+            
+            while (destination != null)
+            {
+                World world = ModUtil.getWorldServerForDimension(destination.dimension);
+                TileEntity te = world.getTileEntity(destination.position);
+                if (te != null && te instanceof TileEntityTeleportRail)
+                {
+                    if (direction == ((TileEntityTeleportRail) te).getTeleportDirection())
+                    {
+                        return destination;
+                    }
+                }
+                
+                if (destination == afterDestination)
+                {
+                    // We've looped back to the afterDestination and still haven't found a rail of the specified direction.
+                    return null;
+                }
+                
+                destination = teleportationHandler.getNextDestination(destination, filter);
             }
         }
         
@@ -140,6 +214,7 @@ public class TeleportationHelper
             safePos = findSafeTeleportPosNearBed(teleportDimension, destination.position);
             break;
         case BEACON:
+        case RAIL:
             if (!teleportWorld.getBlockState(destination.position.up()).getMaterial().isSolid())
             {
                 safePos = destination.position;

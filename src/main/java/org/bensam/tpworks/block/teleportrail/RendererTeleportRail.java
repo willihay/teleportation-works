@@ -1,4 +1,4 @@
-package org.bensam.tpworks.block.teleportbeacon;
+package org.bensam.tpworks.block.teleportrail;
 
 import org.lwjgl.opengl.GL11;
 
@@ -15,16 +15,16 @@ import net.minecraftforge.client.ForgeHooksClient;
  * @author WilliHay
  *
  */
-public class RendererTeleportBeacon extends TileEntitySpecialRenderer<TileEntityTeleportBeacon>
+public class RendererTeleportRail extends TileEntitySpecialRenderer<TileEntityTeleportRail>
 {
-    
+
     @Override
-    public void render(TileEntityTeleportBeacon te, double x, double y, double z, float partialTicks, int destroyStage,
+    public void render(TileEntityTeleportRail te, double x, double y, double z, float partialTicks, int destroyStage,
                        float alpha)
     {
-        if (!te.isActive)
+        if (!te.isStored)
             return;
-
+        
         // Render rotating topper item when active.
         GlStateManager.enableRescaleNormal();
         GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1f);
@@ -40,11 +40,11 @@ public class RendererTeleportBeacon extends TileEntitySpecialRenderer<TileEntity
         GlStateManager.rotate((te.getWorld().getTotalWorldTime() + partialTicks) * 4, 0, 1, 0);
 
         IBakedModel model = Minecraft.getMinecraft().getRenderItem()
-                .getItemModelWithOverrides(TileEntityTeleportBeacon.TOPPER_ITEM_WHEN_STORED, te.getWorld(), null);
+                .getItemModelWithOverrides(TileEntityTeleportRail.TOPPER_ITEM_WHEN_STORED, te.getWorld(), null);
         model = ForgeHooksClient.handleCameraTransforms(model, ItemCameraTransforms.TransformType.GROUND, false);
 
         Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().getRenderItem().renderItem(TileEntityTeleportBeacon.TOPPER_ITEM_WHEN_STORED, model);
+        Minecraft.getMinecraft().getRenderItem().renderItem(TileEntityTeleportRail.TOPPER_ITEM_WHEN_STORED, model);
 
         GlStateManager.popMatrix();
         GlStateManager.disableRescaleNormal();

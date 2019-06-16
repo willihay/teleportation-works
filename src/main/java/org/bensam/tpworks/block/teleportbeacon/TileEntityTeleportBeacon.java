@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
-import org.bensam.tpworks.item.ModItems;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
 
@@ -26,7 +26,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  */
 public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameable, ITickable
 {
-    public static ItemStack TOPPER_ITEM_WHEN_ACTIVE = null;
+    public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
     public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after becoming active until particles should start spawning
     
     // particle path characteristics
@@ -40,16 +40,12 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
     public boolean isActive = false;
     public long particleSpawnStartTime = 0; // world time to begin spawning particles (for an active beacon)
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
+    protected TeleportDirection teleportDirection = TeleportDirection.RECEIVER;
 
     // server-only data
     private String beaconName = "";
     private UUID uniqueID = new UUID(0, 0);
 
-    public TileEntityTeleportBeacon()
-    {
-        TOPPER_ITEM_WHEN_ACTIVE = new ItemStack(ModItems.ENDER_EYE_TRANSLUCENT);
-    }
-    
     @Override
     public void onLoad()
     {
@@ -67,7 +63,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
     @Override
     public void update()
     {
-        if (world.isRemote && isActive)
+        if (world.isRemote)
         {
             long totalWorldTime = world.getTotalWorldTime();
 
@@ -82,12 +78,20 @@ public class TileEntityTeleportBeacon extends TileEntity implements IWorldNameab
                 // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
                 double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
                 float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-                
+                double yCoordGroup1 = 0.0D;
+                if (teleportDirection == TeleportDirection.SENDER)
+                    yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                else
+                    yCoordGroup1 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group1Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+
                 // Particle group 2 = Particle 3 & Particle 4. They also share the same height and appear opposite each other.
                 double group2Height = (double) ((totalWorldTime + 16) % PARTICLE_VERTICAL_POSITIONS);
                 float group2ScaleModifier = (group2Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group2Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup2 = blockY + (group2Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                double yCoordGroup2 = 0.0D;
+                if (teleportDirection == TeleportDirection.SENDER)
+                    yCoordGroup2 = blockY + (group2Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                else
+                    yCoordGroup2 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group2Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
 
                 // Particle 1:
                 double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);

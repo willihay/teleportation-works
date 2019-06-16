@@ -5,6 +5,8 @@ import java.util.Arrays;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.teleportbeacon.BlockTeleportBeacon;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportrail.BlockTeleportRail;
+import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.util.ModSetup;
 
 import com.google.common.base.Preconditions;
@@ -29,12 +31,15 @@ import net.minecraftforge.registries.IForgeRegistry;
 public class ModBlocks
 {
     public static final BlockTeleportBeacon TELEPORT_BEACON = null;
-
+    public static final BlockTeleportRail TELEPORT_RAIL = null;
+    
     public static void register(IForgeRegistry<Block> registry)
     {
         registry.register(new BlockTeleportBeacon("teleport_beacon"));
+        registry.register(new BlockTeleportRail("teleport_rail"));
 
         GameRegistry.registerTileEntity(TileEntityTeleportBeacon.class, new ResourceLocation(TeleportationWorks.MODID, "teleport_beacon"));
+        GameRegistry.registerTileEntity(TileEntityTeleportRail.class, new ResourceLocation(TeleportationWorks.MODID, "teleport_rail"));
     }
 
     // @formatter:off
@@ -42,7 +47,8 @@ public class ModBlocks
     {
         Arrays.stream(new Block[]
                 {
-                    TELEPORT_BEACON
+                    TELEPORT_BEACON,
+                    TELEPORT_RAIL
                 }).forEach(block -> 
                 {
                     registry.register(
@@ -56,7 +62,8 @@ public class ModBlocks
     {
         Arrays.stream(new Block[]
                 {
-                    TELEPORT_BEACON
+                    TELEPORT_BEACON,
+                    TELEPORT_RAIL
                 }).forEach(block -> 
                 {
                     Preconditions.checkNotNull(block, "Block cannot be null!");

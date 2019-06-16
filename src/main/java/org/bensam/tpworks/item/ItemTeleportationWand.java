@@ -10,12 +10,15 @@ import javax.annotation.Nullable;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
+import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModSetup;
 import org.bensam.tpworks.util.ModUtil;
@@ -143,6 +146,13 @@ public class ItemTeleportationWand extends Item
         return true; // this item always looks enchanted
     }
 
+    @Override
+    public boolean onEntitySwing(EntityLivingBase entityLiving, ItemStack stack)
+    {
+        //entityLiving.sendMessage(new TextComponentTranslation((entityLiving.world.isRemote ? "Client:" : "Server:") + " onEntitySwing " + stack.getDisplayName(), new Object[0]));
+        return super.onEntitySwing(entityLiving, stack);
+    }
+
     /**
      * Called when the equipped item is right clicked.
      */
@@ -205,17 +215,8 @@ public class ItemTeleportationWand extends Item
                             }
                             else
                             {
-                                if (dispenserTeleportationHandler.getDestinationCount() > 0)
-                                {
-                                    // Replace the first teleport destination in the dispenser with the player's active one.
-                                    dispenserTeleportationHandler.replaceDestination(0, activePlayerDestination);
-                                }
-                                else
-                                {
-                                    // Add the player's active destination to the dispenser.
-                                    dispenserTeleportationHandler.addOrReplaceDestination(activePlayerDestination);
-                                }
-                                
+                                // Replace (or add) the first teleport destination in the dispenser with the player's active one.
+                                dispenserTeleportationHandler.replaceOrAddFirstDestination(activePlayerDestination);
                                 player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + activePlayerDestination.friendlyName + TextFormatting.RESET}));
                             }
                         }
@@ -241,6 +242,69 @@ public class ItemTeleportationWand extends Item
                     
                     return EnumActionResult.FAIL;
                 }
+                else if (clickedBlock == ModBlocks.TELEPORT_RAIL)
+                {
+                    TileEntityTeleportRail te = (TileEntityTeleportRail) world.getTileEntity(pos);
+                    UUID uuid = te.getUniqueID();
+                    String name = te.getRailName();
+                    TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                    
+                    if (player.isSneaking())
+                    {
+                        {
+                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportRail(player, TeleportDirection.RECEIVER, destination);
+                            if (nextDestination != null)
+                            {
+                                te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
+                                player.sendMessage(new TextComponentTranslation("message.td.rail.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
+                            }
+                            else
+                            {
+                                te.teleportationHandler.removeDestination(0);
+                                player.sendMessage(new TextComponentTranslation("message.td.rail.destination.set.none"));
+                            }
+                            
+                            te.markDirty();
+                        }
+                    }
+                    else
+                    {
+                        if (playerTeleportationHandler.hasDestination(uuid))
+                        {
+                            // Remove this tile from the player's network.
+                            playerTeleportationHandler.removeDestination(uuid);
+                            te.isStored = false;
+                            
+                            // Send a packet update so the client can get word that this rail is no longer stored for this player.
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), false, te.getTeleportDirection()), (EntityPlayerMP) player);
+                            player.sendMessage(new TextComponentTranslation("message.td.rail.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
+                        }
+                        else
+                        {
+                            if (playerTeleportationHandler.getDestinationCount() < playerTeleportationHandler.getDestinationLimit())
+                            {
+                                // Add this rail to the player's network.
+                                te.isStored = true;
+                                TeleportDestination railDestination = new TeleportDestination(uuid, name, DestinationType.RAIL, world.provider.getDimension(), pos);
+                                if (playerTeleportationHandler.replaceOrAddDestination(railDestination))
+                                {
+                                    // Send a packet update so the client can get word that this rail is active for this player.
+                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), true, te.getTeleportDirection()), (EntityPlayerMP) player);
+                                    player.sendMessage(new TextComponentTranslation("message.td.rail.add.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
+                                }
+                            }
+                            else
+                            {
+                                TextComponentTranslation message = new TextComponentTranslation("message.td.network.full", new Object[] {playerTeleportationHandler.getDestinationLimit()});
+                                message.getStyle().setColor(TextFormatting.RED);
+                                player.sendMessage(message);
+                            }
+                        }
+                    }
+
+                    // Set momentary cooldown as a flag for onPlayerStoppedUsing to ignore this click so it doesn't try to change the player's active destination.
+                    player.getCooldownTracker().setCooldown(this, 1);
+                }
                 else if (clickedBlock == ModBlocks.TELEPORT_BEACON && !(player.getCooldownTracker().hasCooldown(this)))
                 {
                     // Toggle the inclusion of this teleport beacon in the player's teleport destination network.
@@ -264,7 +328,7 @@ public class ItemTeleportationWand extends Item
                         {
                             // Add this beacon to the player's network.
                             TeleportDestination destination = new TeleportDestination(uuid, name, DestinationType.BEACON, world.provider.getDimension(), pos);
-                            if (playerTeleportationHandler.addOrReplaceDestination(destination))
+                            if (playerTeleportationHandler.replaceOrAddDestination(destination))
                             {
                                 // Send a packet update so the client can get word that this beacon is active for this player.
                                 TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), true), (EntityPlayerMP) player);

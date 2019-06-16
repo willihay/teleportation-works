@@ -12,6 +12,7 @@ import org.bensam.tpworks.item.ItemTeleportationSplashPotion;
 import org.bensam.tpworks.potion.ModPotions;
 import org.bensam.tpworks.potion.PotionTeleportation;
 import org.bensam.tpworks.util.ModConfig;
+import org.bensam.tpworks.util.ModUtil;
 
 import com.google.common.base.Predicate;
 
@@ -144,7 +145,7 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
         else 
         {
             // Get a collection of all the entities that are riding other entities, so the pair can be remounted later, after teleportation.
-            HashMap<Entity, Entity> riderMap = getRiders(teleportingEntities);
+            HashMap<Entity, Entity> riderMap = ModUtil.getRiders(teleportingEntities);
             
             // Find all entities being ridden by the entities who are about to be teleported.
             // Make sure both are included in the list of entities to be teleported. (Perhaps one was just outside the bounding box.)
@@ -237,24 +238,6 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
                     || (entity instanceof EntityMinecart && ModConfig.splashPotionSettings.teleportMinecarts);
         }
     };
-
-    /**
-     * From a list of entities, find all that are riding some other entity and return a map of riders to ridden.
-     */
-    protected HashMap<Entity, Entity> getRiders(List<Entity> list)
-    {
-        HashMap<Entity, Entity> riderMap = new HashMap<Entity, Entity>();
-        
-        for (Entity entity : list)
-        {
-            if (entity.isRiding())
-            {
-                riderMap.put(entity, entity.getRidingEntity());
-            }
-        }
-        
-        return riderMap;
-    }
 
     @Override
     public void writeEntityToNBT(NBTTagCompound compound)
