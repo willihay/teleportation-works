@@ -36,5 +36,13 @@ public interface ITeleportationBlock
         }
     }
     
-
+    /**
+     * Return the current TeleportDirection of this block.
+     */
+    TeleportDirection getTeleportDirection();
+    
+    /**
+     * Set the TeleportDirection of this block.
+     */
+    void setTeleportDirection(TeleportDirection teleportDirection);
 }

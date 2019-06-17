@@ -55,16 +55,17 @@ public class PacketRequestUpdateTeleportBeacon implements IMessage
 
                 if (teleportationHandler != null)
                 {
-                    TeleportDestination destination = teleportationHandler.getDestinationFromUUID(((TileEntityTeleportBeacon) te).getUniqueID());
+                    TileEntityTeleportBeacon teTeleportBeacon = (TileEntityTeleportBeacon) te;
+                    TeleportDestination destination = teleportationHandler.getDestinationFromUUID(teTeleportBeacon.getUniqueID());
                     if (destination != null)
                     {
-                        // Return a packet indicating the beacon is active. 
-                        return new PacketUpdateTeleportBeacon(message.pos, true);
+                        // Return a packet indicating the beacon is stored. 
+                        return new PacketUpdateTeleportBeacon(message.pos, true, teTeleportBeacon.getTeleportDirection());
                     }
                     else
                     {
-                        // Return a packet indicating the beacon is not active for this player. 
-                        return new PacketUpdateTeleportBeacon(message.pos, false);
+                        // Return a packet indicating the beacon is not stored for this player. 
+                        return new PacketUpdateTeleportBeacon(message.pos, false, teTeleportBeacon.getTeleportDirection());
                     }
                 }
             }

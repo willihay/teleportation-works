@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 import org.bensam.tpworks.TeleportationWorks;
+import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
@@ -191,16 +192,16 @@ public class BlockTeleportRail extends BlockRailPowered
                 name = te.getRailName();
             }
             
-            // Send the name of the rail to the player if they're not using a teleport wand.
             if (player.getHeldItem(hand).getItem() == ModItems.TELEPORTATION_WAND)
             {
                 return true;
             }
             else
             {
+                // Send the name of the rail to the player if they're not using a teleport wand.
                 if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
                 {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
+                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
                 }
                 else
                 {
@@ -240,7 +241,7 @@ public class BlockTeleportRail extends BlockRailPowered
                     te.teleportationHandler.removeDestination(0);
                     te.markDirty();
                     displayNameOfRail = false;
-                    player.sendMessage(new TextComponentTranslation("message.td.rail.destination.cleared.confirmation"));
+                    player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                 }
                 else
                 {
@@ -252,10 +253,10 @@ public class BlockTeleportRail extends BlockRailPowered
             
             if (displayNameOfRail)
             {
-                // Send the name of the rail to the player if they're not using a teleport wand.
+                // Send the name of the rail to the player.
                 if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
                 {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
+                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
                 }
                 else
                 {
@@ -265,7 +266,7 @@ public class BlockTeleportRail extends BlockRailPowered
                     }
                     else
                     {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_rail.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, destination.friendlyName}));
+                        player.sendMessage(new TextComponentTranslation("message.td.show_rail.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
                     }
                 }
             }
@@ -278,8 +279,12 @@ public class BlockTeleportRail extends BlockRailPowered
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
     {
+        TileEntityTeleportRail te = getTileEntity(world, pos);
+
         if (world.isRemote) // running on client
         {
+            te.blockPlacedTime = world.getTotalWorldTime();
+            
             double centerX = pos.getX() + 0.5D;
             double centerY = pos.getY() + 1.0D;
             double centerZ = pos.getZ() + 0.5D;
@@ -295,7 +300,6 @@ public class BlockTeleportRail extends BlockRailPowered
         }
         else // running on server
         {
-            TileEntityTeleportRail te = getTileEntity(world, pos);
             if (stack.hasDisplayName())
             {
                 // Make sure rail name is updated with any changes in the item stack (e.g. was renamed in anvil).
@@ -330,7 +334,7 @@ public class BlockTeleportRail extends BlockRailPowered
                         {
                             TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, true, te.getTeleportDirection()), (EntityPlayerMP) placer);
                         }
-                        placer.sendMessage(new TextComponentTranslation("message.td.rail.found", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
+                        placer.sendMessage(new TextComponentTranslation("message.td.rail.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
@@ -348,6 +352,17 @@ public class BlockTeleportRail extends BlockRailPowered
     public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player,
                                    boolean willHarvest)
     {
+        if (!world.isRemote) // running on server
+        {
+            TileEntityTeleportRail te = getTileEntity(world, pos);
+            UUID uuid = te.getUniqueID();
+            ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+            if (teleportationHandler != null)
+            {
+                teleportationHandler.setDestinationAsRemoved(uuid);
+            }
+        }
+
         if (willHarvest)
             return true; // If it will harvest, delay deletion of the block until after getDrops.
 

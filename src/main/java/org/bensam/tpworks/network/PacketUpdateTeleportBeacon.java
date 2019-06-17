@@ -1,7 +1,7 @@
 package org.bensam.tpworks.network;
 
-import org.bensam.tpworks.block.teleportbeacon.BlockTeleportBeacon;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -21,12 +21,21 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 public class PacketUpdateTeleportBeacon implements IMessage
 {
     private BlockPos pos;
-    private boolean isActive;
-    
-    public PacketUpdateTeleportBeacon(BlockPos pos, boolean isActive)
+    private boolean isStored;
+    private int teleportDirection;
+
+    public PacketUpdateTeleportBeacon(BlockPos pos, boolean isStored)
     {
         this.pos = pos;
-        this.isActive = isActive;
+        this.isStored = isStored;
+        this.teleportDirection = -1; // indicates no change is being made to direction
+    }
+
+    public PacketUpdateTeleportBeacon(BlockPos pos, boolean isStored, TeleportDirection teleportDirection)
+    {
+        this.pos = pos;
+        this.isStored = isStored;
+        this.teleportDirection = teleportDirection.getTeleportDirectionValue();
     }
     
     /*
@@ -48,14 +57,11 @@ public class PacketUpdateTeleportBeacon implements IMessage
                 if (te instanceof TileEntityTeleportBeacon)
                 {
                     TileEntityTeleportBeacon teTeleportBeacon = (TileEntityTeleportBeacon) te;
-                    
-                    // Set block state on the client so that lighting is updated.
-                    world.setBlockState(message.pos, world.getBlockState(message.pos).withProperty(BlockTeleportBeacon.IS_ACTIVE, message.isActive), 0);
-
-                    teTeleportBeacon.isActive = message.isActive;
-
-                    // TODO: do we need this render update call now that we have a setBlockState call?
-                    //world.markBlockRangeForRenderUpdate(te.getPos(), te.getPos());
+                    teTeleportBeacon.isStored = message.isStored;
+                    if (message.teleportDirection >= 0)
+                    {
+                        teTeleportBeacon.setTeleportDirection(TeleportDirection.values()[message.teleportDirection]);
+                    }
                 }
             });
             
@@ -67,14 +73,16 @@ public class PacketUpdateTeleportBeacon implements IMessage
     public void fromBytes(ByteBuf buf)
     {
         pos = BlockPos.fromLong(buf.readLong());
-        isActive = buf.readBoolean();
+        isStored = buf.readBoolean();
+        teleportDirection = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf)
     {
         buf.writeLong(pos.toLong());
-        buf.writeBoolean(isActive);
+        buf.writeBoolean(isStored);
+        buf.writeInt(teleportDirection);
     }
 
 }

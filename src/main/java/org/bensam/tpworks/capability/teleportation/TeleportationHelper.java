@@ -94,12 +94,13 @@ public class TeleportationHelper
     }
 
     /**
-     * Get the NEXT teleport rail of the specified direction, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
+     * Get the NEXT teleport block of the specified direction and type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
+     * If blockType is null, any Beacon or Rail of the specified direction will match.
      * Will return afterDestination if that destination is of the specified direction and it is the only one that can be found. 
-     * Returns null if no rails can be found of the specified direction in the entity's network.
+     * Returns null if no blocks can be found of the specified direction (and type) in the entity's network.
      */
     @Nullable
-    public static TeleportDestination getNextTeleportRail(Entity entity, TeleportDirection direction, @Nullable TeleportDestination afterDestination)
+    public static TeleportDestination getNextTeleportBlock(Entity entity, TeleportDirection direction, @Nullable DestinationType blockType, @Nullable TeleportDestination afterDestination)
     {
         ITeleportationHandler teleportationHandler = entity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
         if (teleportationHandler != null)
@@ -113,16 +114,16 @@ public class TeleportationHelper
                 }
             }
             
-            Predicate<TeleportDestination> filter = d -> d.destinationType == DestinationType.RAIL;
-            TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);;
+            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> d.destinationType == blockType) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
+            TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);
             
             while (destination != null)
             {
                 World world = ModUtil.getWorldServerForDimension(destination.dimension);
                 TileEntity te = world.getTileEntity(destination.position);
-                if (te != null && te instanceof TileEntityTeleportRail)
+                if (te instanceof ITeleportationBlock)
                 {
-                    if (direction == ((TileEntityTeleportRail) te).getTeleportDirection())
+                    if (direction == ((ITeleportationBlock) te).getTeleportDirection())
                     {
                         return destination;
                     }
@@ -130,7 +131,7 @@ public class TeleportationHelper
                 
                 if (destination == afterDestination)
                 {
-                    // We've looped back to the afterDestination and still haven't found a rail of the specified direction.
+                    // We've looped back to the afterDestination and still haven't found a block of the specified direction.
                     return null;
                 }
                 

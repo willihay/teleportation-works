@@ -200,7 +200,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             beaconNameFormat = isValid ? TextFormatting.DARK_GREEN : TextFormatting.DARK_GRAY;
         }
         
-        return beaconNameFormat + destination.friendlyName + defaultFormat + " (" + ModUtil.getDimensionName(destination.dimension) + ")";
+        return beaconNameFormat + destination.friendlyName + defaultFormat + " (" + destination.destinationType + " in " + ModUtil.getDimensionName(destination.dimension) + ")";
     }
 
     @Override
@@ -225,6 +225,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     public static String getLongFormattedName(TeleportDestination destination, TextFormatting beaconNameFormat, TextFormatting defaultFormat)
     {
         return beaconNameFormat + destination.friendlyName + defaultFormat 
+                + " (" + destination.destinationType + ") "
                 + " at {" + destination.position.getX() + ", " 
                 + destination.position.getY() + ", " 
                 + destination.position.getZ() + "} in " 

@@ -6,8 +6,8 @@ import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
-import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
@@ -30,8 +30,9 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  * @author WilliHay
  *
  */
-public class TileEntityTeleportRail extends TileEntity implements IWorldNameable, ITickable
+public class TileEntityTeleportRail extends TileEntity implements ITeleportationBlock, IWorldNameable, ITickable
 {
+    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
 
     // particle path characteristics
@@ -45,6 +46,7 @@ public class TileEntityTeleportRail extends TileEntity implements IWorldNameable
     protected TeleportDirection teleportDirection = TeleportDirection.SENDER;
     
     // client-only data
+    public long blockPlacedTime = 0; // world time when block was placed
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
 
     // server-only data
@@ -72,31 +74,34 @@ public class TileEntityTeleportRail extends TileEntity implements IWorldNameable
         {
             long totalWorldTime = world.getTotalWorldTime();
 
-            // Spawn teleport rail particles.
-            particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
-            double blockCenterX = (double) pos.getX() + 0.5D;
-            double blockY = (double) pos.getY() + 0.125D;
-            double blockCenterZ = (double) pos.getZ() + 0.5D;
-            
-            // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
-            double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
-            float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-            double yCoordGroup1 = 0.0D;
-            if (teleportDirection == TeleportDirection.SENDER)
-                yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-            else
-                yCoordGroup1 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group1Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-            
-            // Particle 1:
-            double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-            double zCoord = blockCenterZ + (Math.sin(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-            TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
-            
-            // Particle 2:
-            double particle2SpawnAngle = particleSpawnAngle + Math.PI;
-            xCoord = blockCenterX + (Math.cos(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-            zCoord = blockCenterZ + (Math.sin(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-            TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
+            if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
+            {
+                // Spawn teleport rail particles.
+                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
+                double blockCenterX = (double) pos.getX() + 0.5D;
+                double blockY = (double) pos.getY() + 0.125D;
+                double blockCenterZ = (double) pos.getZ() + 0.5D;
+                
+                // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
+                double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
+                float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
+                double yCoordGroup1 = 0.0D;
+                if (teleportDirection == TeleportDirection.SENDER)
+                    yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                else
+                    yCoordGroup1 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group1Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                
+                // Particle 1:
+                double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
+                double zCoord = blockCenterZ + (Math.sin(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
+                
+                // Particle 2:
+                double particle2SpawnAngle = particleSpawnAngle + Math.PI;
+                xCoord = blockCenterX + (Math.cos(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
+                zCoord = blockCenterZ + (Math.sin(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
+            }
         }
     }
 
@@ -155,11 +160,13 @@ public class TileEntityTeleportRail extends TileEntity implements IWorldNameable
         return super.writeToNBT(compound);
     }
 
+    @Override
     public TeleportDirection getTeleportDirection()
     {
         return teleportDirection;
     }
     
+    @Override
     public void setTeleportDirection(TeleportDirection teleportDirection)
     {
         if (teleportDirection != this.teleportDirection)
