@@ -6,22 +6,20 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 
 import org.bensam.tpworks.TeleportationWorks;
-import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
-import org.bensam.tpworks.network.PacketUpdateTeleportRail;
+import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModSetup;
+import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockFaceShape;
-import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -34,15 +32,15 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -237,6 +235,19 @@ public class BlockTeleportBeacon extends Block
         if (world.isRemote) // running on client
         {
             te.blockPlacedTime = world.getTotalWorldTime();
+
+            // Spawn portal particles indicating portal has opened.
+            double centerX = pos.getX() + 0.5D;
+            double centerY = pos.getY() + 1.0D;
+            double centerZ = pos.getZ() + 0.5D;
+            for (int i = 0; i < 64; ++i)
+            {
+                double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
+                double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
+                double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
+                
+                world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
+            }
         }
         else
         {
@@ -282,6 +293,9 @@ public class BlockTeleportBeacon extends Block
                     }
                 }
             }
+
+            // Play beacon activation sound.
+            world.playSound(null, pos, ModSounds.ACTIVATE_TELEPORT_BEACON, SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
     }
 
@@ -289,7 +303,22 @@ public class BlockTeleportBeacon extends Block
     public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player,
                                    boolean willHarvest)
     {
-        if (!world.isRemote) // running on server
+        if (world.isRemote) // running on client
+        {
+            // Spawn portal particles indicating portal has closed.
+            double centerX = pos.getX() + 0.5D;
+            double centerY = pos.getY() + 0.1D;
+            double centerZ = pos.getZ() + 0.5D;
+            for (int i = 0; i < 64; ++i)
+            {
+                double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
+                double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + ModUtil.RANDOM.nextDouble());
+                double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
+                
+                world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
+            }
+        }
+        else
         {
             TileEntityTeleportBeacon te = getTileEntity(world, pos);
             UUID uuid = te.getUniqueID();
@@ -298,6 +327,9 @@ public class BlockTeleportBeacon extends Block
             {
                 teleportationHandler.setDestinationAsRemoved(uuid);
             }
+
+            // Play beacon deactivation sound.
+            world.playSound(null, pos, ModSounds.DEACTIVATE_TELEPORT_BEACON, SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
 
         if (willHarvest)

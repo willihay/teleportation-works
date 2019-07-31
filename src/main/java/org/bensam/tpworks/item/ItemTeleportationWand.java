@@ -371,37 +371,16 @@ public class ItemTeleportationWand extends Item
         }
         else if (clickedBlock == ModBlocks.TELEPORT_BEACON && !player.isSneaking()) // (and running on client)
         {
-            double centerX = pos.getX() + 0.5D;
-            double centerY = pos.getY() + 1.0D;
-            double centerZ = pos.getZ() + 0.5D;
             TileEntityTeleportBeacon te = (TileEntityTeleportBeacon) world.getTileEntity(pos);
-            if (te.isStored) // beacon will begin deactivating
+            if (te.isStored) // beacon will be removed from player's library of saved beacons
             {
-                for (int i = 0; i < 64; ++i)
-                {
-                    double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
-                    double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + ModUtil.RANDOM.nextDouble());
-                    double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
-                    
-                    world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
-                }
-
-                world.playSound(player, pos, ModSounds.DEACTIVATE_TELEPORT_BEACON,
+                world.playSound(player, pos, ModSounds.REMOVE_TELEPORT_BEACON,
                         SoundCategory.BLOCKS, 1.0F, 1.0F);
             }
-            else // beacon will begin activating
+            else // beacon will be added to player's library of saved beacons
             {
-                for (int i = 0; i < 64; ++i)
-                {
-                    double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
-                    double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
-                    double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
-                    
-                    world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
-                }
-
-                world.playSound(player, pos, ModSounds.ACTIVATE_TELEPORT_BEACON,
-                        SoundCategory.BLOCKS, 1.0F, 1.0F);
+                world.playSound(player, pos, ModSounds.STORE_TELEPORT_BEACON,
+                        SoundCategory.HOSTILE, 0.8F, 1.0F);
             }
         }
         

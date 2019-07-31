@@ -2,6 +2,7 @@ package org.bensam.tpworks.sound;
 
 import org.bensam.tpworks.TeleportationWorks;
 
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder;
@@ -12,6 +13,8 @@ public class ModSounds
 {
     public static final SoundEvent ACTIVATE_TELEPORT_BEACON = null;
     public static final SoundEvent DEACTIVATE_TELEPORT_BEACON = null;
+    public static final SoundEvent STORE_TELEPORT_BEACON = SoundEvents.BLOCK_END_PORTAL_SPAWN;
+    public static final SoundEvent REMOVE_TELEPORT_BEACON = SoundEvents.BLOCK_CHORUS_FLOWER_DEATH;
     
     public static void register(IForgeRegistry<SoundEvent> registry)
     {
