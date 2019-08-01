@@ -21,13 +21,27 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 public class PacketUpdateTeleportRail implements IMessage
 {
     private BlockPos pos;
-    private boolean isStored;
+    private int isStored;
     private int teleportDirection;
     
+    public PacketUpdateTeleportRail(BlockPos pos, boolean isStored)
+    {
+        this.pos = pos;
+        this.isStored = isStored ? 1 : 0;
+        this.teleportDirection = -1; // indicates no change is being made to direction
+    }
+
+    public PacketUpdateTeleportRail(BlockPos pos, TeleportDirection teleportDirection)
+    {
+        this.pos = pos;
+        this.isStored = -1; // indicates no change is being made to storage
+        this.teleportDirection = teleportDirection.getTeleportDirectionValue();
+    }
+
     public PacketUpdateTeleportRail(BlockPos pos, boolean isStored, TeleportDirection teleportDirection)
     {
         this.pos = pos;
-        this.isStored = isStored;
+        this.isStored = isStored ? 1 : 0;
         this.teleportDirection = teleportDirection.getTeleportDirectionValue();
     }
     
@@ -50,8 +64,16 @@ public class PacketUpdateTeleportRail implements IMessage
                 if (te instanceof TileEntityTeleportRail)
                 {
                     TileEntityTeleportRail teTeleportRail = (TileEntityTeleportRail) te;
-                    teTeleportRail.isStored = message.isStored;
-                    teTeleportRail.setTeleportDirection(TeleportDirection.values()[message.teleportDirection]);
+                    
+                    if (message.isStored >= 0)
+                    {
+                        teTeleportRail.setStoredByPlayer(message.isStored != 0);
+                    }
+                    
+                    if (message.teleportDirection >= 0)
+                    {
+                        teTeleportRail.setTeleportDirection(TeleportDirection.values()[message.teleportDirection]);
+                    }
                 }
             });
             
@@ -63,7 +85,7 @@ public class PacketUpdateTeleportRail implements IMessage
     public void fromBytes(ByteBuf buf)
     {
         pos = BlockPos.fromLong(buf.readLong());
-        isStored = buf.readBoolean();
+        isStored = buf.readInt();
         teleportDirection = buf.readInt();
     }
 
@@ -71,7 +93,7 @@ public class PacketUpdateTeleportRail implements IMessage
     public void toBytes(ByteBuf buf)
     {
         buf.writeLong(pos.toLong());
-        buf.writeBoolean(isStored);
+        buf.writeInt(isStored);
         buf.writeInt(teleportDirection);
     }
 }

@@ -21,20 +21,27 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 public class PacketUpdateTeleportBeacon implements IMessage
 {
     private BlockPos pos;
-    private boolean isStored;
+    private int isStored;
     private int teleportDirection;
 
     public PacketUpdateTeleportBeacon(BlockPos pos, boolean isStored)
     {
         this.pos = pos;
-        this.isStored = isStored;
+        this.isStored = isStored ? 1 : 0;
         this.teleportDirection = -1; // indicates no change is being made to direction
+    }
+
+    public PacketUpdateTeleportBeacon(BlockPos pos, TeleportDirection teleportDirection)
+    {
+        this.pos = pos;
+        this.isStored = -1; // indicates no change is being made to storage
+        this.teleportDirection = teleportDirection.getTeleportDirectionValue();
     }
 
     public PacketUpdateTeleportBeacon(BlockPos pos, boolean isStored, TeleportDirection teleportDirection)
     {
         this.pos = pos;
-        this.isStored = isStored;
+        this.isStored = isStored ? 1 : 0;
         this.teleportDirection = teleportDirection.getTeleportDirectionValue();
     }
     
@@ -57,7 +64,12 @@ public class PacketUpdateTeleportBeacon implements IMessage
                 if (te instanceof TileEntityTeleportBeacon)
                 {
                     TileEntityTeleportBeacon teTeleportBeacon = (TileEntityTeleportBeacon) te;
-                    teTeleportBeacon.isStored = message.isStored;
+                    
+                    if (message.isStored >= 0)
+                    {
+                        teTeleportBeacon.setStoredByPlayer(message.isStored != 0);
+                    }
+                    
                     if (message.teleportDirection >= 0)
                     {
                         teTeleportBeacon.setTeleportDirection(TeleportDirection.values()[message.teleportDirection]);
@@ -73,7 +85,7 @@ public class PacketUpdateTeleportBeacon implements IMessage
     public void fromBytes(ByteBuf buf)
     {
         pos = BlockPos.fromLong(buf.readLong());
-        isStored = buf.readBoolean();
+        isStored = buf.readInt();
         teleportDirection = buf.readInt();
     }
 
@@ -81,7 +93,7 @@ public class PacketUpdateTeleportBeacon implements IMessage
     public void toBytes(ByteBuf buf)
     {
         buf.writeLong(pos.toLong());
-        buf.writeBoolean(isStored);
+        buf.writeInt(isStored);
         buf.writeInt(teleportDirection);
     }
 

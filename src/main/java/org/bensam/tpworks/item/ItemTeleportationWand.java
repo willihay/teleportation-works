@@ -16,6 +16,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
@@ -272,7 +273,6 @@ public class ItemTeleportationWand extends Item
                         {
                             // Remove this tile from the player's network.
                             playerTeleportationHandler.removeDestination(uuid);
-                            te.isStored = false;
                             
                             // Send a packet update so the client can get word that this rail is no longer stored for this player.
                             TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), false, te.getTeleportDirection()), (EntityPlayerMP) player);
@@ -283,7 +283,6 @@ public class ItemTeleportationWand extends Item
                             if (playerTeleportationHandler.getDestinationCount() < playerTeleportationHandler.getDestinationLimit())
                             {
                                 // Add this rail to the player's network.
-                                te.isStored = true;
                                 TeleportDestination railDestination = new TeleportDestination(uuid, name, DestinationType.RAIL, world.provider.getDimension(), pos);
                                 if (playerTeleportationHandler.replaceOrAddDestination(railDestination))
                                 {
@@ -335,7 +334,6 @@ public class ItemTeleportationWand extends Item
                         {
                             // Remove this beacon from the player's network.
                             playerTeleportationHandler.removeDestination(uuid);
-                            te.isStored = false;
                             
                             // Send a packet update so the client can get word that this beacon is no longer stored for this player.
                             TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), false, te.getTeleportDirection()), (EntityPlayerMP) player);
@@ -346,7 +344,6 @@ public class ItemTeleportationWand extends Item
                             if (playerTeleportationHandler.getDestinationCount() < playerTeleportationHandler.getDestinationLimit())
                             {
                                 // Add this beacon to the player's network.
-                                te.isStored = true;
                                 TeleportDestination beaconDestination = new TeleportDestination(uuid, name, DestinationType.BEACON, world.provider.getDimension(), pos);
                                 if (playerTeleportationHandler.replaceOrAddDestination(beaconDestination))
                                 {
@@ -369,15 +366,16 @@ public class ItemTeleportationWand extends Item
                 }
             }
         }
-        else if (clickedBlock == ModBlocks.TELEPORT_BEACON && !player.isSneaking()) // (and running on client)
+        else if ((clickedBlock == ModBlocks.TELEPORT_BEACON || clickedBlock == ModBlocks.TELEPORT_RAIL) 
+                && !player.isSneaking()) // (and running on client)
         {
-            TileEntityTeleportBeacon te = (TileEntityTeleportBeacon) world.getTileEntity(pos);
-            if (te.isStored) // beacon will be removed from player's library of saved beacons
+            ITeleportationBlock te = (ITeleportationBlock) world.getTileEntity(pos);
+            if (te.isStoredByPlayer()) // block is about to be removed from player's teleportation library
             {
                 world.playSound(player, pos, ModSounds.REMOVE_TELEPORT_BEACON,
                         SoundCategory.BLOCKS, 1.0F, 1.0F);
             }
-            else // beacon will be added to player's library of saved beacons
+            else // block is about to be added to player's teleportation library
             {
                 world.playSound(player, pos, ModSounds.STORE_TELEPORT_BEACON,
                         SoundCategory.HOSTILE, 0.8F, 1.0F);

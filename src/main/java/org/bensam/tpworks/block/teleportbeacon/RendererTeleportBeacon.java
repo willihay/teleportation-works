@@ -22,7 +22,7 @@ public class RendererTeleportBeacon extends TileEntitySpecialRenderer<TileEntity
     public void render(TileEntityTeleportBeacon te, double x, double y, double z, float partialTicks, int destroyStage,
                        float alpha)
     {
-        if (!te.isStored)
+        if (!te.isStoredByPlayer())
             return;
 
         // Render rotating topper item when active.

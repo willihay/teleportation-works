@@ -45,4 +45,16 @@ public interface ITeleportationBlock
      * Set the TeleportDirection of this block.
      */
     void setTeleportDirection(TeleportDirection teleportDirection);
+    
+    /**
+     * Check if block has been stored in player's teleportation network.
+     * (valid on CLIENT only)
+     */
+    boolean isStoredByPlayer();
+    
+    /**
+     * Set whether or not this block has been stored in the player's teleportation network.
+     * (valid on CLIENT only)
+     */
+    void setStoredByPlayer(boolean stored);
 }

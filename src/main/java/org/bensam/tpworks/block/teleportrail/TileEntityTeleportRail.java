@@ -42,11 +42,11 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     public static final double PARTICLE_HEIGHT_TO_BEGIN_SCALING = 16.0D;
     public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
-    public boolean isStored = false; // true when player has stored this TE in their teleport destination network
     protected TeleportDirection teleportDirection = TeleportDirection.SENDER;
     
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
+    protected boolean isStored = false; // true when player has stored this TE in their teleport destination network
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
 
     // server-only data
@@ -118,7 +118,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     {
         if (FMLCommonHandler.instance().getEffectiveSide().isServer())
         {
-            isStored = compound.getBoolean("isStored");
             teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
             railName = compound.getString("railName");
             uniqueID = compound.getUniqueId("uniqueID");
@@ -141,7 +140,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        compound.setBoolean("isStored", isStored);
         compound.setInteger("tpDirection", teleportDirection.getTeleportDirectionValue());
         if (!railName.isEmpty())
         {
@@ -174,6 +172,18 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             this.teleportDirection = teleportDirection;
             markDirty();
         }
+    }
+
+    @Override
+    public boolean isStoredByPlayer()
+    {
+        return isStored;
+    }
+
+    @Override
+    public void setStoredByPlayer(boolean stored)
+    {
+        isStored = stored;
     }
     
     public UUID getUniqueID()

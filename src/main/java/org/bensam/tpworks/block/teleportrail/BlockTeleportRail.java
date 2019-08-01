@@ -247,7 +247,7 @@ public class BlockTeleportRail extends BlockRailPowered
                 {
                     // Left-click toggles rail's teleport direction between SENDER and RECEIVER.
                     te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
-                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), te.isStored, te.getTeleportDirection()), (EntityPlayerMP) player);
+                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
                 }
             }
             
@@ -285,6 +285,7 @@ public class BlockTeleportRail extends BlockRailPowered
         {
             te.blockPlacedTime = world.getTotalWorldTime();
             
+            // Spawn portal particles indicating portal has opened.
             double centerX = pos.getX() + 0.5D;
             double centerY = pos.getY() + 1.0D;
             double centerZ = pos.getZ() + 0.5D;
@@ -343,6 +344,7 @@ public class BlockTeleportRail extends BlockRailPowered
                 }
             }
 
+            // Play teleport block activation sound.
             world.playSound((EntityPlayer) null, pos, ModSounds.ACTIVATE_TELEPORT_BEACON,
                     SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
@@ -352,7 +354,22 @@ public class BlockTeleportRail extends BlockRailPowered
     public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player,
                                    boolean willHarvest)
     {
-        if (!world.isRemote) // running on server
+        if (world.isRemote) // running on client
+        {
+            // Spawn portal particles indicating portal has closed.
+            double centerX = pos.getX() + 0.5D;
+            double centerY = pos.getY() + 0.1D;
+            double centerZ = pos.getZ() + 0.5D;
+            for (int i = 0; i < 64; ++i)
+            {
+                double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
+                double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + ModUtil.RANDOM.nextDouble());
+                double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D);
+                
+                world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
+            }
+        }
+        else
         {
             TileEntityTeleportRail te = getTileEntity(world, pos);
             UUID uuid = te.getUniqueID();
@@ -361,6 +378,9 @@ public class BlockTeleportRail extends BlockRailPowered
             {
                 teleportationHandler.setDestinationAsRemoved(uuid);
             }
+
+            // Play teleport block deactivation sound.
+            world.playSound(null, pos, ModSounds.DEACTIVATE_TELEPORT_BEACON, SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
 
         if (willHarvest)

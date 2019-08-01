@@ -116,6 +116,7 @@ public class TeleportationHelper
             
             Predicate<TeleportDestination> filter = (blockType != null) ? (d -> d.destinationType == blockType) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
             TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);
+            TeleportDestination firstDestination = destination;
             
             while (destination != null)
             {
@@ -136,6 +137,12 @@ public class TeleportationHelper
                 }
                 
                 destination = teleportationHandler.getNextDestination(destination, filter);
+                
+                if (destination == firstDestination)
+                {
+                    // We've looped back to the first destination found by getNextDestination.
+                    return null;
+                }
             }
         }
         

@@ -198,7 +198,7 @@ public class BlockTeleportBeacon extends Block
                 {
                     // Left-click toggles beacon's teleport direction between SENDER and RECEIVER.
                     te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
-                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), te.isStored, te.getTeleportDirection()), (EntityPlayerMP) player);
+                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
                 }
             }
             
