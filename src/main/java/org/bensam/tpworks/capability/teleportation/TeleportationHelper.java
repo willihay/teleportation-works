@@ -96,8 +96,7 @@ public class TeleportationHelper
     /**
      * Get the NEXT teleport block of the specified direction and type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
      * If blockType is null, any Beacon or Rail of the specified direction will match.
-     * Will return afterDestination if that destination is of the specified direction and it is the only one that can be found. 
-     * Returns null if no blocks can be found of the specified direction (and type) in the entity's network.
+     * Returns null if the end of the list is reached and no blocks of the specified direction and type have been found.
      */
     @Nullable
     public static TeleportDestination getNextTeleportBlock(Entity entity, TeleportDirection direction, @Nullable DestinationType blockType, @Nullable TeleportDestination afterDestination)
@@ -116,7 +115,6 @@ public class TeleportationHelper
             
             Predicate<TeleportDestination> filter = (blockType != null) ? (d -> d.destinationType == blockType) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
             TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);
-            TeleportDestination firstDestination = destination;
             
             while (destination != null)
             {
@@ -130,19 +128,7 @@ public class TeleportationHelper
                     }
                 }
                 
-                if (destination == afterDestination)
-                {
-                    // We've looped back to the afterDestination and still haven't found a block of the specified direction.
-                    return null;
-                }
-                
                 destination = teleportationHandler.getNextDestination(destination, filter);
-                
-                if (destination == firstDestination)
-                {
-                    // We've looped back to the first destination found by getNextDestination.
-                    return null;
-                }
             }
         }
         

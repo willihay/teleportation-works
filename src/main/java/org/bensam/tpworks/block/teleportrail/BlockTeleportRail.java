@@ -231,43 +231,28 @@ public class BlockTeleportRail extends BlockRailPowered
             TileEntityTeleportRail te = getTileEntity(world, pos);
             String name = te.getRailName();
             TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            boolean displayNameOfRail = true;
             
-            if (player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
+            if (player.isSneaking() && player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
             {
-                if (player.isSneaking())
-                {
-                    // Sneak + left-click clears the teleport destination of the rail.
-                    te.teleportationHandler.removeDestination(0);
-                    te.markDirty();
-                    displayNameOfRail = false;
-                    player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
-                }
-                else
-                {
-                    // Left-click toggles rail's teleport direction between SENDER and RECEIVER.
-                    te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
-                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
-                }
+                // Sneak + left-click toggles rail's teleport direction between SENDER and RECEIVER.
+                te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
+                TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
             }
             
-            if (displayNameOfRail)
+            // Send the name of the rail to the player.
+            if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
             {
-                // Send the name of the rail to the player.
-                if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
+                player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
+            }
+            else
+            {
+                if (destination == null)
                 {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
+                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
                 }
                 else
                 {
-                    if (destination == null)
-                    {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_rail.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
-                    }
-                    else
-                    {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_rail.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
-                    }
+                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
                 }
             }
         }

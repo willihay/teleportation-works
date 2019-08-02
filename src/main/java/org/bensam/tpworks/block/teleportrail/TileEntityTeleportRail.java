@@ -77,7 +77,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
             {
                 // Spawn teleport rail particles.
-                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
+                particleSpawnAngle += (teleportDirection == TeleportDirection.SENDER) ? PARTICLE_ANGULAR_VELOCITY * 2.0D : PARTICLE_ANGULAR_VELOCITY;
                 double blockCenterX = (double) pos.getX() + 0.5D;
                 double blockY = (double) pos.getY() + 0.125D;
                 double blockCenterZ = (double) pos.getZ() + 0.5D;

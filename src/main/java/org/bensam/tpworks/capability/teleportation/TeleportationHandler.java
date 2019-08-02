@@ -74,6 +74,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             return null;
     }
     
+    @Override
     @Nullable
     public TeleportDestination getNextDestination(@Nullable TeleportDestination afterDestination, @Nullable Predicate<TeleportDestination> filter)
     {
@@ -83,6 +84,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             return getNextDestination(destinations.indexOf(afterDestination), filter);
     }
 
+    @Override
     @Nullable
     public TeleportDestination getNextDestination(@Nullable Integer afterIndex, @Nullable Predicate<TeleportDestination> filter)
     {
@@ -90,39 +92,30 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             return null;
         
         int index = 0;
-        int endIndex = 0;
         
         if (afterIndex == null || afterIndex.intValue() == -1)
         {
-            index = endIndex = activeDestinationIndex;
+            index = activeDestinationIndex;
         }
-        else if (afterIndex >= 0 && afterIndex < destinations.size())
+        else if (afterIndex >= 0 && afterIndex < (destinations.size() - 1))
         {
-            index = endIndex = afterIndex.intValue();
+            index = afterIndex.intValue();
         }
         else
         {
             return null;
         }
         
-        index = (index + 1) % destinations.size();
-        TeleportDestination destination = destinations.get(index);
-        
-        if (filter == null)
-        {
-            return destination;
-        }
-        
         do
         {
-            if (filter.test(destination))
+            index++;
+            TeleportDestination destination = destinations.get(index);
+            
+            if (filter == null || filter.test(destination))
             {
                 return destination;
             }
-            
-            index = (index + 1) % destinations.size();
-            destination = destinations.get(index);
-        } while (index != endIndex);
+        } while (index < destinations.size());
         
         return null;
     }

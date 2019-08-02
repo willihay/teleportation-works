@@ -182,43 +182,28 @@ public class BlockTeleportBeacon extends Block
             TileEntityTeleportBeacon te = getTileEntity(world, pos);
             String name = te.getBeaconName();
             TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            boolean displayNameOfBeacon = true;
             
-            if (player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
+            if (player.isSneaking() && player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
             {
-                if (player.isSneaking())
-                {
-                    // Sneak + left-click clears the teleport destination of the beacon.
-                    te.teleportationHandler.removeDestination(0);
-                    te.markDirty();
-                    displayNameOfBeacon = false;
-                    player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
-                }
-                else
-                {
-                    // Left-click toggles beacon's teleport direction between SENDER and RECEIVER.
-                    te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
-                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
-                }
+                // Sneak + left-click toggles beacon's teleport direction between SENDER and RECEIVER.
+                te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
+                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
             }
             
-            if (displayNameOfBeacon)
+            // Send the name of the beacon to the player.
+            if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
             {
-                // Send the name of the beacon to the player.
-                if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
+                player.sendMessage(new TextComponentTranslation("message.td.show_beacon.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
+            }
+            else
+            {
+                if (destination == null)
                 {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_beacon.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
+                    player.sendMessage(new TextComponentTranslation("message.td.show_beacon.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
                 }
                 else
                 {
-                    if (destination == null)
-                    {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_beacon.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
-                    }
-                    else
-                    {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_beacon.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
-                    }
+                    player.sendMessage(new TextComponentTranslation("message.td.show_beacon.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
                 }
             }
         }

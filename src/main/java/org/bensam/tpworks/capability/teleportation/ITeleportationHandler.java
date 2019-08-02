@@ -49,13 +49,15 @@ public interface ITeleportationHandler
     TeleportDestination getDestinationFromIndex(int index);
     
     /**
-     * Returns the next destination after the one specified by afterDestination, applying the filter if supplied.
+     * Returns the next destination after the one specified by afterDestination, applying the filter if supplied,
+     * returning null if the end of the list is reached.
      * Uses active destination index if afterDestination is null.
      */
     TeleportDestination getNextDestination(@Nullable TeleportDestination afterDestination, @Nullable Predicate<TeleportDestination> filter);
     
     /**
-     * Returns the next destination after the one specified by afterIndex, applying the filter if supplied.
+     * Returns the next destination after the one specified by afterIndex, applying the filter if supplied,
+     * returning null if the end of the list is reached.
      * Uses active destination index if afterIndex is null.
      */
     TeleportDestination getNextDestination(@Nullable Integer afterIndex, @Nullable Predicate<TeleportDestination> filter);
