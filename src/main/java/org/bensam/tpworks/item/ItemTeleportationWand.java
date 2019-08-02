@@ -198,35 +198,35 @@ public class ItemTeleportationWand extends Item
                     
                     if (dispenserTeleportationHandler != null)
                     {
+                        TeleportDestination dispenserDestination = dispenserTeleportationHandler.getActiveDestination();
+                        
                         if (player.isSneaking())
                         {
-                            // Set the dispenser's teleport destination to the same as the player's current active teleport destination
-                            // (unless the player's current destination is a spawn bed, in which case remove the dispenser's teleport
-                            // destination).
-                            
-                            TeleportDestination activePlayerDestination = playerTeleportationHandler.getActiveDestination();
-                            
-                            if (activePlayerDestination == null || activePlayerDestination.destinationType == DestinationType.SPAWNBED)
+                            // Set or clear destination for dispenser.
+                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, TeleportDirection.RECEIVER, DestinationType.BEACON, dispenserDestination);
+                            if (nextDestination != null)
                             {
-                                // Cannot set dispensers to teleport to player beds.
-                                // Instead, this is how a player can remove a teleport destination from a dispenser without disturbing it. 
-                                dispenserTeleportationHandler.removeDestination(0);
-                                player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.cleared.confirmation"));
-
+                                dispenserTeleportationHandler.replaceOrAddFirstDestination(nextDestination);
+                                te.markDirty();
+                                player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
                             }
                             else
                             {
-                                // Replace (or add) the first teleport destination in the dispenser with the player's active one.
-                                dispenserTeleportationHandler.replaceOrAddFirstDestination(activePlayerDestination);
-                                player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + activePlayerDestination.friendlyName + TextFormatting.RESET}));
+                                if (dispenserDestination == null)
+                                {
+                                    player.sendMessage(new TextComponentTranslation("message.td.beacon.destination.set.none"));
+                                }
+                                else
+                                {
+                                    dispenserTeleportationHandler.removeDestination(0);
+                                    te.markDirty();
+                                    player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
+                                }
                             }
                         }
                         else
                         {
                             // Display the dispenser's current teleport destination to the player.
-                            
-                            TeleportDestination dispenserDestination = dispenserTeleportationHandler.getActiveDestination();
-                            
                             if (dispenserDestination == null)
                             {
                                 player.sendMessage(new TextComponentTranslation("message.td.dispenser.beacon.none"));
