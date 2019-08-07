@@ -15,8 +15,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 /**
  * @author WilliHay
  * 
- * PacketUpdateTeleportBeacon - sent from server to client to update the active status stored in the teleport beacon on the client,
- * used whenever the status changes on the server
+ * PacketUpdateTeleportBeacon - sent from server to client to update the stored status and teleport direction
+ * of the teleport beacon on the client; used whenever the status changes on the server
  */
 public class PacketUpdateTeleportBeacon implements IMessage
 {

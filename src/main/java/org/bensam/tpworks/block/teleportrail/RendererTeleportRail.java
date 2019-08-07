@@ -25,7 +25,7 @@ public class RendererTeleportRail extends TileEntitySpecialRenderer<TileEntityTe
         if (!te.isStoredByPlayer())
             return;
         
-        // Render rotating topper item when active.
+        // Render rotating topper item when stored in player's network.
         GlStateManager.enableRescaleNormal();
         GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1f);
         GlStateManager.enableBlend();
@@ -33,7 +33,7 @@ public class RendererTeleportRail extends TileEntitySpecialRenderer<TileEntityTe
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
         GlStateManager.pushMatrix();
 
-        // Item appears on top of beacon.
+        // Item appears on top of rail.
         GlStateManager.translate(x + 0.5D, y + 1.0D, z + 0.5D);
 
         // Item should smoothly rotate around the Y-axis.

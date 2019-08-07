@@ -27,6 +27,8 @@ import net.minecraft.network.play.server.SPacketMoveVehicle;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
@@ -37,6 +39,46 @@ import net.minecraftforge.common.DimensionManager;
  */
 public class TeleportationHelper
 {
+    public static void displayTeleportBlockName(EntityPlayer player, ITeleportationBlock teleportBlock, @Nullable TeleportDestination destination)
+    {
+        if (teleportBlock instanceof TileEntityTeleportBeacon)
+        {
+            if (teleportBlock.getTeleportDirection() == TeleportDirection.RECEIVER)
+            {
+                player.sendMessage(new TextComponentTranslation("message.td.beacon.receiver.display_name", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+            }
+            else
+            {
+                if (destination == null)
+                {
+                    player.sendMessage(new TextComponentTranslation("message.td.beacon.sender.display_name.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+                }
+                else
+                {
+                    player.sendMessage(new TextComponentTranslation("message.td.beacon.sender.display_name.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
+                }
+            }
+        }
+        else if (teleportBlock instanceof TileEntityTeleportRail)
+        {
+            if (teleportBlock.getTeleportDirection() == TeleportDirection.RECEIVER)
+            {
+                player.sendMessage(new TextComponentTranslation("message.td.rail.receiver.display_name", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+            }
+            else
+            {
+                if (destination == null)
+                {
+                    player.sendMessage(new TextComponentTranslation("message.td.rail.sender.display_name.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+                }
+                else
+                {
+                    player.sendMessage(new TextComponentTranslation("message.td.rail.sender.display_name.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
+                }
+            }
+        }
+    }
+    
     @Nullable
     public static BlockPos findSafeTeleportPosNearBed(int dimension, BlockPos bedPos)
     {
@@ -113,23 +155,25 @@ public class TeleportationHelper
                 }
             }
             
-            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> d.destinationType == blockType) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
-            TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);
+            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (d.direction == direction && d.destinationType == blockType)) : (d-> (d.direction == direction && (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL)));
+            return teleportationHandler.getNextDestination(afterDestination, filter);
+// TODO: Remove this block if new filter works out...
+//            TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);
             
-            while (destination != null)
-            {
-                World world = ModUtil.getWorldServerForDimension(destination.dimension);
-                TileEntity te = world.getTileEntity(destination.position);
-                if (te instanceof ITeleportationBlock)
-                {
-                    if (direction == ((ITeleportationBlock) te).getTeleportDirection())
-                    {
-                        return destination;
-                    }
-                }
-                
-                destination = teleportationHandler.getNextDestination(destination, filter);
-            }
+//            while (destination != null)
+//            {
+//                World world = ModUtil.getWorldServerForDimension(destination.dimension);
+//                TileEntity te = world.getTileEntity(destination.position);
+//                if (te instanceof ITeleportationBlock)
+//                {
+//                    if (direction == ((ITeleportationBlock) te).getTeleportDirection())
+//                    {
+//                        return destination;
+//                    }
+//                }
+//                
+//                destination = teleportationHandler.getNextDestination(destination, filter);
+//            }
         }
         
         return null;
@@ -201,6 +245,14 @@ public class TeleportationHelper
         BlockPos safePos = null;
         float rotationYaw = entityToTeleport.rotationYaw;
 
+        // TODO: Check config setting to see how strict we should be about teleporting only to RECEIVER destinations. 
+        // Make sure this destination is a RECEIVER.
+//        if (destination.direction != TeleportDirection.RECEIVER)
+//        {
+//            TeleportationWorks.MOD_LOGGER.warn("Unable to teleport - destination is a SENDER");
+//            return entityToTeleport;
+//        }
+        
         // Calculate a safe position at the teleport destination to which the entity can be teleported.
         switch (destination.destinationType)
         {

@@ -13,6 +13,7 @@ import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
@@ -111,6 +112,9 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             index++;
             TeleportDestination destination = destinations.get(index);
             
+            // Make sure destination has up-to-date information before running any filter tests.
+            validateDestination(null, destination);
+            
             if (filter == null || filter.test(destination))
             {
                 return destination;
@@ -193,7 +197,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             beaconNameFormat = isValid ? TextFormatting.DARK_GREEN : TextFormatting.DARK_GRAY;
         }
         
-        return beaconNameFormat + destination.friendlyName + defaultFormat + " (" + destination.destinationType + " in " + ModUtil.getDimensionName(destination.dimension) + ")";
+        return beaconNameFormat + destination.friendlyName + defaultFormat + " (" + destination.getFormattedType() + " in " + ModUtil.getDimensionName(destination.dimension) + ")";
     }
 
     @Override
@@ -218,7 +222,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     public static String getLongFormattedName(TeleportDestination destination, TextFormatting beaconNameFormat, TextFormatting defaultFormat)
     {
         return beaconNameFormat + destination.friendlyName + defaultFormat 
-                + " (" + destination.destinationType + ") "
+                + " (" + destination.getFormattedType() + ") "
                 + " at {" + destination.position.getX() + ", " 
                 + destination.position.getY() + ", " 
                 + destination.position.getZ() + "} in " 
@@ -556,8 +560,9 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 isValid = !(destination.position.equals(BlockPos.ORIGIN));
                 if (isValid)
                 {
-                    // Make sure friendly name is correct.
-                    destination.friendlyName = ((TileEntityTeleportBeacon)teBeacon).getBeaconName();
+                    // Make sure friendly name and teleport direction are correct.
+                    destination.friendlyName = ((TileEntityTeleportBeacon)teBeacon).getTeleportName();
+                    destination.direction = ((TileEntityTeleportBeacon)teBeacon).getTeleportDirection();
                 }
             }
             break;
@@ -594,8 +599,9 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 isValid = !(destination.position.equals(BlockPos.ORIGIN));
                 if (isValid)
                 {
-                    // Make sure friendly name is correct.
-                    destination.friendlyName = ((TileEntityTeleportRail)teRail).getRailName();
+                    // Make sure friendly name and teleport direction are correct.
+                    destination.friendlyName = ((TileEntityTeleportRail)teRail).getTeleportName();
+                    destination.direction = ((TileEntityTeleportRail)teRail).getTeleportDirection();
                 }
             }
             break;

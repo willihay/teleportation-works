@@ -179,17 +179,16 @@ public class BlockTeleportRail extends BlockRailPowered
         {
             TileEntityTeleportRail te = getTileEntity(world, pos);
             UUID uuid = te.getUniqueID();
-            String name = te.getRailName();
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+            String name = te.getTeleportName();
 
             if (uuid == null || uuid.equals(new UUID(0, 0)) || name == null || name.isEmpty())
             {
                 TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Rail block activated with invalid UUID or name fields. Setting to defaults...");
                 te.setDefaultUUID();
-                te.setRailName(null);
+                te.setTeleportName(null);
                 
                 uuid = te.getUniqueID();
-                name = te.getRailName();
+                name = te.getTeleportName();
             }
             
             if (player.getHeldItem(hand).getItem() == ModItems.TELEPORTATION_WAND)
@@ -199,21 +198,8 @@ public class BlockTeleportRail extends BlockRailPowered
             else
             {
                 // Send the name of the rail to the player if they're not using a teleport wand.
-                if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
-                }
-                else
-                {
-                    if (destination == null)
-                    {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_rail.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
-                    }
-                    else
-                    {
-                        player.sendMessage(new TextComponentTranslation("message.td.show_rail.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, destination.friendlyName}));
-                    }
-                }
+                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                TeleportationHelper.displayTeleportBlockName(player, te, destination);
             }
         }
 
@@ -229,32 +215,33 @@ public class BlockTeleportRail extends BlockRailPowered
         if (!world.isRemote) // running on server
         {
             TileEntityTeleportRail te = getTileEntity(world, pos);
-            String name = te.getRailName();
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
             
             if (player.isSneaking() && player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
             {
                 // Sneak + left-click toggles rail's teleport direction between SENDER and RECEIVER.
-                te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
-                TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
+                TeleportDirection newDirection = te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER; 
+                te.setTeleportDirection(newDirection);
+                
+                // Tell ALL players that the direction has changed.
+                // TODO: remove the single-player message...
+                //TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), newDirection), (EntityPlayerMP) player);
+                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), newDirection));
+                
+                // Update direction of beacon in player's network, if applicable.
+                ITeleportationHandler playerTeleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+                if (playerTeleportationHandler != null)
+                {
+                    TeleportDestination playerDestination = playerTeleportationHandler.getDestinationFromUUID(te.getUniqueID());
+                    if (playerDestination != null)
+                    {
+                        playerDestination.direction = newDirection;
+                    }
+                }
             }
             
             // Send the name of the rail to the player.
-            if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
-            {
-                player.sendMessage(new TextComponentTranslation("message.td.show_rail.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
-            }
-            else
-            {
-                if (destination == null)
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
-                }
-                else
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_rail.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
-                }
-            }
+            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+            TeleportationHelper.displayTeleportBlockName(player, te, destination);
         }
     }
 
@@ -289,10 +276,10 @@ public class BlockTeleportRail extends BlockRailPowered
             if (stack.hasDisplayName())
             {
                 // Make sure rail name is updated with any changes in the item stack (e.g. was renamed in anvil).
-                te.setRailName(stack.getDisplayName());
+                te.setTeleportName(stack.getDisplayName());
             }
 
-            String name = te.getRailName();
+            String name = te.getTeleportName();
             UUID uuid = te.getUniqueID();
             
             if (uuid == null || uuid.equals(new UUID(0, 0)))
@@ -300,8 +287,8 @@ public class BlockTeleportRail extends BlockRailPowered
                 te.setDefaultUUID();
                 if (name == null || name.isEmpty())
                 {
-                    te.setRailName(null); // Set rail name to a default-generated name.
-                    TeleportationWorks.MOD_LOGGER.info("New Teleport Rail placed: name = {}", te.getRailName());
+                    te.setTeleportName(null); // Set rail name to a default-generated name.
+                    TeleportationWorks.MOD_LOGGER.info("New Teleport Rail placed: name = {}", te.getTeleportName());
                 }
             }
             else
@@ -389,7 +376,7 @@ public class BlockTeleportRail extends BlockRailPowered
         ItemStack itemStack = new ItemStack(Item.getItemFromBlock(this));
         
         // Preserve the custom name in the item stack containing this TE block.
-        itemStack.setStackDisplayName(te.getRailName());
+        itemStack.setStackDisplayName(te.getTeleportName());
         
         // Set the BlockEntityTag tag so that Forge will write the TE data when the block is placed in the world again.
         itemStack.setTagInfo("BlockEntityTag", te.serializeNBT());
@@ -406,5 +393,7 @@ public class BlockTeleportRail extends BlockRailPowered
     {
         tooltip.add(I18n.format("tile.teleport_rail.tipLine1", TextFormatting.DARK_GREEN));
         tooltip.add(I18n.format("tile.teleport_rail.tipLine2", TextFormatting.DARK_GREEN));
+        tooltip.add(I18n.format("tile.teleport_rail.tipLine3", TextFormatting.DARK_GREEN));
+        tooltip.add(I18n.format("tile.teleport_rail.tipLine4", TextFormatting.DARK_GREEN));
     }
 }

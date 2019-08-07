@@ -47,6 +47,16 @@ public interface ITeleportationBlock
     void setTeleportDirection(TeleportDirection teleportDirection);
     
     /**
+     * Return the teleport destination display name of this block.
+     */
+    String getTeleportName();
+    
+    /**
+     * Set the teleport destination display name of this block.
+     */
+    void setTeleportName(String name);
+    
+    /**
      * Check if block has been stored in player's teleportation network.
      * (valid on CLIENT only)
      */

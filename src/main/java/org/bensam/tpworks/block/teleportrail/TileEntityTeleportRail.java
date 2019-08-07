@@ -197,15 +197,16 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         markDirty();
     }
 
-    public String getRailName()
+    public String getTeleportName()
     {
         return railName;
     }
 
-    /*
+    /**
+     * Set the teleport destination display name of this block.
      * Passing in a null or empty string will set a random name of the format [A-Z][0-99].
      */
-    public void setRailName(@Nullable String name)
+    public void setTeleportName(@Nullable String name)
     {
         if (name == null || name.isEmpty())
         {
@@ -225,7 +226,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public String getName()
     {
-        return hasCustomName() ? railName : ModBlocks.TELEPORT_RAIL.getTranslationKey();
+        return hasCustomName() ? getTeleportName() : ModBlocks.TELEPORT_RAIL.getTranslationKey();
     }
 
     @Override

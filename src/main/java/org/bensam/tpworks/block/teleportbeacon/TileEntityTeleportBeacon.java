@@ -227,15 +227,16 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         markDirty();
     }
 
-    public String getBeaconName()
+    public String getTeleportName()
     {
         return beaconName;
     }
 
-    /*
+    /**
+     * Set the teleport destination display name of this block.
      * Passing in a null or empty string will set a random name of the format [A-Z][0-99].
      */
-    public void setBeaconName(@Nullable String name)
+    public void setTeleportName(@Nullable String name)
     {
         if (name == null || name.isEmpty())
         {
@@ -255,7 +256,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     @Override
     public String getName()
     {
-        return hasCustomName() ? beaconName : ModBlocks.TELEPORT_BEACON.getTranslationKey();
+        return hasCustomName() ? getTeleportName() : ModBlocks.TELEPORT_BEACON.getTranslationKey();
     }
 
     @Override
@@ -267,6 +268,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     @Override
     public ITextComponent getDisplayName()
     {
-        return this.hasCustomName() ? new TextComponentString(this.getName()) : new TextComponentTranslation(this.getName());
+        return hasCustomName() ? new TextComponentString(getName()) : new TextComponentTranslation(getName());
     }
 }

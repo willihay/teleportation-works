@@ -59,6 +59,9 @@ public class PacketRequestUpdateTeleportRail implements IMessage
                     TeleportDestination destination = teleportationHandler.getDestinationFromUUID(teTeleportRail.getUniqueID());
                     if (destination != null)
                     {
+                        // Run validation on the destination found in the player's network.
+                        teleportationHandler.validateDestination(player, destination);
+                        
                         // Return a packet indicating the rail is stored. 
                         return new PacketUpdateTeleportRail(message.pos, true, teTeleportRail.getTeleportDirection());
                     }

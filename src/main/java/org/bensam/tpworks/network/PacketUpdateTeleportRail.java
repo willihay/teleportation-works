@@ -15,8 +15,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 /**
  * @author WilliHay
  *
- * PacketUpdateTeleportRail - sent from server to client to update the active status stored in the teleport rail on the client,
- * used whenever the status changes on the server
+ * PacketUpdateTeleportRail - sent from server to client to update the stored status and teleport direction
+ * of the teleport rail on the client; used whenever the status changes on the server
  */
 public class PacketUpdateTeleportRail implements IMessage
 {

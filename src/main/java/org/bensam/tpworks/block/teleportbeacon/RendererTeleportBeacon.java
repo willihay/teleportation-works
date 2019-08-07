@@ -25,7 +25,7 @@ public class RendererTeleportBeacon extends TileEntitySpecialRenderer<TileEntity
         if (!te.isStoredByPlayer())
             return;
 
-        // Render rotating topper item when active.
+        // Render rotating topper item when stored in player's network.
         GlStateManager.enableRescaleNormal();
         GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1f);
         GlStateManager.enableBlend();

@@ -5,6 +5,7 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 
 import org.bensam.tpworks.TeleportationWorks;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 
 import com.google.common.base.MoreObjects;
 
@@ -48,6 +49,7 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
 
     public DestinationType destinationType;
     public int dimension;
+    public TeleportDirection direction;
     public String friendlyName;
     public BlockPos position;
     private UUID uuid;
@@ -67,15 +69,16 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
     
     public TeleportDestination(@Nonnull String friendlyName, DestinationType destinationType, int dimension, @Nonnull BlockPos position)
     {
-        this(UUID.randomUUID(), friendlyName, destinationType, dimension, position);
+        this(UUID.randomUUID(), friendlyName, destinationType, dimension, TeleportDirection.RECEIVER, position);
     }
     
-    public TeleportDestination(@Nonnull UUID uuid, @Nonnull String friendlyName, DestinationType destinationType, int dimension, @Nonnull BlockPos position)
+    public TeleportDestination(@Nonnull UUID uuid, @Nonnull String friendlyName, DestinationType destinationType, int dimension, TeleportDirection direction, @Nonnull BlockPos position)
     {
         this.uuid = uuid;
         this.friendlyName = friendlyName;
         this.destinationType = destinationType;
         this.dimension = dimension;
+        this.direction = direction;
         this.position = position;
         this.flags = 0;
         
@@ -113,6 +116,7 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
     {
         return MoreObjects.toStringHelper(this)
                 .add("Type", destinationType)
+                .add("Direction", direction)
                 .add("UUID", uuid)
                 .add("Name", friendlyName)
                 .add("Dimension", dimension)
@@ -121,6 +125,19 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
                 .toString();
     }
 
+    public String getFormattedType()
+    {
+        switch (destinationType)
+        {
+        case BEACON:
+            return (direction == TeleportDirection.RECEIVER) ? "Beacon" : "Pad";
+        case RAIL:
+            return direction.toString() + " " + destinationType.toString();
+        default:
+            return destinationType.toString();
+        }
+    }
+    
     public UUID getUUID()
     {
         return uuid;
@@ -133,6 +150,7 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger("DestinationType", destinationType.getDestinationValue());
         nbt.setInteger("Dimension", dimension);
+        nbt.setInteger("Direction", direction.getTeleportDirectionValue());
         nbt.setString("FriendlyName", friendlyName);
         nbt.setLong("Position", position.toLong());
         nbt.setUniqueId("UUID", uuid);
@@ -147,6 +165,7 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
         TeleportationWorks.MOD_LOGGER.debug("TeleportDestination.deserializeNBT called for " + nbt.getString("FriendlyName"));
         destinationType = DestinationType.values()[nbt.getInteger("DestinationType")];
         dimension = nbt.getInteger("Dimension");
+        direction = nbt.hasKey("Direction") ? TeleportDirection.values()[nbt.getInteger("Direction")] : TeleportDirection.RECEIVER; // default value supports mod v1
         friendlyName = nbt.getString("FriendlyName");
         position = BlockPos.fromLong(nbt.getLong("Position"));
         uuid = nbt.getUniqueId("UUID");

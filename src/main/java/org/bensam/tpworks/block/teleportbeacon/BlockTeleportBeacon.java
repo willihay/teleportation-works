@@ -9,6 +9,7 @@ import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
+import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
@@ -149,26 +150,27 @@ public class BlockTeleportBeacon extends Block
         {
             TileEntityTeleportBeacon te = getTileEntity(world, pos);
             UUID uuid = te.getUniqueID();
-            String name = te.getBeaconName();
+            String name = te.getTeleportName();
 
             if (uuid == null || uuid.equals(new UUID(0, 0)) || name == null || name.isEmpty())
             {
                 TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Beacon block activated with invalid UUID or name fields. Setting to defaults...");
                 te.setDefaultUUID();
-                te.setBeaconName(null);
+                te.setTeleportName(null);
                 
                 uuid = te.getUniqueID();
-                name = te.getBeaconName();
+                name = te.getTeleportName();
             }
             
             // Send the name of the beacon to the player if they're not using a teleport wand.
             if (player.getHeldItem(hand).getItem() != ModItems.TELEPORTATION_WAND)
             {
-                player.sendMessage(new TextComponentTranslation("message.td.show", new Object[] {TextFormatting.DARK_GREEN + name}));
+                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                TeleportationHelper.displayTeleportBlockName(player, te, destination);
             }
         }
 
-        return true; // Always return true because there's no GUI, and the more complex activation logic depends on the item used (e.g. teleport wand).
+        return true; // Always return true because there's no GUI, and the more complex destination storage logic depends on the item used (e.g. teleport wand).
     }
 
     /**
@@ -180,32 +182,33 @@ public class BlockTeleportBeacon extends Block
         if (!world.isRemote) // running on server
         {
             TileEntityTeleportBeacon te = getTileEntity(world, pos);
-            String name = te.getBeaconName();
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
             
             if (player.isSneaking() && player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
             {
                 // Sneak + left-click toggles beacon's teleport direction between SENDER and RECEIVER.
-                te.setTeleportDirection(te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER);
-                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), te.getTeleportDirection()), (EntityPlayerMP) player);
+                TeleportDirection newDirection = te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER; 
+                te.setTeleportDirection(newDirection);
+
+                // Tell ALL players that the direction has changed.
+                // TODO: remove the single-player message...
+                //TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), newDirection), (EntityPlayerMP) player);
+                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), newDirection));
+                
+                // Update direction of beacon in player's network, if applicable.
+                ITeleportationHandler playerTeleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+                if (playerTeleportationHandler != null)
+                {
+                    TeleportDestination playerDestination = playerTeleportationHandler.getDestinationFromUUID(te.getUniqueID());
+                    if (playerDestination != null)
+                    {
+                        playerDestination.direction = newDirection;
+                    }
+                }
             }
             
             // Send the name of the beacon to the player.
-            if (te.getTeleportDirection() == TeleportDirection.RECEIVER)
-            {
-                player.sendMessage(new TextComponentTranslation("message.td.show_beacon.receiver", new Object[] {TextFormatting.DARK_GREEN + name}));
-            }
-            else
-            {
-                if (destination == null)
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_beacon.no_destination", new Object[] {TextFormatting.DARK_GREEN + name}));
-                }
-                else
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.show_beacon.with_destination", new Object[] {TextFormatting.DARK_GREEN + name, TextFormatting.DARK_GREEN + destination.friendlyName}));
-                }
-            }
+            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+            TeleportationHelper.displayTeleportBlockName(player, te, destination);
         }
     }
 
@@ -239,10 +242,10 @@ public class BlockTeleportBeacon extends Block
             if (stack.hasDisplayName())
             {
                 // Make sure beacon name is updated with any changes in the item stack (e.g. was renamed in anvil).
-                te.setBeaconName(stack.getDisplayName());
+                te.setTeleportName(stack.getDisplayName());
             }
 
-            String name = te.getBeaconName();
+            String name = te.getTeleportName();
             UUID uuid = te.getUniqueID();
             
             if (uuid == null || uuid.equals(new UUID(0, 0)))
@@ -250,8 +253,8 @@ public class BlockTeleportBeacon extends Block
                 te.setDefaultUUID();
                 if (name == null || name.isEmpty())
                 {
-                    te.setBeaconName(null); // Set beacon name to a default-generated name.
-                    TeleportationWorks.MOD_LOGGER.info("New Teleport Beacon placed: name = {}", te.getBeaconName());
+                    te.setTeleportName(null); // Set beacon name to a default-generated name.
+                    TeleportationWorks.MOD_LOGGER.info("New Teleport Beacon placed: name = {}", te.getTeleportName());
                 }
             }
             else
@@ -270,7 +273,7 @@ public class BlockTeleportBeacon extends Block
                         {
                             TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, true, te.getTeleportDirection()), (EntityPlayerMP) placer);
                         }
-                        placer.sendMessage(new TextComponentTranslation("message.td.found", new Object[] {TextFormatting.DARK_GREEN + name}));
+                        placer.sendMessage(new TextComponentTranslation("message.td.beacon.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
@@ -338,7 +341,7 @@ public class BlockTeleportBeacon extends Block
         ItemStack itemStack = new ItemStack(Item.getItemFromBlock(this));
         
         // Preserve the custom name in the item stack containing this TE block.
-        itemStack.setStackDisplayName(te.getBeaconName());
+        itemStack.setStackDisplayName(te.getTeleportName());
         
         // Set the BlockEntityTag tag so that Forge will write the TE data when the block is placed in the world again.
         itemStack.setTagInfo("BlockEntityTag", te.serializeNBT());
@@ -355,5 +358,7 @@ public class BlockTeleportBeacon extends Block
     {
         tooltip.add(I18n.format("tile.teleport_beacon.tipLine1", TextFormatting.DARK_GREEN));
         tooltip.add(I18n.format("tile.teleport_beacon.tipLine2", TextFormatting.DARK_GREEN));
+        tooltip.add(I18n.format("tile.teleport_beacon.tipLine3", TextFormatting.DARK_GREEN));
+        tooltip.add(I18n.format("tile.teleport_beacon.tipLine4", TextFormatting.DARK_GREEN));
     }
 }

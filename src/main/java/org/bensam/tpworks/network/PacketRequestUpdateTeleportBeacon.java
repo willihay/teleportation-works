@@ -59,6 +59,9 @@ public class PacketRequestUpdateTeleportBeacon implements IMessage
                     TeleportDestination destination = teleportationHandler.getDestinationFromUUID(teTeleportBeacon.getUniqueID());
                     if (destination != null)
                     {
+                        // Run validation on the destination found in the player's network.
+                        teleportationHandler.validateDestination(player, destination);
+                        
                         // Return a packet indicating the beacon is stored. 
                         return new PacketUpdateTeleportBeacon(message.pos, true, teTeleportBeacon.getTeleportDirection());
                     }
