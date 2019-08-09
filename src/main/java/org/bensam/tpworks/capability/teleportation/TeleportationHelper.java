@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
@@ -12,6 +13,7 @@ import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
+import org.bensam.tpworks.item.ItemTeleportationBow;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -136,6 +138,59 @@ public class TeleportationHelper
     }
 
     /**
+     * Get the active destination for the specified entity. Will validate too if requested.
+     * Returns null if the entity doesn't have an active destination or doesn't have the teleportation capability.
+     */
+    @Nullable
+    public static TeleportDestination getActiveDestination(Entity entity, boolean validate)
+    {
+        TeleportDestination activeDestination = null;
+        
+        ITeleportationHandler teleportationHandler = entity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+        if (teleportationHandler != null)
+        {
+            if (entity instanceof EntityLivingBase && ((EntityLivingBase) entity).getHeldItemMainhand().getItem() instanceof ItemTeleportationBow)
+            {
+                activeDestination = teleportationHandler.getSpecialDestination();
+            }
+            else
+            {
+                activeDestination = teleportationHandler.getActiveDestination();
+            }
+            
+            if (validate && activeDestination != null)
+            {
+                teleportationHandler.validateDestination(entity, activeDestination);
+            }
+        }
+        
+        return activeDestination;
+    }
+    
+    /**
+     * Get the active teleport destination for the specified tile entity. Will validate too if requested.
+     * Returns null if the TE doesn't have an active destination or doesn't have the teleportation capability.
+     */
+    @Nullable
+    public static TeleportDestination getActiveDestination(TileEntity tileEntity, boolean validate)
+    {
+        TeleportDestination activeDestination = null;
+        
+        ITeleportationHandler teleportationHandler = tileEntity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+        if (teleportationHandler != null)
+        {
+            activeDestination = teleportationHandler.getActiveDestination();
+            
+            if (validate && activeDestination != null)
+            {
+                teleportationHandler.validateDestination((Entity) null, activeDestination);
+            }
+        }
+        
+        return activeDestination;
+    }
+    
+    /**
      * Get the NEXT teleport block of the specified direction and type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
      * If blockType is null, any Beacon or Rail of the specified direction will match.
      * Returns null if the end of the list is reached and no blocks of the specified direction and type have been found.
@@ -157,23 +212,6 @@ public class TeleportationHelper
             
             Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (d.direction == direction && d.destinationType == blockType)) : (d-> (d.direction == direction && (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL)));
             return teleportationHandler.getNextDestination(afterDestination, filter);
-// TODO: Remove this block if new filter works out...
-//            TeleportDestination destination = teleportationHandler.getNextDestination(afterDestination, filter);
-            
-//            while (destination != null)
-//            {
-//                World world = ModUtil.getWorldServerForDimension(destination.dimension);
-//                TileEntity te = world.getTileEntity(destination.position);
-//                if (te instanceof ITeleportationBlock)
-//                {
-//                    if (direction == ((ITeleportationBlock) te).getTeleportDirection())
-//                    {
-//                        return destination;
-//                    }
-//                }
-//                
-//                destination = teleportationHandler.getNextDestination(destination, filter);
-//            }
         }
         
         return null;
@@ -200,17 +238,10 @@ public class TeleportationHelper
      */
     public static Entity teleportOther(Entity entityToTeleport, TileEntity tileEntityInitiatingTeleport)
     {
-        ITeleportationHandler teleportationHandler = tileEntityInitiatingTeleport.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
-        if (teleportationHandler != null)
+        TeleportDestination activeDestination = getActiveDestination(tileEntityInitiatingTeleport, true);
+        if (activeDestination != null)
         {
-            TeleportDestination activeTeleportDestination = teleportationHandler.getActiveDestination();
-            if (activeTeleportDestination != null)
-            {
-                if (teleportationHandler.validateDestination((Entity) null, activeTeleportDestination))
-                {
-                    return teleport(entityToTeleport, activeTeleportDestination);
-                }
-            }
+            return teleport(entityToTeleport, activeDestination);
         }
         
         return entityToTeleport;
@@ -221,17 +252,10 @@ public class TeleportationHelper
      */
     public static Entity teleportOther(Entity entityToTeleport, Entity entityInitiatingTeleport)
     {
-        ITeleportationHandler teleportationHandler = entityInitiatingTeleport.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
-        if (teleportationHandler != null)
+        TeleportDestination activeDestination = getActiveDestination(entityInitiatingTeleport, true);
+        if (activeDestination != null)
         {
-            TeleportDestination activeTeleportDestination = teleportationHandler.getActiveDestination();
-            if (activeTeleportDestination != null)
-            {
-                if (teleportationHandler.validateDestination(entityInitiatingTeleport, activeTeleportDestination))
-                {
-                    return teleport(entityToTeleport, activeTeleportDestination);
-                }
-            }
+            return teleport(entityToTeleport, activeDestination);
         }
         
         return entityToTeleport;
@@ -245,14 +269,6 @@ public class TeleportationHelper
         BlockPos safePos = null;
         float rotationYaw = entityToTeleport.rotationYaw;
 
-        // TODO: Check config setting to see how strict we should be about teleporting only to RECEIVER destinations. 
-        // Make sure this destination is a RECEIVER.
-//        if (destination.direction != TeleportDirection.RECEIVER)
-//        {
-//            TeleportationWorks.MOD_LOGGER.warn("Unable to teleport - destination is a SENDER");
-//            return entityToTeleport;
-//        }
-        
         // Calculate a safe position at the teleport destination to which the entity can be teleported.
         switch (destination.destinationType)
         {

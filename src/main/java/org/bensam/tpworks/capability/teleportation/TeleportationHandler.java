@@ -43,6 +43,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     
     protected LinkedList<TeleportDestination> destinations = new LinkedList<TeleportDestination>();
     protected int activeDestinationIndex = -1;
+    protected TeleportDestination specialDestination = null;
     
     public TeleportationHandler()
     {
@@ -75,6 +76,20 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             return null;
     }
     
+    
+    @Override
+    @Nullable
+    public TeleportDestination getSpecialDestination()
+    {
+        return specialDestination;
+    }
+
+    @Override
+    public void setSpecialDestination(TeleportDestination destination)
+    {
+        specialDestination = destination;
+    }
+
     @Override
     @Nullable
     public TeleportDestination getNextDestination(@Nullable TeleportDestination afterDestination, @Nullable Predicate<TeleportDestination> filter)
@@ -89,27 +104,28 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     @Nullable
     public TeleportDestination getNextDestination(@Nullable Integer afterIndex, @Nullable Predicate<TeleportDestination> filter)
     {
-        if (destinations.size() == 0 || activeDestinationIndex < 0)
+        int destinationCount = destinations.size();
+        
+        if (destinationCount == 0 || activeDestinationIndex < 0)
             return null;
         
         int index = 0;
         
-        if (afterIndex == null || afterIndex.intValue() == -1)
+        if (afterIndex == null || afterIndex <= -1)
         {
             index = activeDestinationIndex;
         }
-        else if (afterIndex >= 0 && afterIndex < (destinations.size() - 1))
+        else if (afterIndex < (destinationCount - 1))
         {
-            index = afterIndex.intValue();
+            index = afterIndex.intValue() + 1;
         }
         else
         {
             return null;
         }
         
-        do
+        while (index < destinationCount)
         {
-            index++;
             TeleportDestination destination = destinations.get(index);
             
             // Make sure destination has up-to-date information before running any filter tests.
@@ -119,7 +135,9 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             {
                 return destination;
             }
-        } while (index < destinations.size());
+            
+            index++;
+        }
         
         return null;
     }
@@ -641,6 +659,11 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         }
         compound.setTag("destinations", nbtTagList);
 
+        if (specialDestination != null)
+        {
+            compound.setTag("specialDestination", specialDestination.serializeNBT());
+        }
+        
         return compound;
     }
 
@@ -665,6 +688,11 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 NBTTagCompound destinationTag = nbtTagList.getCompoundTagAt(i);
                 this.replaceOrAddDestination(new TeleportDestination(destinationTag));
             }
+        }
+        
+        if (compound.hasKey("specialDestination"))
+        {
+            specialDestination = new TeleportDestination(compound.getCompoundTag("specialDestination"));
         }
     }
     

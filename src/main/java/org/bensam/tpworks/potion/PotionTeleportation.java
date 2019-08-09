@@ -1,6 +1,9 @@
 package org.bensam.tpworks.potion;
 
+import javax.annotation.Nonnull;
+
 import org.bensam.tpworks.TeleportationWorks;
+import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 
 import net.minecraft.entity.Entity;
@@ -37,7 +40,7 @@ public class PotionTeleportation extends Potion
      * Called when entity is affected by a Splash Potion of Teleportation or hit by an Arrow of Teleportation
      * thrown by a TileEntity (e.g. dispenser).
      */
-    public Entity affectEntity(Entity source, TileEntity indirectSource, Entity entityAffected)
+    public Entity affectEntity(Entity source, @Nonnull TileEntity indirectSource, @Nonnull Entity entityAffected, @Nonnull TeleportDestination destination)
     {
         TeleportationWorks.MOD_LOGGER.info("PotionTeleportation.affectEntity {} from {} at {}", 
                 entityAffected.getDisplayName().getFormattedText(),
@@ -48,7 +51,7 @@ public class PotionTeleportation extends Potion
         
         if (!world.isRemote) // running on server
         {
-            return TeleportationHelper.teleportOther(entityAffected, indirectSource);
+            return TeleportationHelper.teleport(entityAffected, destination);
         }
         
         return entityAffected;
@@ -58,7 +61,7 @@ public class PotionTeleportation extends Potion
      * Called when entity is affected by a Splash Potion of Teleportation or hit by an Arrow of Teleportation
      * thrown/shot by a living entity (e.g. player).
      */
-    public Entity affectEntity(Entity source, Entity indirectSource, Entity entityAffected)
+    public Entity affectEntity(Entity source, @Nonnull Entity indirectSource, @Nonnull Entity entityAffected, @Nonnull TeleportDestination destination)
     {
         TeleportationWorks.MOD_LOGGER.info("PotionTeleportation.affectEntity {} from {} at {}", 
                 entityAffected.getDisplayName().getFormattedText(),
@@ -69,7 +72,7 @@ public class PotionTeleportation extends Potion
         
         if (!world.isRemote) // running on server
         {
-            return TeleportationHelper.teleportOther(entityAffected, indirectSource);
+            return TeleportationHelper.teleport(entityAffected, destination);
         }
         
         return entityAffected;

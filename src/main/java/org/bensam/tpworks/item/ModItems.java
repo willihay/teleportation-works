@@ -23,6 +23,7 @@ public class ModItems
 {
     public static final ItemGeneric ENDER_EYE_SHARD = null;
     public static final ItemGeneric ENDER_EYE_TRANSLUCENT = null;
+    public static final ItemTeleportationBow TELEPORTATION_BOW = null;
     public static final ItemTeleportationWand TELEPORTATION_WAND = null;
     public static final ItemTeleportationSplashPotion TELEPORTATION_SPLASH_POTION = null;
     public static final ItemTeleportationSplashPotion TELEPORTATION_SPLASH_POTION_EXTENDED = null;
@@ -32,6 +33,7 @@ public class ModItems
     {
         registry.register(new ItemGeneric("ender_eye_shard", true));
         registry.register(new ItemGeneric("ender_eye_translucent", false));
+        registry.register(new ItemTeleportationBow("teleportation_bow"));
         registry.register(new ItemTeleportationWand("teleportation_wand"));
         registry.register(new ItemTeleportationSplashPotion("teleportation_splash_potion", false));
         registry.register(new ItemTeleportationSplashPotion("teleportation_splash_potion_extended", true));
@@ -45,6 +47,7 @@ public class ModItems
                 {
                     ENDER_EYE_SHARD,
                     ENDER_EYE_TRANSLUCENT,
+                    TELEPORTATION_BOW,
                     TELEPORTATION_WAND,
                     TELEPORTATION_SPLASH_POTION,
                     TELEPORTATION_SPLASH_POTION_EXTENDED,

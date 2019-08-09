@@ -39,6 +39,16 @@ public interface ITeleportationHandler
     TeleportDestination getActiveDestination();
     
     /**
+     * Returns the special-purpose TeleportDestination.
+     */
+    TeleportDestination getSpecialDestination();
+    
+    /**
+     * Sets a special-purpose TeleportDestination.
+     */
+    void setSpecialDestination(TeleportDestination destination);
+    
+    /**
      * Returns the TeleportDestination with the UUID specified (or null if it cannot be found).
      */
     TeleportDestination getDestinationFromUUID(UUID uuid);

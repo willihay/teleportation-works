@@ -1,5 +1,7 @@
 package org.bensam.tpworks.entity;
 
+import org.bensam.tpworks.capability.teleportation.TeleportDestination;
+import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.potion.ModPotions;
 import org.bensam.tpworks.potion.PotionTeleportation;
@@ -19,6 +21,7 @@ import net.minecraft.world.World;
 public class EntityTeleportationTippedArrow extends EntityTippedArrow
 {
     protected TileEntity sourceTileEntity;
+    protected TeleportDestination teleportDestination;
     
     public EntityTeleportationTippedArrow(World world)
     {
@@ -28,6 +31,11 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
     public EntityTeleportationTippedArrow(World world, EntityLivingBase shooter)
     {
         super(world, shooter);
+        
+        if (shooter != null)
+        {
+            teleportDestination = TeleportationHelper.getActiveDestination(shooter, true);
+        }
     }
 
     public EntityTeleportationTippedArrow(World world, double x, double y, double z)
@@ -38,7 +46,13 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
     public EntityTeleportationTippedArrow(World world, double x, double y, double z, IBlockSource source)
     {
         super(world, x, y, z);
+        
         sourceTileEntity = source.getBlockTileEntity();
+        if (sourceTileEntity != null)
+        {
+            teleportDestination = TeleportationHelper.getActiveDestination(sourceTileEntity, true);
+        }
+        
     }
 
     public TileEntity getSourceTileEntity()
@@ -62,13 +76,13 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
             PotionTeleportation potion = ModPotions.TELEPORTATION_POTION;
             Entity shooter = this.shootingEntity;
 
-            if (shooter != null)
+            if (shooter != null && teleportDestination != null)
             {
-                potion.affectEntity(this, shooter, entityHit);
+                potion.affectEntity(this, shooter, entityHit, teleportDestination);
             }
-            else if (sourceTileEntity != null)
+            else if (sourceTileEntity != null && teleportDestination != null)
             {
-                potion.affectEntity(this, sourceTileEntity, entityHit);
+                potion.affectEntity(this, sourceTileEntity, entityHit, teleportDestination);
             }
         }
     }
@@ -79,4 +93,17 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
         return new ItemStack(ModItems.TELEPORTATION_TIPPED_ARROW);
     }
 
+    @Override
+    public void shoot(Entity shooter, float pitch, float yaw, float p_184547_4_, float velocity, float inaccuracy)
+    {
+        // TODO Auto-generated method stub
+        super.shoot(shooter, pitch, yaw, p_184547_4_, velocity, inaccuracy);
+    }
+
+    @Override
+    public void shoot(double x, double y, double z, float velocity, float inaccuracy)
+    {
+        // TODO Auto-generated method stub
+        super.shoot(x, y, z, velocity, inaccuracy);
+    }
 }

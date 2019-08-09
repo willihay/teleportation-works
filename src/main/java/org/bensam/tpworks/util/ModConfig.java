@@ -76,7 +76,7 @@ public final class ModConfig
         public boolean addItemsToSpawnChest = false;
         
         public enum CraftingDifficulty { NORMAL, HARD };
-        @Comment("HARD difficulty requires an Eye of Ender instead of an Ender Pearl in wands and beacons")
+        @Comment("HARD difficulty requires an Eye of Ender instead of an Ender Pearl in wands, bows, and beacons")
         @LangKey(LANG_PREFIX + ".world.crafting_difficulty")
         public CraftingDifficulty craftingDifficulty = CraftingDifficulty.NORMAL;
     }

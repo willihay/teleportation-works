@@ -1,0 +1,6 @@
+{
+    "parent": "tpworks:item/teleportation_bow",
+    "textures": {
+        "layer0": "tpworks:items/teleportation_bow_pulling_1"
+    }
+}

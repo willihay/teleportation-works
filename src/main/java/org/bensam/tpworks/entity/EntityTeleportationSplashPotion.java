@@ -7,7 +7,11 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
+import org.bensam.tpworks.capability.teleportation.TeleportDestination;
+import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
+import org.bensam.tpworks.item.ItemTeleportationBow;
 import org.bensam.tpworks.item.ItemTeleportationSplashPotion;
 import org.bensam.tpworks.potion.ModPotions;
 import org.bensam.tpworks.potion.PotionTeleportation;
@@ -44,6 +48,7 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
     protected TileEntity sourceTileEntity;
     protected Vec3d splashRange = ItemTeleportationSplashPotion.NORMAL_RANGE;
     protected boolean setDeadNextUpdate; // avoids "index out of bounds" exception when this splash potion causes another entity to be removed immediately from a World entity list
+    protected TeleportDestination teleportDestination;
     
     public EntityTeleportationSplashPotion(World world)
     {
@@ -53,7 +58,13 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
     public EntityTeleportationSplashPotion(World world, double x, double y, double z, IBlockSource source, boolean rangeExtended)
     {
         super(world, x, y, z);
+        
         sourceTileEntity = source.getBlockTileEntity();
+        if (sourceTileEntity != null)
+        {
+            teleportDestination = TeleportationHelper.getActiveDestination(sourceTileEntity, true);
+        }
+        
         if (rangeExtended)
         {
             splashRange = ItemTeleportationSplashPotion.EXTENDED_RANGE;
@@ -63,6 +74,12 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
     public EntityTeleportationSplashPotion(World world, EntityLivingBase thrower, boolean rangeExtended)
     {
         super(world, thrower);
+        
+        if (thrower != null)
+        {
+            teleportDestination = TeleportationHelper.getActiveDestination(thrower, true);
+        }
+        
         if (rangeExtended)
         {
             splashRange = ItemTeleportationSplashPotion.EXTENDED_RANGE;
@@ -172,13 +189,13 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
                 boolean hasPassengers = riderMap.containsValue(entityToTeleport);
 
                 EntityLivingBase thrower = this.getThrower();
-                if (thrower != null)
+                if (thrower != null && teleportDestination != null)
                 {
-                    teleportedEntity = potion.affectEntity(this, thrower, entityToTeleport);
+                    teleportedEntity = potion.affectEntity(this, thrower, entityToTeleport, teleportDestination);
                 }
-                else if (sourceTileEntity != null)
+                else if (sourceTileEntity != null && teleportDestination != null)
                 {
-                    teleportedEntity = potion.affectEntity(this, sourceTileEntity, entityToTeleport);
+                    teleportedEntity = potion.affectEntity(this, sourceTileEntity, entityToTeleport, teleportDestination);
                 }
                 
                 // Non-player entities get cloned when they teleport across dimensions.
