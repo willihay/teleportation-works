@@ -63,12 +63,12 @@ public class PacketRequestUpdateTeleportBeacon implements IMessage
                         teleportationHandler.validateDestination(player, destination);
                         
                         // Return a packet indicating the beacon is stored. 
-                        return new PacketUpdateTeleportBeacon(message.pos, true, teTeleportBeacon.getTeleportDirection());
+                        return new PacketUpdateTeleportBeacon(message.pos, Boolean.TRUE, Boolean.valueOf(teTeleportBeacon.isSender()));
                     }
                     else
                     {
                         // Return a packet indicating the beacon is not stored for this player. 
-                        return new PacketUpdateTeleportBeacon(message.pos, false, teTeleportBeacon.getTeleportDirection());
+                        return new PacketUpdateTeleportBeacon(message.pos, Boolean.FALSE, Boolean.valueOf(teTeleportBeacon.isSender()));
                     }
                 }
             }

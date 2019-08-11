@@ -1,7 +1,8 @@
 package org.bensam.tpworks.network;
 
+import javax.annotation.Nullable;
+
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -15,34 +16,20 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 /**
  * @author WilliHay
  * 
- * PacketUpdateTeleportBeacon - sent from server to client to update the stored status and teleport direction
+ * PacketUpdateTeleportBeacon - sent from server to client to update the stored and sender status
  * of the teleport beacon on the client; used whenever the status changes on the server
  */
 public class PacketUpdateTeleportBeacon implements IMessage
 {
     private BlockPos pos;
-    private int isStored;
-    private int teleportDirection;
+    private int isStored; // -1: no change; 0: false; 1: true
+    private int isSender; // -1: no change; 0: false; 1: true
 
-    public PacketUpdateTeleportBeacon(BlockPos pos, boolean isStored)
+    public PacketUpdateTeleportBeacon(BlockPos pos, @Nullable Boolean isStored, @Nullable Boolean isSender)
     {
         this.pos = pos;
-        this.isStored = isStored ? 1 : 0;
-        this.teleportDirection = -1; // indicates no change is being made to direction
-    }
-
-    public PacketUpdateTeleportBeacon(BlockPos pos, TeleportDirection teleportDirection)
-    {
-        this.pos = pos;
-        this.isStored = -1; // indicates no change is being made to storage
-        this.teleportDirection = teleportDirection.getTeleportDirectionValue();
-    }
-
-    public PacketUpdateTeleportBeacon(BlockPos pos, boolean isStored, TeleportDirection teleportDirection)
-    {
-        this.pos = pos;
-        this.isStored = isStored ? 1 : 0;
-        this.teleportDirection = teleportDirection.getTeleportDirectionValue();
+        this.isStored = isStored == null ? -1 : (isStored.booleanValue() ? 1 : 0);
+        this.isSender = isSender == null ? -1 : (isSender.booleanValue() ? 1 : 0);
     }
     
     /*
@@ -70,9 +57,10 @@ public class PacketUpdateTeleportBeacon implements IMessage
                         teTeleportBeacon.setStoredByPlayer(message.isStored != 0);
                     }
                     
-                    if (message.teleportDirection >= 0)
+                    if (message.isSender >= 0)
                     {
-                        teTeleportBeacon.setTeleportDirection(TeleportDirection.values()[message.teleportDirection]);
+                        teTeleportBeacon.setSender(message.isSender != 0);
+                        world.markBlockRangeForRenderUpdate(message.pos, message.pos);
                     }
                 }
             });
@@ -85,16 +73,15 @@ public class PacketUpdateTeleportBeacon implements IMessage
     public void fromBytes(ByteBuf buf)
     {
         pos = BlockPos.fromLong(buf.readLong());
-        isStored = buf.readInt();
-        teleportDirection = buf.readInt();
+        isStored = (int) (buf.readByte());
+        isSender = (int) (buf.readByte());
     }
 
     @Override
     public void toBytes(ByteBuf buf)
     {
         buf.writeLong(pos.toLong());
-        buf.writeInt(isStored);
-        buf.writeInt(teleportDirection);
+        buf.writeByte(isStored);
+        buf.writeByte(isSender);
     }
-
 }

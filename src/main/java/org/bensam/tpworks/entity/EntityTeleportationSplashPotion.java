@@ -7,11 +7,8 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
-import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.item.ItemTeleportationBow;
 import org.bensam.tpworks.item.ItemTeleportationSplashPotion;
 import org.bensam.tpworks.potion.ModPotions;
 import org.bensam.tpworks.potion.PotionTeleportation;

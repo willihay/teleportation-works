@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportrail.BlockTeleportRail;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
@@ -259,7 +260,9 @@ public class ItemTeleportationWand extends Item
                             if (nextDestination != null)
                             {
                                 te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
+                                te.setSender(true);
                                 te.markDirty();
+                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.TRUE));
                                 player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
                             }
                             else
@@ -271,10 +274,14 @@ public class ItemTeleportationWand extends Item
                                 else
                                 {
                                     te.teleportationHandler.removeDestination(0);
+                                    te.setSender(false);
                                     te.markDirty();
+                                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.FALSE));
                                     player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                                 }
                             }
+                            
+                            //world.setBlockState(pos, world.getBlockState(pos).withProperty(BlockTeleportRail.SENDER, te.isSender()));
                         }
                     }
                     else
@@ -285,7 +292,7 @@ public class ItemTeleportationWand extends Item
                             playerTeleportationHandler.removeDestination(uuid);
                             
                             // Send a packet update so the client can get word that this rail is no longer stored for this player.
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), false, te.getTeleportDirection()), (EntityPlayerMP) player);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), Boolean.FALSE, null), (EntityPlayerMP) player);
                             player.sendMessage(new TextComponentTranslation("message.td.rail.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                         }
                         else
@@ -297,7 +304,7 @@ public class ItemTeleportationWand extends Item
                                 if (playerTeleportationHandler.replaceOrAddDestination(railDestination))
                                 {
                                     // Send a packet update so the client can get word that this rail is stored for this player.
-                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), true, te.getTeleportDirection()), (EntityPlayerMP) player);
+                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), Boolean.TRUE, null), (EntityPlayerMP) player);
                                     player.sendMessage(new TextComponentTranslation("message.td.rail.add.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                                 }
                             }
@@ -329,7 +336,9 @@ public class ItemTeleportationWand extends Item
                             if (nextDestination != null)
                             {
                                 te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
+                                te.setSender(true);
                                 te.markDirty();
+                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.TRUE));
                                 player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
                             }
                             else
@@ -341,7 +350,9 @@ public class ItemTeleportationWand extends Item
                                 else
                                 {
                                     te.teleportationHandler.removeDestination(0);
+                                    te.setSender(false);
                                     te.markDirty();
+                                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.FALSE));
                                     player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                                 }
                             }
@@ -356,7 +367,7 @@ public class ItemTeleportationWand extends Item
                             playerTeleportationHandler.removeDestination(uuid);
                             
                             // Send a packet update so the client can get word that this beacon is no longer stored for this player.
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), false, te.getTeleportDirection()), (EntityPlayerMP) player);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), Boolean.FALSE, null), (EntityPlayerMP) player);
                             player.sendMessage(new TextComponentTranslation("message.td.beacon.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                         }
                         else
@@ -368,7 +379,7 @@ public class ItemTeleportationWand extends Item
                                 if (playerTeleportationHandler.replaceOrAddDestination(beaconDestination))
                                 {
                                     // Send a packet update so the client can get word that this beacon is stored for this player.
-                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), true, te.getTeleportDirection()), (EntityPlayerMP) player);
+                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), Boolean.TRUE, null), (EntityPlayerMP) player);
                                     player.sendMessage(new TextComponentTranslation("message.td.beacon.add.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                                 }
                             }

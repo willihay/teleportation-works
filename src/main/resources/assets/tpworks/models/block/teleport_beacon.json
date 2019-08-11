@@ -3,10 +3,10 @@
     "ambientocclusion": false,
     "textures": {
         "particle": "tpworks:blocks/beacon_obsidian_base",
-        "beacon_obsidian_base": "tpworks:blocks/beacon_obsidian_base_lit",
+        "beacon_obsidian_base": "tpworks:blocks/beacon_obsidian_base",
         "stonebrick": "minecraft:blocks/stonebrick",
         "stone": "minecraft:blocks/stone",
-        "lapis_block": "tpworks:blocks/lapis_block_lit"
+        "lapis_block": "minecraft:blocks/lapis_block"
     },
     "display": {
         "gui": {

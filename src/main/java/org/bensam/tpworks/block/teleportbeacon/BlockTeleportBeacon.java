@@ -10,7 +10,6 @@ import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.sound.ModSounds;
@@ -20,7 +19,9 @@ import org.bensam.tpworks.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockFaceShape;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -40,8 +41,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -51,6 +54,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 public class BlockTeleportBeacon extends Block
 {
+    public static final PropertyBool SENDER = PropertyBool.create("sender");
     protected static final AxisAlignedBB BLOCK_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D);
     
     public BlockTeleportBeacon(@Nonnull String name)
@@ -61,6 +65,7 @@ public class BlockTeleportBeacon extends Block
         ModSetup.setCreativeTab(this);
         setHardness(5.0F); // enchantment table = 5.0F
         setResistance(2000.F); // enchantment table = 2000.F
+        setDefaultState(this.blockState.getBaseState().withProperty(SENDER, Boolean.valueOf(false)));
     }
 
     @Override
@@ -78,6 +83,32 @@ public class BlockTeleportBeacon extends Block
     public TileEntityTeleportBeacon getTileEntity(@Nonnull IBlockAccess world, BlockPos pos)
     {
         return (TileEntityTeleportBeacon) world.getTileEntity(pos);
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState()
+    {
+        return new BlockStateContainer(this, SENDER);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state)
+    {
+        return 0;
+    }
+
+    @Override
+    public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos)
+    {
+        boolean isSender = false;
+        TileEntity te = world instanceof ChunkCache ? ((ChunkCache)world).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : world.getTileEntity(pos);
+        
+        if (te instanceof TileEntityTeleportBeacon)
+        {
+            isSender = ((TileEntityTeleportBeacon) te).isSender();
+        }
+        
+        return state.withProperty(SENDER, Boolean.valueOf(isSender));
     }
 
     @Override
@@ -185,25 +216,16 @@ public class BlockTeleportBeacon extends Block
             
             if (player.isSneaking() && player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
             {
-                // Sneak + left-click toggles beacon's teleport direction between SENDER and RECEIVER.
-                TeleportDirection newDirection = te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER; 
-                te.setTeleportDirection(newDirection);
-
-                // Tell ALL players that the direction has changed.
-                // TODO: remove the single-player message...
-                //TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), newDirection), (EntityPlayerMP) player);
-                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), newDirection));
-                
-                // Update direction of beacon in player's network, if applicable.
-                ITeleportationHandler playerTeleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
-                if (playerTeleportationHandler != null)
+                // Sneak + left-click clears teleport destination on this tile entity.
+                if (te.teleportationHandler.hasActiveDestination())
                 {
-                    TeleportDestination playerDestination = playerTeleportationHandler.getDestinationFromUUID(te.getUniqueID());
-                    if (playerDestination != null)
-                    {
-                        playerDestination.direction = newDirection;
-                    }
+                    te.teleportationHandler.removeDestination(0);
+                    te.setSender(false);
+                    te.markDirty();
+                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.FALSE));
                 }
+                
+                player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
             }
             
             // Send the name of the beacon to the player.
@@ -271,13 +293,13 @@ public class BlockTeleportBeacon extends Block
                         teleportationHandler.setDestinationAsPlaced(uuid, null, world.provider.getDimension(), pos);
                         if (placer instanceof EntityPlayerMP)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, true, te.getTeleportDirection()), (EntityPlayerMP) placer);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                         }
                         placer.sendMessage(new TextComponentTranslation("message.td.beacon.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, false, te.getTeleportDirection()), (EntityPlayerMP) placer);
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                     }
                 }
             }

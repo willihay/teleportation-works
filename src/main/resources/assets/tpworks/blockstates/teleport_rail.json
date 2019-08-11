@@ -6,12 +6,16 @@
             "false": {}
         },
         "shape": {
-            "north_south":  { "model": "tpworks:teleport_rail_active_flat" },
-            "east_west":  { "model": "tpworks:teleport_rail_active_flat", "y": 90 },
-            "ascending_east": { "model": "tpworks:teleport_rail_active_raised_ne", "y": 90 },
-            "ascending_west": { "model": "tpworks:teleport_rail_active_raised_sw", "y": 90 },
-            "ascending_north": { "model": "tpworks:teleport_rail_active_raised_ne" },
-            "ascending_south": { "model": "tpworks:teleport_rail_active_raised_sw" }
+            "north_south":  { "model": "tpworks:teleport_rail_flat" },
+            "east_west":  { "model": "tpworks:teleport_rail_flat", "y": 90 },
+            "ascending_east": { "model": "tpworks:teleport_rail_raised_ne", "y": 90 },
+            "ascending_west": { "model": "tpworks:teleport_rail_raised_sw", "y": 90 },
+            "ascending_north": { "model": "tpworks:teleport_rail_raised_ne" },
+            "ascending_south": { "model": "tpworks:teleport_rail_raised_sw" }
+        },
+        "sender": {
+            "true": { "textures": { "rail": "tpworks:blocks/rail_teleport_lit" } },
+            "false": { "textures": { "rail": "tpworks:blocks/rail_teleport" } }
         }
     }
 }

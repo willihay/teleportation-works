@@ -1,11 +1,13 @@
 package org.bensam.tpworks.capability.teleportation;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
@@ -210,7 +212,7 @@ public class TeleportationHelper
                 }
             }
             
-            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (d.direction == direction && d.destinationType == blockType)) : (d-> (d.direction == direction && (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL)));
+            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (/*d.direction == direction &&*/ d.destinationType == blockType)) : (d-> (/*d.direction == direction &&*/ (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL)));
             return teleportationHandler.getNextDestination(afterDestination, filter);
         }
         
@@ -234,33 +236,68 @@ public class TeleportationHelper
     }
 
     /**
-     * A Tile Entity is teleporting another Entity.
+     * Teleport an entity, anything it is riding, and all its passengers, remounting them as needed after teleporting them all.
      */
-    public static Entity teleportOther(Entity entityToTeleport, TileEntity tileEntityInitiatingTeleport)
+    public static void teleportEntityAndPassengers(Entity entity, TeleportDestination destination)
     {
-        TeleportDestination activeDestination = getActiveDestination(tileEntityInitiatingTeleport, true);
-        if (activeDestination != null)
+        // Start a list of teleporting entities and add the target entity.
+        List<Entity> teleportingEntities = new ArrayList<>();
+        teleportingEntities.add(entity);
+        
+        // Add any other entity that the target entity is riding.
+        if (entity.isRiding())
         {
-            return teleport(entityToTeleport, activeDestination);
+            teleportingEntities.add(entity.getRidingEntity());
         }
         
-        return entityToTeleport;
+        // Add all the passengers of the entity to the list of teleporting entities.
+        for (Entity passenger : entity.getPassengers())
+        {
+            teleportingEntities.add(passenger);
+            for (Entity passengerOfPassenger : passenger.getPassengers())
+            {
+                teleportingEntities.add(passengerOfPassenger);
+            }
+        }
+        
+        // Get a map of all the entities that are riding other entities, so the pair can be remounted later, after teleportation.
+        HashMap<Entity, Entity> riderMap = ModUtil.getRiders(teleportingEntities);
+        
+        // Teleport the cart and all its passengers.
+        for (Entity entityToTeleport : teleportingEntities)
+        {
+            Entity teleportedEntity = null;
+            boolean hasPassengers = riderMap.containsValue(entityToTeleport);
+
+            teleportedEntity = teleport(entityToTeleport, destination);
+            
+            // Non-player entities get cloned when they teleport across dimensions.
+            // If the teleported entity had passengers, see if the object changed.
+            if (hasPassengers && (entityToTeleport != teleportedEntity))
+            {
+                // Update the riderMap with the new object.
+                for (Map.Entry<Entity, Entity> riderSet : riderMap.entrySet())
+                {
+                    if (riderSet.getValue() == entityToTeleport)
+                    {
+                        riderSet.setValue(teleportedEntity);
+                    }
+                }
+            }
+        }
+        
+        // Take care of any remounting of rider to entity ridden.
+        for (Map.Entry<Entity, Entity> riderSet : riderMap.entrySet())
+        {
+            Entity rider = riderSet.getKey();
+            Entity entityRidden = riderSet.getValue();
+            remountRider(rider, entityRidden);
+        }
     }
     
     /**
-     * An Entity is teleporting another Entity.
+     * Teleport an entity to a destination. Returns the entity object after teleportation, since it may have been cloned in the process.
      */
-    public static Entity teleportOther(Entity entityToTeleport, Entity entityInitiatingTeleport)
-    {
-        TeleportDestination activeDestination = getActiveDestination(entityInitiatingTeleport, true);
-        if (activeDestination != null)
-        {
-            return teleport(entityToTeleport, activeDestination);
-        }
-        
-        return entityToTeleport;
-    }
-    
     public static Entity teleport(Entity entityToTeleport, TeleportDestination destination)
     {
         World currentWorld = entityToTeleport.world;
@@ -362,17 +399,6 @@ public class TeleportationHelper
             }
         }
 
-        // TODO: This doesn't seem to correct the lighting when traveling to the nether...
-//        if (entityToTeleport instanceof EntityPlayerMP)
-//        {
-//            TileEntity te = teleportWorld.getTileEntity(teleportPos);
-//            if (te instanceof TileEntityTeleportBeacon)
-//            {
-//                // Send block update to correct lighting in some scenarios (e.g. teleporting across dimensions).
-//                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), true), (EntityPlayerMP) entityToTeleport);
-//            }
-//        }
-        
         // Play teleport sound at the starting position and final position of the teleporting entity.
         currentWorld.playSound((EntityPlayer) null, preTeleportPosition, SoundEvents.ITEM_CHORUS_FRUIT_TELEPORT,
                 SoundCategory.PLAYERS, 1.0F, 1.0F);

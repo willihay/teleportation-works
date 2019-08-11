@@ -42,6 +42,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     public static final double PARTICLE_HEIGHT_TO_BEGIN_SCALING = 16.0D;
     public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
+    private boolean isSender = false; // true when a teleport destination is stored in this TE
     protected TeleportDirection teleportDirection = TeleportDirection.SENDER;
     
     // client-only data
@@ -77,7 +78,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
             {
                 // Spawn teleport rail particles.
-                particleSpawnAngle += (teleportDirection == TeleportDirection.SENDER) ? PARTICLE_ANGULAR_VELOCITY * 2.0D : PARTICLE_ANGULAR_VELOCITY;
+                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
                 double blockCenterX = (double) pos.getX() + 0.5D;
                 double blockY = (double) pos.getY() + 0.125D;
                 double blockCenterZ = (double) pos.getZ() + 0.5D;
@@ -85,11 +86,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
                 // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
                 double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
                 float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup1 = 0.0D;
-                if (teleportDirection == TeleportDirection.SENDER)
-                    yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-                else
-                    yCoordGroup1 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group1Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                double yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
                 
                 // Particle 1:
                 double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
@@ -118,10 +115,11 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     {
         if (FMLCommonHandler.instance().getEffectiveSide().isServer())
         {
-            teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
+            //teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
             railName = compound.getString("railName");
             uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
+            isSender = teleportationHandler.hasActiveDestination();
             
             TeleportDestination destination = teleportationHandler.getActiveDestination();
             TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportRail.readFromNBT: railName = {}, uniqueID = {}, destination = {}", 
@@ -172,6 +170,18 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             this.teleportDirection = teleportDirection;
             markDirty();
         }
+    }
+
+    @Override
+    public boolean isSender()
+    {
+        return isSender;
+    }
+
+    @Override
+    public void setSender(boolean isSender)
+    {
+        this.isSender = isSender;
     }
 
     @Override

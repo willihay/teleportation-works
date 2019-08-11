@@ -45,7 +45,8 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     public static final double PARTICLE_HEIGHT_TO_BEGIN_SCALING = 32.0D;
     public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
-    protected TeleportDirection teleportDirection = TeleportDirection.RECEIVER;
+    private boolean isSender = false; // true when a teleport destination is stored in this TE
+    protected TeleportDirection teleportDirection = TeleportDirection.SENDER;
 
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -80,7 +81,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
             if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
             {
                 // Spawn beacon particles.
-                particleSpawnAngle += (teleportDirection == TeleportDirection.SENDER) ? PARTICLE_ANGULAR_VELOCITY * 2.0D : PARTICLE_ANGULAR_VELOCITY;
+                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
                 double blockCenterX = (double) pos.getX() + 0.5D;
                 double blockY = (double) pos.getY() + 0.125D;
                 double blockCenterZ = (double) pos.getZ() + 0.5D;
@@ -88,20 +89,12 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                 // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
                 double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
                 float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup1 = 0.0D;
-                if (teleportDirection == TeleportDirection.SENDER)
-                    yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-                else
-                    yCoordGroup1 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group1Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                double yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
 
                 // Particle group 2 = Particle 3 & Particle 4. They also share the same height and appear opposite each other.
                 double group2Height = (double) ((totalWorldTime + 16) % PARTICLE_VERTICAL_POSITIONS);
                 float group2ScaleModifier = (group2Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group2Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup2 = 0.0D;
-                if (teleportDirection == TeleportDirection.SENDER)
-                    yCoordGroup2 = blockY + (group2Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-                else
-                    yCoordGroup2 = blockY + ((PARTICLE_VERTICAL_POSITIONS - group2Height) / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                double yCoordGroup2 = blockY + (group2Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
 
                 // Particle 1:
                 double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
@@ -123,20 +116,27 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         }
         else // running on server
         {
-            if (totalWorldTime % 10 == 0 && teleportDirection == TeleportDirection.SENDER && teleportationHandler.getDestinationCount() > 0)
+            if (totalWorldTime % 10 == 0 && teleportationHandler.hasActiveDestination())
             {
                 TeleportDestination destination = teleportationHandler.getActiveDestination();
                 
-                // Find all the teleportable entities inside the beacon block. 
-                AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
-                List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
-
-                for (Entity entityInBB : entitiesInBB)
+                if (teleportationHandler.validateDestination(null, destination))
                 {
-                    TeleportationHelper.teleport(entityInBB, destination);
-                    if (ModUtil.RANDOM.nextBoolean())
+                    // Find all the teleportable entities inside the beacon block. 
+                    AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
+                    List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
+
+                    for (Entity entityInBB : entitiesInBB)
                     {
-                        break;
+                        if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                        {
+                            TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
+                            break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
+                        }
+                        else
+                        {
+                            TeleportationHelper.teleport(entityInBB, destination);
+                        }
                     }
                 }
             }
@@ -148,10 +148,11 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     {
         if (FMLCommonHandler.instance().getEffectiveSide().isServer())
         {
-            teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
+            //teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
             beaconName = compound.getString("beaconName");
             uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
+            isSender = teleportationHandler.hasActiveDestination();
             
             TeleportDestination destination = teleportationHandler.getActiveDestination();
             TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: beaconName = {}, uniqueID = {}, destination = {}", 
@@ -202,6 +203,18 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
             this.teleportDirection = teleportDirection;
             markDirty();
         }
+    }
+
+    @Override
+    public boolean isSender()
+    {
+        return isSender;
+    }
+
+    @Override
+    public void setSender(boolean isSender)
+    {
+        this.isSender = isSender;
     }
 
     @Override

@@ -92,18 +92,4 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
     {
         return new ItemStack(ModItems.TELEPORTATION_TIPPED_ARROW);
     }
-
-    @Override
-    public void shoot(Entity shooter, float pitch, float yaw, float p_184547_4_, float velocity, float inaccuracy)
-    {
-        // TODO Auto-generated method stub
-        super.shoot(shooter, pitch, yaw, p_184547_4_, velocity, inaccuracy);
-    }
-
-    @Override
-    public void shoot(double x, double y, double z, float velocity, float inaccuracy)
-    {
-        // TODO Auto-generated method stub
-        super.shoot(x, y, z, velocity, inaccuracy);
-    }
 }

@@ -13,9 +13,9 @@ import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
+import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -50,6 +50,15 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
+    public TeleportDestination getActiveDestination()
+    {
+        if (activeDestinationIndex >= 0 && activeDestinationIndex < destinations.size())
+            return destinations.get(activeDestinationIndex);
+        else
+            return null;
+    }
+    
+    @Override
     public int getActiveDestinationIndex()
     {
         return activeDestinationIndex;
@@ -62,32 +71,30 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
-    public int getDestinationLimit()
+    public TeleportDestination getDestinationFromIndex(int index)
     {
-        return 32;
-    }
-
-    @Override
-    public TeleportDestination getActiveDestination()
-    {
-        if (activeDestinationIndex >= 0 && activeDestinationIndex < destinations.size())
-            return destinations.get(activeDestinationIndex);
+        if (index >= 0 && index < destinations.size())
+            return destinations.get(index);
         else
             return null;
     }
-    
-    
+
     @Override
-    @Nullable
-    public TeleportDestination getSpecialDestination()
+    public TeleportDestination getDestinationFromUUID(UUID uuid)
     {
-        return specialDestination;
+        for (TeleportDestination destination : destinations)
+        {
+            if (destination.getUUID().equals(uuid))
+                return destination;
+        }
+
+        return null;
     }
 
     @Override
-    public void setSpecialDestination(TeleportDestination destination)
+    public int getDestinationLimit()
     {
-        specialDestination = destination;
+        return 32;
     }
 
     @Override
@@ -143,63 +150,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
-    public TeleportDestination setActiveDestination(int index)
-    {
-        if (index >= 0 && index < destinations.size())
-        {
-            activeDestinationIndex = index;
-            return getActiveDestination();
-        }
-        else
-            return null;
-    }
-
-    @Override
-    public TeleportDestination setActiveDestinationToPrevious()
-    {
-        if (destinations.size() > 0)
-        {
-            activeDestinationIndex = (activeDestinationIndex + destinations.size() - 1) % destinations.size();
-            return getActiveDestination();
-        }
-        else
-            return null;
-    }
-
-    @Override
-    public TeleportDestination setActiveDestinationToNext()
-    {
-        if (destinations.size() > 0)
-        {
-            activeDestinationIndex = (activeDestinationIndex + 1) % destinations.size();
-            return getActiveDestination();
-        }
-        else
-            return null;
-    }
-
-    @Override
-    public TeleportDestination getDestinationFromUUID(UUID uuid)
-    {
-        for (TeleportDestination destination : destinations)
-        {
-            if (destination.getUUID().equals(uuid))
-                return destination;
-        }
-
-        return null;
-    }
-
-    @Override
-    public TeleportDestination getDestinationFromIndex(int index)
-    {
-        if (index >= 0 && index < destinations.size())
-            return destinations.get(index);
-        else
-            return null;
-    }
-
-    @Override
     public String getShortFormattedName(@Nullable EntityPlayer player, TeleportDestination destination)
     {
         return getShortFormattedName(player, destination, TextFormatting.RESET);
@@ -247,6 +197,31 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 + ModUtil.getDimensionName(destination.dimension);
     }
 
+    @Override
+    @Nullable
+    public TeleportDestination getSpecialDestination()
+    {
+        return specialDestination;
+    }
+
+    @Override
+    public boolean hasActiveDestination()
+    {
+        return destinations.size() > 0 && activeDestinationIndex >= 0;
+    }
+
+    @Override
+    public boolean hasDestination(UUID uuid)
+    {
+        for (TeleportDestination destination : destinations)
+        {
+            if (destination.getUUID().equals(uuid))
+                return true;
+        }
+        
+        return false;
+    }
+
     protected boolean insertDestination(int index, TeleportDestination destination)
     {
         if (destinations.size() >= getDestinationLimit())
@@ -268,52 +243,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         return true;
     }
     
-    @Override
-    public boolean hasDestination(UUID uuid)
-    {
-        for (TeleportDestination destination : destinations)
-        {
-            if (destination.getUUID().equals(uuid))
-                return true;
-        }
-        
-        return false;
-    }
-
-    @Override
-    public void removeDestination(UUID uuid)
-    {
-        int index = 0;
-        Iterator<TeleportDestination> it = destinations.iterator();
-        while (it.hasNext())
-        {
-            TeleportDestination destination = it.next();
-            if (destination.getUUID().equals(uuid))
-            {
-                it.remove();
-                if (activeDestinationIndex > index || activeDestinationIndex >= destinations.size())
-                {
-                    activeDestinationIndex--; // preserve the active destination when a destination before it is removed
-                }
-                break;
-            }
-            index++;
-        }
-    }
-
-    @Override
-    public void removeDestination(int index)
-    {
-        if (index >= 0 && index < destinations.size())
-        {
-            destinations.remove(index);
-            if (activeDestinationIndex > index || activeDestinationIndex >= destinations.size())
-            {
-                activeDestinationIndex--; // preserve the active destination when a destination before it is removed
-            }
-        }
-    }
-
     @Override
     public void removeAllDestinations(@Nullable EntityPlayer player, boolean includeOverworldSpawnBed)
     {
@@ -339,7 +268,14 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                     // Only need to send a packet update to the client if we can still find the destination in the world.
                     if (validateDestination(player, destination))
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, false), (EntityPlayerMP) player);
+                        if (destination.destinationType == DestinationType.BEACON)
+                        {
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, Boolean.FALSE, null), (EntityPlayerMP) player);
+                        }
+                        else if (destination.destinationType == DestinationType.RAIL)
+                        {
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, Boolean.FALSE, null), (EntityPlayerMP) player);
+                        }
                     }
                 }
                 
@@ -348,6 +284,40 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         }
     
         activeDestinationIndex = (destinations.size() >= 1) ? 0 : -1; 
+    }
+
+    @Override
+    public void removeDestination(int index)
+    {
+        if (index >= 0 && index < destinations.size())
+        {
+            destinations.remove(index);
+            if (activeDestinationIndex > index || activeDestinationIndex >= destinations.size())
+            {
+                activeDestinationIndex--; // preserve the active destination when a destination before it is removed
+            }
+        }
+    }
+
+    @Override
+    public void removeDestination(UUID uuid)
+    {
+        int index = 0;
+        Iterator<TeleportDestination> it = destinations.iterator();
+        while (it.hasNext())
+        {
+            TeleportDestination destination = it.next();
+            if (destination.getUUID().equals(uuid))
+            {
+                it.remove();
+                if (activeDestinationIndex > index || activeDestinationIndex >= destinations.size())
+                {
+                    activeDestinationIndex--; // preserve the active destination when a destination before it is removed
+                }
+                break;
+            }
+            index++;
+        }
     }
 
     @Override
@@ -401,6 +371,42 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
+    public TeleportDestination setActiveDestination(int index)
+    {
+        if (index >= 0 && index < destinations.size())
+        {
+            activeDestinationIndex = index;
+            return getActiveDestination();
+        }
+        else
+            return null;
+    }
+
+    @Override
+    public TeleportDestination setActiveDestinationToNext()
+    {
+        if (destinations.size() > 0)
+        {
+            activeDestinationIndex = (activeDestinationIndex + 1) % destinations.size();
+            return getActiveDestination();
+        }
+        else
+            return null;
+    }
+
+    @Override
+    public TeleportDestination setActiveDestinationToPrevious()
+    {
+        if (destinations.size() > 0)
+        {
+            activeDestinationIndex = (activeDestinationIndex + destinations.size() - 1) % destinations.size();
+            return getActiveDestination();
+        }
+        else
+            return null;
+    }
+
+    @Override
     public void setDestinationAsPlaced(UUID uuid, @Nullable String newName, int newDimension, @Nullable BlockPos newPos)
     {
         for (TeleportDestination destination : destinations)
@@ -437,16 +443,9 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     }
 
     @Override
-    public void updateSpawnBed(EntityPlayer player, int dimension)
+    public void setSpecialDestination(TeleportDestination destination)
     {
-        // Find the player's spawn bed location.
-        BlockPos spawnBed = player.getBedLocation(dimension);
-        if (spawnBed == null)
-        {
-            spawnBed = BlockPos.ORIGIN;
-        }
-        
-        updateSpawnBed(spawnBed, dimension);
+        specialDestination = destination;
     }
 
     @Override
@@ -494,6 +493,28 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                     insertDestination(0, spawnBedDestination);
                 }
             }
+        }
+    }
+
+    @Override
+    public void updateSpawnBed(EntityPlayer player, int dimension)
+    {
+        // Find the player's spawn bed location.
+        BlockPos spawnBed = player.getBedLocation(dimension);
+        if (spawnBed == null)
+        {
+            spawnBed = BlockPos.ORIGIN;
+        }
+        
+        updateSpawnBed(spawnBed, dimension);
+    }
+
+    @Override
+    public void validateAllDestinations(@Nullable Entity entity)
+    {
+        for (TeleportDestination destination : destinations)
+        {
+            validateDestination(entity, destination);
         }
     }
 
@@ -629,15 +650,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         }
         
         return isValid;
-    }
-
-    @Override
-    public void validateAllDestinations(@Nullable Entity entity)
-    {
-        for (TeleportDestination destination : destinations)
-        {
-            validateDestination(entity, destination);
-        }
     }
 
     @Override

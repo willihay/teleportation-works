@@ -1,6 +1,3 @@
 {
-    "parent": "block/rail_raised_sw",
-    "textures": {
-        "rail": "tpworks:blocks/rail_teleport"
-    }
+    "parent": "block/rail_raised_sw"
 }

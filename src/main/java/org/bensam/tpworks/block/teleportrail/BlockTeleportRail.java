@@ -1,42 +1,33 @@
-/**
- * 
- */
 package org.bensam.tpworks.block.teleportrail;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 
 import org.bensam.tpworks.TeleportationWorks;
-import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
-import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.item.ModItems;
-import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModSetup;
 import org.bensam.tpworks.util.ModUtil;
 
+import net.minecraft.block.BlockRailBase;
 import net.minecraft.block.BlockRailPowered;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.MapColor;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityMinecart;
-import net.minecraft.entity.item.EntityMinecartEmpty;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
@@ -50,8 +41,10 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -61,6 +54,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 public class BlockTeleportRail extends BlockRailPowered
 {
+    public static final PropertyBool SENDER = PropertyBool.create("sender");
+
     public BlockTeleportRail(@Nonnull String name)
     {
         super(false);
@@ -69,6 +64,10 @@ public class BlockTeleportRail extends BlockRailPowered
         ModSetup.setCreativeTab(this);
         setHardness(0.7F); // powered_rail = 0.7F
         setSoundType(SoundType.METAL);
+        setDefaultState(this.blockState.getBaseState()
+                .withProperty(SHAPE, BlockRailBase.EnumRailDirection.NORTH_SOUTH)
+                .withProperty(POWERED, Boolean.valueOf(false))
+                .withProperty(SENDER, Boolean.valueOf(false)));
     }
 
     @Override
@@ -86,6 +85,26 @@ public class BlockTeleportRail extends BlockRailPowered
     public TileEntityTeleportRail getTileEntity(@Nonnull IBlockAccess world, BlockPos pos)
     {
         return (TileEntityTeleportRail) world.getTileEntity(pos);
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState()
+    {
+        return new BlockStateContainer(this, new IProperty[] {SHAPE, POWERED, SENDER});
+    }
+
+    @Override
+    public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos)
+    {
+        boolean isSender = false;
+        TileEntity te = world instanceof ChunkCache ? ((ChunkCache)world).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : world.getTileEntity(pos);
+        
+        if (te instanceof TileEntityTeleportRail)
+        {
+            isSender = ((TileEntityTeleportRail) te).isSender();
+        }
+        
+        return state.withProperty(SENDER, Boolean.valueOf(isSender));
     }
 
     @Override
@@ -112,58 +131,13 @@ public class BlockTeleportRail extends BlockRailPowered
     {
         TileEntityTeleportRail te = getTileEntity(world, pos);
         
-        if (te.getTeleportDirection() == TeleportDirection.SENDER)
+        if (te.teleportationHandler.hasActiveDestination())
         {
             TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            if (destination != null && te.teleportationHandler.validateDestination(cart, destination))
+            
+            if (te.teleportationHandler.validateDestination(null, destination))
             {
-                // Start a list of teleporting entities.
-                List<Entity> teleportingEntities = new ArrayList<>();
-                teleportingEntities.add(cart);
-                
-                // Add all the passengers in the minecart to the list of teleporting entities.
-                for (Entity passenger : cart.getPassengers())
-                {
-                    teleportingEntities.add(passenger);
-                    for (Entity passengerOfPassenger : passenger.getPassengers())
-                    {
-                        teleportingEntities.add(passengerOfPassenger);
-                    }
-                }
-                
-                // Get a map of all the entities that are riding other entities, so the pair can be remounted later, after teleportation.
-                HashMap<Entity, Entity> riderMap = ModUtil.getRiders(teleportingEntities);
-                
-                // Teleport the cart and all its passengers.
-                for (Entity entityToTeleport : teleportingEntities)
-                {
-                    Entity teleportedEntity = null;
-                    boolean hasPassengers = riderMap.containsValue(entityToTeleport);
-
-                    teleportedEntity = TeleportationHelper.teleport(entityToTeleport, destination);
-                    
-                    // Non-player entities get cloned when they teleport across dimensions.
-                    // If the teleported entity had passengers, see if the object changed.
-                    if (hasPassengers && (entityToTeleport != teleportedEntity))
-                    {
-                        // Update the riderMap with the new object.
-                        for (Map.Entry<Entity, Entity> riderSet : riderMap.entrySet())
-                        {
-                            if (riderSet.getValue() == entityToTeleport)
-                            {
-                                riderSet.setValue(teleportedEntity);
-                            }
-                        }
-                    }
-                }
-                
-                // Take care of any remounting of rider to entity ridden.
-                for (Map.Entry<Entity, Entity> riderSet : riderMap.entrySet())
-                {
-                    Entity rider = riderSet.getKey();
-                    Entity entityRidden = riderSet.getValue();
-                    TeleportationHelper.remountRider(rider, entityRidden);
-                }
+                TeleportationHelper.teleportEntityAndPassengers(cart, destination);
             }
         }
     }
@@ -218,25 +192,16 @@ public class BlockTeleportRail extends BlockRailPowered
             
             if (player.isSneaking() && player.getHeldItemMainhand().getItem() == ModItems.TELEPORTATION_WAND)
             {
-                // Sneak + left-click toggles rail's teleport direction between SENDER and RECEIVER.
-                TeleportDirection newDirection = te.getTeleportDirection() == TeleportDirection.SENDER ? TeleportDirection.RECEIVER : TeleportDirection.SENDER; 
-                te.setTeleportDirection(newDirection);
-                
-                // Tell ALL players that the direction has changed.
-                // TODO: remove the single-player message...
-                //TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), newDirection), (EntityPlayerMP) player);
-                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), newDirection));
-                
-                // Update direction of beacon in player's network, if applicable.
-                ITeleportationHandler playerTeleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
-                if (playerTeleportationHandler != null)
+                // Sneak + left-click clears teleport destination on this tile entity.
+                if (te.teleportationHandler.hasActiveDestination())
                 {
-                    TeleportDestination playerDestination = playerTeleportationHandler.getDestinationFromUUID(te.getUniqueID());
-                    if (playerDestination != null)
-                    {
-                        playerDestination.direction = newDirection;
-                    }
+                    te.teleportationHandler.removeDestination(0);
+                    te.setSender(false);
+                    te.markDirty();
+                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(pos, null, Boolean.FALSE));
                 }
+                
+                player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
             }
             
             // Send the name of the rail to the player.
@@ -305,13 +270,13 @@ public class BlockTeleportRail extends BlockRailPowered
                         teleportationHandler.setDestinationAsPlaced(uuid, null, world.provider.getDimension(), pos);
                         if (placer instanceof EntityPlayerMP)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, true, te.getTeleportDirection()), (EntityPlayerMP) placer);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                         }
                         placer.sendMessage(new TextComponentTranslation("message.td.rail.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, false, te.getTeleportDirection()), (EntityPlayerMP) placer);
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                     }
                 }
             }
