@@ -165,7 +165,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             beaconNameFormat = isValid ? TextFormatting.DARK_GREEN : TextFormatting.DARK_GRAY;
         }
         
-        return beaconNameFormat + destination.friendlyName + defaultFormat + " (" + destination.getFormattedType() + " in " + ModUtil.getDimensionName(destination.dimension) + ")";
+        return beaconNameFormat + destination.friendlyName + defaultFormat + " (" + destination.destinationType + " in " + ModUtil.getDimensionName(destination.dimension) + ")";
     }
 
     @Override
@@ -190,7 +190,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     public static String getLongFormattedName(TeleportDestination destination, TextFormatting beaconNameFormat, TextFormatting defaultFormat)
     {
         return beaconNameFormat + destination.friendlyName + defaultFormat 
-                + " (" + destination.getFormattedType() + ") "
+                + " (" + destination.destinationType + ") "
                 + " at {" + destination.position.getX() + ", " 
                 + destination.position.getY() + ", " 
                 + destination.position.getZ() + "} in " 
@@ -599,9 +599,8 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 isValid = !(destination.position.equals(BlockPos.ORIGIN));
                 if (isValid)
                 {
-                    // Make sure friendly name and teleport direction are correct.
+                    // Make sure friendly name is correct.
                     destination.friendlyName = ((TileEntityTeleportBeacon)teBeacon).getTeleportName();
-                    destination.direction = ((TileEntityTeleportBeacon)teBeacon).getTeleportDirection();
                 }
             }
             break;
@@ -638,9 +637,8 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                 isValid = !(destination.position.equals(BlockPos.ORIGIN));
                 if (isValid)
                 {
-                    // Make sure friendly name and teleport direction are correct.
+                    // Make sure friendly name is correct.
                     destination.friendlyName = ((TileEntityTeleportRail)teRail).getTeleportName();
-                    destination.direction = ((TileEntityTeleportRail)teRail).getTeleportDirection();
                 }
             }
             break;

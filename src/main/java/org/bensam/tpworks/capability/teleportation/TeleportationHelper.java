@@ -13,7 +13,6 @@ import javax.annotation.Nullable;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.item.ItemTeleportationBow;
 import org.bensam.tpworks.util.ModUtil;
@@ -47,38 +46,24 @@ public class TeleportationHelper
     {
         if (teleportBlock instanceof TileEntityTeleportBeacon)
         {
-            if (teleportBlock.getTeleportDirection() == TeleportDirection.RECEIVER)
+            if (destination == null)
             {
-                player.sendMessage(new TextComponentTranslation("message.td.beacon.receiver.display_name", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+                player.sendMessage(new TextComponentTranslation("message.td.beacon.display.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
             }
             else
             {
-                if (destination == null)
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.beacon.sender.display_name.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
-                }
-                else
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.beacon.sender.display_name.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
-                }
+                player.sendMessage(new TextComponentTranslation("message.td.beacon.display.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
             }
         }
         else if (teleportBlock instanceof TileEntityTeleportRail)
         {
-            if (teleportBlock.getTeleportDirection() == TeleportDirection.RECEIVER)
+            if (destination == null)
             {
-                player.sendMessage(new TextComponentTranslation("message.td.rail.receiver.display_name", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+                player.sendMessage(new TextComponentTranslation("message.td.rail.display.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
             }
             else
             {
-                if (destination == null)
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.rail.sender.display_name.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
-                }
-                else
-                {
-                    player.sendMessage(new TextComponentTranslation("message.td.rail.sender.display_name.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
-                }
+                player.sendMessage(new TextComponentTranslation("message.td.rail.display.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
             }
         }
     }
@@ -193,12 +178,12 @@ public class TeleportationHelper
     }
     
     /**
-     * Get the NEXT teleport block of the specified direction and type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
-     * If blockType is null, any Beacon or Rail of the specified direction will match.
-     * Returns null if the end of the list is reached and no blocks of the specified direction and type have been found.
+     * Get the NEXT teleport block of the specified type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
+     * If blockType is null, any Beacon or Rail will match.
+     * Returns null if the end of the list is reached and no blocks of the specified type have been found.
      */
     @Nullable
-    public static TeleportDestination getNextTeleportBlock(Entity entity, TeleportDirection direction, @Nullable DestinationType blockType, @Nullable TeleportDestination afterDestination)
+    public static TeleportDestination getNextTeleportBlock(Entity entity, @Nullable DestinationType blockType, @Nullable TeleportDestination afterDestination)
     {
         ITeleportationHandler teleportationHandler = entity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
         if (teleportationHandler != null)
@@ -212,7 +197,7 @@ public class TeleportationHelper
                 }
             }
             
-            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (/*d.direction == direction &&*/ d.destinationType == blockType)) : (d-> (/*d.direction == direction &&*/ (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL)));
+            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (d.destinationType == blockType)) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
             return teleportationHandler.getNextDestination(afterDestination, filter);
         }
         

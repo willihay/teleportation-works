@@ -10,7 +10,6 @@ import javax.annotation.Nullable;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
-import org.bensam.tpworks.block.teleportrail.BlockTeleportRail;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
@@ -18,7 +17,6 @@ import org.bensam.tpworks.capability.teleportation.TeleportDestination.Destinati
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.sound.ModSounds;
@@ -53,6 +51,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -204,7 +203,7 @@ public class ItemTeleportationWand extends Item
                         if (player.isSneaking())
                         {
                             // Set or clear destination for dispenser.
-                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, TeleportDirection.RECEIVER, DestinationType.BEACON, dispenserDestination);
+                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.BEACON, dispenserDestination);
                             if (nextDestination != null)
                             {
                                 dispenserTeleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -253,35 +252,30 @@ public class ItemTeleportationWand extends Item
                     
                     if (player.isSneaking())
                     {
-                        if (te.getTeleportDirection() == TeleportDirection.SENDER)
+                        // Set or clear destination for teleport rail.
+                        TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.RAIL, destination);
+                        if (nextDestination != null)
                         {
-                            // Set or clear destination for teleport sender rail.
-                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, TeleportDirection.RECEIVER, DestinationType.RAIL, destination);
-                            if (nextDestination != null)
+                            te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
+                            te.setSender(true);
+                            te.markDirty();
+                            TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.TRUE));
+                            player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
+                        }
+                        else
+                        {
+                            if (destination == null)
                             {
-                                te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
-                                te.setSender(true);
-                                te.markDirty();
-                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.TRUE));
-                                player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
+                                player.sendMessage(new TextComponentTranslation("message.td.rail.destination.none_available"));
                             }
                             else
                             {
-                                if (destination == null)
-                                {
-                                    player.sendMessage(new TextComponentTranslation("message.td.rail.destination.none_available"));
-                                }
-                                else
-                                {
-                                    te.teleportationHandler.removeDestination(0);
-                                    te.setSender(false);
-                                    te.markDirty();
-                                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.FALSE));
-                                    player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
-                                }
+                                te.teleportationHandler.removeDestination(0);
+                                te.setSender(false);
+                                te.markDirty();
+                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.FALSE));
+                                player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                             }
-                            
-                            //world.setBlockState(pos, world.getBlockState(pos).withProperty(BlockTeleportRail.SENDER, te.isSender()));
                         }
                     }
                     else
@@ -300,7 +294,7 @@ public class ItemTeleportationWand extends Item
                             if (playerTeleportationHandler.getDestinationCount() < playerTeleportationHandler.getDestinationLimit())
                             {
                                 // Add this rail to the player's network.
-                                TeleportDestination railDestination = new TeleportDestination(uuid, name, DestinationType.RAIL, world.provider.getDimension(), te.getTeleportDirection(), pos);
+                                TeleportDestination railDestination = new TeleportDestination(uuid, name, DestinationType.RAIL, world.provider.getDimension(), pos);
                                 if (playerTeleportationHandler.replaceOrAddDestination(railDestination))
                                 {
                                     // Send a packet update so the client can get word that this rail is stored for this player.
@@ -329,32 +323,29 @@ public class ItemTeleportationWand extends Item
 
                     if (player.isSneaking())
                     {
-                        if (te.getTeleportDirection() == TeleportDirection.SENDER)
+                        // Set or clear destination for teleport pad.
+                        TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.BEACON, destination);
+                        if (nextDestination != null)
                         {
-                            // Set or clear destination for teleport pad.
-                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, TeleportDirection.RECEIVER, DestinationType.BEACON, destination);
-                            if (nextDestination != null)
+                            te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
+                            te.setSender(true);
+                            te.markDirty();
+                            TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.TRUE));
+                            player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
+                        }
+                        else
+                        {
+                            if (destination == null)
                             {
-                                te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
-                                te.setSender(true);
-                                te.markDirty();
-                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.TRUE));
-                                player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
+                                player.sendMessage(new TextComponentTranslation("message.td.beacon.destination.none_available"));
                             }
                             else
                             {
-                                if (destination == null)
-                                {
-                                    player.sendMessage(new TextComponentTranslation("message.td.beacon.destination.none_available"));
-                                }
-                                else
-                                {
-                                    te.teleportationHandler.removeDestination(0);
-                                    te.setSender(false);
-                                    te.markDirty();
-                                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.FALSE));
-                                    player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
-                                }
+                                te.teleportationHandler.removeDestination(0);
+                                te.setSender(false);
+                                te.markDirty();
+                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.FALSE));
+                                player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                             }
                         }
                     }
@@ -375,7 +366,7 @@ public class ItemTeleportationWand extends Item
                             if (playerTeleportationHandler.getDestinationCount() < playerTeleportationHandler.getDestinationLimit())
                             {
                                 // Add this beacon to the player's network.
-                                TeleportDestination beaconDestination = new TeleportDestination(uuid, name, DestinationType.BEACON, world.provider.getDimension(), te.getTeleportDirection(), pos);
+                                TeleportDestination beaconDestination = new TeleportDestination(uuid, name, DestinationType.BEACON, world.provider.getDimension(), pos);
                                 if (playerTeleportationHandler.replaceOrAddDestination(beaconDestination))
                                 {
                                     // Send a packet update so the client can get word that this beacon is stored for this player.
@@ -546,10 +537,12 @@ public class ItemTeleportationWand extends Item
     @Override
     public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
     {
-        tooltip.add(I18n.format("item.teleportation_wand.tipLine1", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("item.teleportation_wand.tipLine2", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("item.teleportation_wand.tipLine3", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("item.teleportation_wand.tipLine4", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("item.teleportation_wand.tipLine5", TextFormatting.DARK_GREEN));
+        String sneakBind = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
+        String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
+        
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_wand.tipLine1"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_wand.tipLine2", useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_wand.tipLine3"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_wand.tipLine4", sneakBind, useItemBind));
     }
 }

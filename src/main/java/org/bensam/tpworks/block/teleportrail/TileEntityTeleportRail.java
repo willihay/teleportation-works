@@ -7,7 +7,6 @@ import javax.annotation.Nullable;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
@@ -43,7 +42,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
     private boolean isSender = false; // true when a teleport destination is stored in this TE
-    protected TeleportDirection teleportDirection = TeleportDirection.SENDER;
     
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -63,7 +61,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             // Set an initial, random spawn angle for particles.
             particleSpawnAngle = ModUtil.RANDOM.nextDouble() * Math.PI;
             
-            // Request an update from the server to get current values for isStored and teleportDirection for this TE for the current player (i.e. client).
+            // Request an update from the server to get current values for isStored and isSender for this TE for the current player (i.e. client).
             TeleportationWorks.network.sendToServer(new PacketRequestUpdateTeleportRail(this));
         }
     }
@@ -115,7 +113,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     {
         if (FMLCommonHandler.instance().getEffectiveSide().isServer())
         {
-            //teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
             railName = compound.getString("railName");
             uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
@@ -138,7 +135,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        compound.setInteger("tpDirection", teleportDirection.getTeleportDirectionValue());
         if (!railName.isEmpty())
         {
             compound.setString("railName", railName);
@@ -154,22 +150,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
                 destination == null ? "EMPTY" : destination);
 
         return super.writeToNBT(compound);
-    }
-
-    @Override
-    public TeleportDirection getTeleportDirection()
-    {
-        return teleportDirection;
-    }
-    
-    @Override
-    public void setTeleportDirection(TeleportDirection teleportDirection)
-    {
-        if (teleportDirection != this.teleportDirection)
-        {
-            this.teleportDirection = teleportDirection;
-            markDirty();
-        }
     }
 
     @Override

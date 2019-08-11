@@ -11,7 +11,6 @@ import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
 
@@ -46,7 +45,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
     private boolean isSender = false; // true when a teleport destination is stored in this TE
-    protected TeleportDirection teleportDirection = TeleportDirection.SENDER;
 
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -66,7 +64,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
             // Set an initial, random spawn angle for particles.
             particleSpawnAngle = ModUtil.RANDOM.nextDouble() * Math.PI;
             
-            // Request an update from the server to get current values for isStored and teleportDirection for this TE for the current player (i.e. client).
+            // Request an update from the server to get current values for isStored and isSender for this TE for the current player (i.e. client).
             TeleportationWorks.network.sendToServer(new PacketRequestUpdateTeleportBeacon(this));
         }
     }
@@ -118,24 +116,26 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         {
             if (totalWorldTime % 10 == 0 && teleportationHandler.hasActiveDestination())
             {
-                TeleportDestination destination = teleportationHandler.getActiveDestination();
-                
-                if (teleportationHandler.validateDestination(null, destination))
-                {
-                    // Find all the teleportable entities inside the beacon block. 
-                    AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
-                    List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
+                // Find all the teleportable entities inside the beacon block. 
+                AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
+                List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
 
-                    for (Entity entityInBB : entitiesInBB)
+                if (!entitiesInBB.isEmpty())
+                {
+                    TeleportDestination destination = teleportationHandler.getActiveDestination();
+                    if (teleportationHandler.validateDestination(null, destination))
                     {
-                        if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                        for (Entity entityInBB : entitiesInBB)
                         {
-                            TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
-                            break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
-                        }
-                        else
-                        {
-                            TeleportationHelper.teleport(entityInBB, destination);
+                            if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                            {
+                                TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
+                                break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
+                            }
+                            else
+                            {
+                                TeleportationHelper.teleport(entityInBB, destination);
+                            }
                         }
                     }
                 }
@@ -148,7 +148,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     {
         if (FMLCommonHandler.instance().getEffectiveSide().isServer())
         {
-            //teleportDirection = TeleportDirection.values()[compound.getInteger("tpDirection")];
             beaconName = compound.getString("beaconName");
             uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
@@ -171,7 +170,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        compound.setInteger("tpDirection", teleportDirection.getTeleportDirectionValue());
         if (!beaconName.isEmpty())
         {
             compound.setString("beaconName", beaconName);
@@ -187,22 +185,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                 destination == null ? "EMPTY" : destination);
 
         return super.writeToNBT(compound);
-    }
-
-    @Override
-    public TeleportDirection getTeleportDirection()
-    {
-        return teleportDirection;
-    }
-    
-    @Override
-    public void setTeleportDirection(TeleportDirection teleportDirection)
-    {
-        if (teleportDirection != this.teleportDirection)
-        {
-            this.teleportDirection = teleportDirection;
-            markDirty();
-        }
     }
 
     @Override

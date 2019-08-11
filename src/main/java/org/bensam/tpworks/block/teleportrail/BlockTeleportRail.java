@@ -24,6 +24,7 @@ import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
@@ -259,7 +260,7 @@ public class BlockTeleportRail extends BlockRailPowered
             else
             {
                 TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-                TeleportationWorks.MOD_LOGGER.info("Teleport Rail placed: name = {}, destination = {}, direction = {}", name, destination == null ? "EMPTY" : destination, te.getTeleportDirection());
+                TeleportationWorks.MOD_LOGGER.info("Teleport Rail placed: name = {}, destination = {}", name, destination == null ? "EMPTY" : destination);
                 
                 ITeleportationHandler teleportationHandler = placer.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
                 if (teleportationHandler != null)
@@ -356,9 +357,13 @@ public class BlockTeleportRail extends BlockRailPowered
     @Override
     public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
-        tooltip.add(I18n.format("tile.teleport_rail.tipLine1", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("tile.teleport_rail.tipLine2", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("tile.teleport_rail.tipLine3", TextFormatting.DARK_GREEN));
-        tooltip.add(I18n.format("tile.teleport_rail.tipLine4", TextFormatting.DARK_GREEN));
+        String sneakBind = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
+        String attackBind = Minecraft.getMinecraft().gameSettings.keyBindAttack.getDisplayName();
+        String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
+        
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine1"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine2", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine3", sneakBind, attackBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine4"));
     }
 }

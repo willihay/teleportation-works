@@ -9,10 +9,10 @@ import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock.TeleportDirection;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.util.ModSetup;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
@@ -142,7 +142,7 @@ public class ItemTeleportationBow extends ItemBow
                 {
                     // Set or clear destination for teleportation bow.
                     TeleportDestination destination = playerTeleportationHandler.getSpecialDestination();
-                    TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, TeleportDirection.RECEIVER, DestinationType.BEACON, destination);
+                    TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.BEACON, destination);
                     if (nextDestination != null)
                     {
                         playerTeleportationHandler.setSpecialDestination(nextDestination);
@@ -233,6 +233,11 @@ public class ItemTeleportationBow extends ItemBow
     @Override
     public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
     {
-        tooltip.add(I18n.format("item.teleportation_bow.tipLine1", TextFormatting.DARK_GREEN));
+        String sneakBind = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
+        String attackBind = Minecraft.getMinecraft().gameSettings.keyBindAttack.getDisplayName();
+        String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
+        
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine1", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine2", sneakBind, attackBind));
     }
 }
