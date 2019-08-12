@@ -26,11 +26,13 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
     public EntityTeleportationTippedArrow(World world)
     {
         super(world);
+        setDamage(getDamage() * 0.25D);
     }
 
     public EntityTeleportationTippedArrow(World world, EntityLivingBase shooter)
     {
         super(world, shooter);
+        setDamage(getDamage() * 0.25D);
         
         if (shooter != null)
         {
@@ -41,11 +43,13 @@ public class EntityTeleportationTippedArrow extends EntityTippedArrow
     public EntityTeleportationTippedArrow(World world, double x, double y, double z)
     {
         super(world, x, y, z);
+        setDamage(getDamage() * 0.25D);
     }
 
     public EntityTeleportationTippedArrow(World world, double x, double y, double z, IBlockSource source)
     {
         super(world, x, y, z);
+        setDamage(getDamage() * 0.25D);
         
         sourceTileEntity = source.getBlockTileEntity();
         if (sourceTileEntity != null)
