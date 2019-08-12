@@ -63,8 +63,10 @@ message.td.rail.found=Teleport rail: %s FOUND in your network
 # Items
 item.ender_eye_shard.name=Eye of Ender Shard
 item.teleportation_bow.name=Bow of Teleportation
-item.teleportation_bow.tipLine1=Sneak while using bow (%s+%s) to change active destination.
-item.teleportation_bow.tipLine2=Sneak while attacking (%s+%s) to clear its destination.
+item.teleportation_bow.tipLine1=Stores a teleport destination separate from your wand.
+item.teleportation_bow.tipLine2=Must still use Arrow of Teleportation to teleport target.
+item.teleportation_bow.tipLine3=Sneak while using bow (%s+%s) to store active destination.
+item.teleportation_bow.tipLine4=Sneak while attacking (%s+%s) to clear its destination.
 item.teleportation_splash_potion.name=Splash Potion of Teleportation
 item.teleportation_splash_potion_extended.name=Splash Potion of Teleportation II
 item.teleportation_tipped_arrow.name=Arrow of Teleportation

@@ -237,7 +237,9 @@ public class ItemTeleportationBow extends ItemBow
         String attackBind = Minecraft.getMinecraft().gameSettings.keyBindAttack.getDisplayName();
         String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
         
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine1", sneakBind, useItemBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine2", sneakBind, attackBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine1"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine2"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine3", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("item.teleportation_bow.tipLine4", sneakBind, attackBind));
     }
 }
