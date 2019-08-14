@@ -28,7 +28,14 @@ import net.minecraft.util.text.TextFormatting;
  */
 public class CommandTeleportation extends CommandBase
 {
-
+    private enum TargetType
+    {
+        NONE,
+        INVALID,
+        BEACONS,
+        RAILS
+    }
+    
     /**
      * Gets the name of the command.
      */
@@ -59,13 +66,26 @@ public class CommandTeleportation extends CommandBase
         String cmd = args[0];
         int index = -1;
         boolean affectAll = false;
+        TargetType targetType = TargetType.NONE;
 
-        // Get the target destination array index, if any.
+        // Get the second parameter indicating target destination, if any.
         if (args.length >= 2)
         {
             if (args[1].equals("*") || args[1].equalsIgnoreCase("all"))
             {
                 affectAll = true;
+            }
+            else if (args[1].equalsIgnoreCase("invalid"))
+            {
+                targetType = TargetType.INVALID;
+            }
+            else if (args[1].equalsIgnoreCase("beacons"))
+            {
+                targetType = TargetType.BEACONS;
+            }
+            else if (args[1].equalsIgnoreCase("rails"))
+            {
+                targetType = TargetType.RAILS;
             }
             else
             {
@@ -76,12 +96,12 @@ public class CommandTeleportation extends CommandBase
         if (StringUtils.isNumeric(cmd))
         {
             index = parseInt(args[0], 1);
-            executeSetDestinationCommand(sender, --index); // need zero-based index
+            executeSetDestinationCommand(sender, --index); // use zero-based index
         }
         else if (cmd.equalsIgnoreCase("list"))
         {
-            index--; // need zero-based index
-            executeListCommand(sender, index);
+            index--; // use zero-based index
+            executeListCommand(sender, index, targetType);
         }
         else if (cmd.equalsIgnoreCase("delete"))
         {
@@ -94,8 +114,8 @@ public class CommandTeleportation extends CommandBase
             }
             else
             {
-                index--; // need zero-based index
-                executeDeleteCommand(sender, index);
+                index--; // use zero-based index
+                executeDeleteCommand(sender, index, targetType);
             }
         }
         else if (cmd.equalsIgnoreCase("prev"))
@@ -135,7 +155,7 @@ public class CommandTeleportation extends CommandBase
         }
     }
 
-    public void executeListCommand(ICommandSender sender, int destinationIndex) throws CommandException
+    public void executeListCommand(ICommandSender sender, int destinationIndex, TargetType targetType) throws CommandException
     {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
@@ -150,7 +170,39 @@ public class CommandTeleportation extends CommandBase
                 return;
             }
 
-            if (destinationIndex < 0)
+            if (targetType != TargetType.NONE)
+            {
+                // List all the teleport destinations of type targetType in this player's network.
+                TeleportDestination activeDestination = teleportationHandler.getActiveDestination();
+                DestinationType destinationType = null;
+                
+                if (targetType == TargetType.BEACONS)
+                    destinationType = DestinationType.BEACON;
+                else if (targetType == TargetType.RAILS)
+                    destinationType = DestinationType.RAIL;
+                
+                TeleportDestination destination = null;
+                boolean foundOne = false;
+                do
+                {
+                     destination = TeleportationHelper.getNextDestination(player, destinationType, destination);
+                     if (destination != null)
+                     {
+                         if (targetType != TargetType.INVALID || !teleportationHandler.validateDestination(player, destination))
+                         {
+                             foundOne = true;
+                             TextFormatting destinationFormat = (destination.equals(activeDestination)) ? TextFormatting.GOLD : TextFormatting.RESET;
+                             player.sendMessage(new TextComponentString(destinationFormat + teleportationHandler.getLongFormattedName(player, destination, destinationFormat)));
+                         }
+                     }
+                } while (destination != null);
+                
+                if (!foundOne)
+                {
+                    player.sendMessage(new TextComponentTranslation("command.td.destination.none_of_type", new Object[] { targetType }));
+                }
+            }
+            else if (destinationIndex < 0)
             {
                 // List all the teleport destinations in this player's network.
                 int activeDestinationIndex = teleportationHandler.getActiveDestinationIndex();
@@ -174,7 +226,7 @@ public class CommandTeleportation extends CommandBase
         }
     }
 
-    public void executeDeleteCommand(ICommandSender sender, int destinationIndex) throws CommandException
+    public void executeDeleteCommand(ICommandSender sender, int destinationIndex, TargetType targetType) throws CommandException
     {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY,
@@ -189,37 +241,81 @@ public class CommandTeleportation extends CommandBase
                 return;
             }
 
-            // Get the TeleportDestination.
-            TeleportDestination destination = teleportationHandler.getDestinationFromIndex(destinationIndex);
-            if (destination == null)
-                throw new CommandException("command.td.destination.notFound", new Object[] { (destinationIndex + 1) });
-
-            // Check destination - we don't want to remove an Overworld spawn bed from the network because this is supposed to be a fixed destination.
-            if (destination.destinationType == DestinationType.SPAWNBED && destination.dimension == 0)
-                throw new CommandException("command.td.delete.spawnBed.invalid");
-
-            // Notify the player what's getting removed.
-            player.sendMessage(new TextComponentTranslation("command.td.delete.confirmation",
-                    new Object[] { TextFormatting.DARK_GREEN + destination.friendlyName + TextFormatting.RESET }));
-
-            // Only need to send a packet update to the client if we can still find the destination in the world.
-            if (teleportationHandler.validateDestination(player, destination))
+            if (targetType != TargetType.NONE)
             {
-                if (destination.destinationType == DestinationType.BEACON)
+                // Delete all the teleport destinations of type targetType in this player's network.
+                boolean foundOne = false;
+
+                DestinationType destinationType = null;
+                if (targetType == TargetType.BEACONS)
+                    destinationType = DestinationType.BEACON;
+                else if (targetType == TargetType.RAILS)
+                    destinationType = DestinationType.RAIL;
+
+                TeleportDestination prevDestination = null;
+                TeleportDestination destination = TeleportationHelper.getNextDestination(player, destinationType, null);
+                while (destination != null)
                 {
-                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, Boolean.FALSE, null), player);
+                    if (targetType != TargetType.INVALID || !teleportationHandler.validateDestination(player, destination))
+                    {
+                        // Remove the destination.
+                        removeDestination(player, teleportationHandler, destination);
+                        foundOne = true;
+                    }
+                    else
+                    {
+                        prevDestination = destination;
+                    }
+                    
+                    destination = TeleportationHelper.getNextDestination(player, destinationType, prevDestination);
                 }
-                else if (destination.destinationType == DestinationType.RAIL)
+                
+                if (!foundOne)
                 {
-                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, Boolean.FALSE, null), player);
+                    player.sendMessage(new TextComponentTranslation("command.td.destination.none_of_type", new Object[] { targetType }));
                 }
             }
+            else
+            {
+                // Get the TeleportDestination.
+                TeleportDestination destination = teleportationHandler.getDestinationFromIndex(destinationIndex);
+                if (destination == null)
+                    throw new CommandException("command.td.destination.notFound", new Object[] { (destinationIndex + 1) });
 
-            // Finally, remove the destination from the player's network.
-            teleportationHandler.removeDestination(destinationIndex);
+                // Check destination - we don't want to remove an Overworld spawn bed from the network because this is supposed to be a fixed destination.
+                if (destination.destinationType == DestinationType.SPAWNBED && destination.dimension == 0)
+                    throw new CommandException("command.td.delete.spawnBed.invalid");
+                
+                // Remove the destination.
+                removeDestination(player, teleportationHandler, destination);
+            }
+
         }
     }
 
+    private void removeDestination(EntityPlayerMP player, ITeleportationHandler teleportationHandler, TeleportDestination destination)
+    {
+        // Notify the player what's getting removed.
+        player.sendMessage(new TextComponentTranslation("command.td.delete.confirmation",
+                new Object[] { TextFormatting.DARK_GREEN + destination.friendlyName + TextFormatting.RESET }));
+
+        // Only need to send a packet update to the client if we can still find the destination in the world.
+        if (teleportationHandler.validateDestination(player, destination))
+        {
+            if (destination.destinationType == DestinationType.BEACON)
+            {
+                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, Boolean.FALSE, null), player);
+            }
+            else if (destination.destinationType == DestinationType.RAIL)
+            {
+                TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, Boolean.FALSE, null), player);
+            }
+        }
+
+        // Finally, remove the destination from the player's network.
+        teleportationHandler.removeDestination(destination.getUUID());
+    }
+    
     public void executeDeleteAllCommand(ICommandSender sender, boolean forceDeleteSpawnBed) throws CommandException
     {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
@@ -298,7 +394,22 @@ public class CommandTeleportation extends CommandBase
         if (args.length == 1)
             return getListOfStringsMatchingLastWord(args, new String[] { "delete", "list", "next", "prev", "<num>" });
         else if (args.length == 2 && !StringUtils.isNumeric(args[0]))
-            return Lists.newArrayList("2");
+        {
+            if (args[0].equalsIgnoreCase("delete"))
+            {
+                if (args[1].isEmpty())
+                    return Lists.newArrayList("2", "all", "beacons", "rails", "invalid");
+                else
+                    return getListOfStringsMatchingLastWord(args, new String[] { "all", "beacons", "rails", "invalid" });
+            }
+            else
+            {
+                if (args[1].isEmpty())
+                    return Lists.newArrayList("2", "beacons", "rails", "invalid");
+                else
+                    return getListOfStringsMatchingLastWord(args, new String[] { "beacons", "rails", "invalid" });
+            }
+        }
 
         return Collections.<String>emptyList();
     }

@@ -142,7 +142,7 @@ public class ItemTeleportationBow extends ItemBow
                 {
                     // Set or clear destination for teleportation bow.
                     TeleportDestination destination = playerTeleportationHandler.getSpecialDestination();
-                    TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.BEACON, destination);
+                    TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination);
                     if (nextDestination != null)
                     {
                         playerTeleportationHandler.setSpecialDestination(nextDestination);

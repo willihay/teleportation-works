@@ -178,12 +178,12 @@ public class TeleportationHelper
     }
     
     /**
-     * Get the NEXT teleport block of the specified type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
-     * If blockType is null, any Beacon or Rail will match.
+     * Get the NEXT teleport destination of the specified type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
+     * If destinationType is null, it will match any Beacon or Rail.
      * Returns null if the end of the list is reached and no blocks of the specified type have been found.
      */
     @Nullable
-    public static TeleportDestination getNextTeleportBlock(Entity entity, @Nullable DestinationType blockType, @Nullable TeleportDestination afterDestination)
+    public static TeleportDestination getNextDestination(Entity entity, @Nullable DestinationType destinationType, @Nullable TeleportDestination afterDestination)
     {
         ITeleportationHandler teleportationHandler = entity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
         if (teleportationHandler != null)
@@ -197,7 +197,7 @@ public class TeleportationHelper
                 }
             }
             
-            Predicate<TeleportDestination> filter = (blockType != null) ? (d -> (d.destinationType == blockType)) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
+            Predicate<TeleportDestination> filter = (destinationType != null) ? (d -> (d.destinationType == destinationType)) : (d-> (d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL));
             return teleportationHandler.getNextDestination(afterDestination, filter);
         }
         

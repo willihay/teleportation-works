@@ -32,9 +32,10 @@ config.tpworks.world.crafting_difficulty.tooltip=HARD difficulty requires an Eye
 itemGroup.tpworks=Teleportation Works
 
 # Commands and Messages
-command.td.usage=/td <list | # | prev | next | delete> [count/destination#/all]
+command.td.usage=/td <list | # | prev | next | delete> <# | beacons | rails | invalid>]
 command.td.destination.missing=Must include teleport destination number
-command.td.destination.none=Player has no known teleport destinations
+command.td.destination.none=You have no valid teleport destinations in your network
+command.td.destination.none_of_type=There are no teleport destinations of type %s in your network
 command.td.destination.notFound=%s is an invalid teleport destination number in your network
 command.td.active.confirmation=Active teleport destination: %s
 command.td.delete.confirmation=Teleport destination %s REMOVED from your network

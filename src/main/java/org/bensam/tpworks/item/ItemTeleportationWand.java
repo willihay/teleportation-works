@@ -203,7 +203,7 @@ public class ItemTeleportationWand extends Item
                         if (player.isSneaking())
                         {
                             // Set or clear destination for dispenser.
-                            TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.BEACON, dispenserDestination);
+                            TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, dispenserDestination);
                             if (nextDestination != null)
                             {
                                 dispenserTeleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -253,7 +253,7 @@ public class ItemTeleportationWand extends Item
                     if (player.isSneaking())
                     {
                         // Set or clear destination for teleport rail.
-                        TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.RAIL, destination);
+                        TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.RAIL, destination);
                         if (nextDestination != null)
                         {
                             te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -324,7 +324,7 @@ public class ItemTeleportationWand extends Item
                     if (player.isSneaking())
                     {
                         // Set or clear destination for teleport pad.
-                        TeleportDestination nextDestination = TeleportationHelper.getNextTeleportBlock(player, DestinationType.BEACON, destination);
+                        TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination);
                         if (nextDestination != null)
                         {
                             te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
