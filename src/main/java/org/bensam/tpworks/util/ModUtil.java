@@ -6,6 +6,7 @@ import java.util.Random;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -34,6 +35,22 @@ public final class ModUtil
         return Character.toString((char) (65 + RANDOM.nextInt(26)));
     }
 
+    /**
+     * Get current speed of entity (blocks / tick).
+     */
+    public static double getEntitySpeed(Entity entity)
+    {
+        return MathHelper.sqrt(getEntitySpeedSq(entity));
+    }
+    
+    /**
+     * Get the square of the current speed of entity (blocks / tick)^2.
+     */
+    public static double getEntitySpeedSq(Entity entity)
+    {
+        return (entity.motionX * entity.motionX + entity.motionY * entity.motionY + entity.motionZ * entity.motionZ);
+    }
+    
     /**
      * From a list of entities, find all that are riding some other entity and return a map of riders to ridden.
      */

@@ -49,6 +49,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
 
     // server-only data
+    protected int coolDownTime = 0; // set to control rapid fire teleportations if a rail gets included in a tight teleport loop
     private String railName = "";
     private UUID uniqueID = new UUID(0, 0);
     public final TeleportationHandler teleportationHandler = new TeleportationHandler();
@@ -97,6 +98,13 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
                 zCoord = blockCenterZ + (Math.sin(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
                 TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
             }
+        }
+        else // running on server
+        {
+            if (coolDownTime > 0)
+                coolDownTime--;
+            else
+                coolDownTime = 0;
         }
     }
 
@@ -174,6 +182,16 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     public void setStoredByPlayer(boolean stored)
     {
         isStored = stored;
+    }
+    
+    public void addCoolDownTime(int coolDown)
+    {
+        coolDownTime += coolDown;
+    }
+    
+    public int getCoolDownTime()
+    {
+        return coolDownTime;
     }
     
     public UUID getUniqueID()

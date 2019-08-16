@@ -10,6 +10,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModSetup;
 
 import net.minecraft.client.Minecraft;
@@ -142,7 +143,12 @@ public class ItemTeleportationBow extends ItemBow
                 {
                     // Set or clear destination for teleportation bow.
                     TeleportDestination destination = playerTeleportationHandler.getSpecialDestination();
-                    TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination);
+                    TeleportDestination nextDestination = null;
+                    if (ModConfig.equippedItemSettings.bowDestinationsIncludeRails)
+                        nextDestination = TeleportationHelper.getNextDestination(player, null, destination, null);
+                    else
+                        nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination, null);
+
                     if (nextDestination != null)
                     {
                         playerTeleportationHandler.setSpecialDestination(nextDestination);

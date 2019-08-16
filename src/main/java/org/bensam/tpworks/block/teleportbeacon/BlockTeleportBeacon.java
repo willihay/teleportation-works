@@ -228,10 +228,12 @@ public class BlockTeleportBeacon extends Block
                 
                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
             }
-            
-            // Send the name of the beacon to the player.
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            TeleportationHelper.displayTeleportBlockName(player, te, destination);
+            else
+            {
+                // Send the name of the beacon to the player.
+                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                TeleportationHelper.displayTeleportBlockName(player, te, destination);
+            }
         }
     }
 

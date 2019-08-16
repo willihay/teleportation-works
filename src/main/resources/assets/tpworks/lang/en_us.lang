@@ -1,6 +1,16 @@
 # English US language file
 
 # Config
+config.tpworks.equipped_item=Equipped Item Settings
+config.tpworks.equipped_item.tooltip=Settings specific to the use of equipped items included with this mod
+config.tpworks.equipped_item.bow_destinations_include_rails=Bows Can Send To Rails
+config.tpworks.equipped_item.bow_destinations_include_rails.tooltip=When cycling through Bow of Teleportation destinations, include saved Teleport Rails.
+config.tpworks.equipped_item.wand_teleports_boats_ridden=Wands Teleport Boats Ridden
+config.tpworks.equipped_item.wand_teleports_boats_ridden.tooltip=Wand of Teleportation also teleports boats that a player is riding.
+config.tpworks.equipped_item.wand_teleports_creatures_ridden=Wands Teleport Creatures Ridden
+config.tpworks.equipped_item.wand_teleports_creatures_ridden.tooltip=Wand of Teleportation also teleports creatures that a player is riding.
+config.tpworks.equipped_item.wand_teleports_minecarts_ridden=Wands Teleport Minecarts Ridden
+config.tpworks.equipped_item.wand_teleports_minecarts_ridden.tooltip=Wand of Teleportation also teleports minecarts that a player is riding.
 config.tpworks.splash_potion=Splash Potion Settings
 config.tpworks.splash_potion.tooltip=Settings specific to the Splash Potion of Teleportation
 config.tpworks.splash_potion.teleport_boats=Teleport Boats
@@ -21,6 +31,16 @@ config.tpworks.splash_potion.teleport_players_other=Teleport Other Players
 config.tpworks.splash_potion.teleport_players_other.tooltip=Teleport other players within the potion splash radius.
 config.tpworks.splash_potion.teleport_projectiles=Teleport Projectiles
 config.tpworks.splash_potion.teleport_projectiles.tooltip=Teleport any projectiles within the potion splash radius.
+config.tpworks.teleport_block=Teleport Block Settings
+config.tpworks.teleport_block.tooltip=Settings specific to teleport blocks included with this mod
+config.tpworks.teleport_block.beacon_destinations_include_rails=Beacons Can Send To Rails
+config.tpworks.teleport_block.beacon_destinations_include_rails.tooltip=When cycling through Teleport Beacon destinations, include saved Teleport Rails.
+config.tpworks.teleport_block.beacon_destinations_include_self=Beacons Can Send To Themselves
+config.tpworks.teleport_block.beacon_destinations_include_self.tooltip=When cycling through Teleport Beacon destinations, include same beacon as an option.
+config.tpworks.teleport_block.rail_cooldown_ticks=Rail Cooldown Time
+config.tpworks.teleport_block.rail_cooldown_ticks.tooltip=Cooldown time (in ticks) after a Teleport Rail teleports a minecart, during which it will not teleport another cart.
+config.tpworks.teleport_block.rail_destinations_include_beacons=Rails Can Send To Beacons
+config.tpworks.teleport_block.rail_destinations_include_beacons.tooltip=When cycling through Teleport Rail destinations, include saved Teleport Beacons.
 config.tpworks.world=World Settings
 config.tpworks.world.tooltip=General settings for how this mod affects your world
 config.tpworks.world.spawn_chest=Add Items to Spawn Chest
@@ -32,7 +52,7 @@ config.tpworks.world.crafting_difficulty.tooltip=HARD difficulty requires an Eye
 itemGroup.tpworks=Teleportation Works
 
 # Commands and Messages
-command.td.usage=/td <list | # | prev | next | delete> <# | beacons | rails | invalid>]
+command.td.usage=/td <list | # | prev | next | delete> <# | beacons | rails | invalid>
 command.td.destination.missing=Must include teleport destination number
 command.td.destination.none=You have no valid teleport destinations in your network
 command.td.destination.none_of_type=There are no teleport destinations of type %s in your network

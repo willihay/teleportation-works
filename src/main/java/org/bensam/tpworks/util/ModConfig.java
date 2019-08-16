@@ -6,6 +6,7 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.LangKey;
 import net.minecraftforge.common.config.Config.Name;
+import net.minecraftforge.common.config.Config.RangeInt;
 import net.minecraftforge.common.config.Config.RequiresWorldRestart;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -20,6 +21,29 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public final class ModConfig
 {
     private static final String LANG_PREFIX = "config." + TeleportationWorks.MODID;
+    
+    @Name("Equipped Item Settings")
+    @LangKey(LANG_PREFIX + ".equipped_item")
+    public static EquippedItemSettings equippedItemSettings = new EquippedItemSettings();
+    
+    public static class EquippedItemSettings
+    {
+        @Comment("When cycling through Bow of Teleportation destinations, include saved Teleport Rails")
+        @LangKey(LANG_PREFIX + ".equipped_item.bow_destinations_include_rails")
+        public boolean bowDestinationsIncludeRails = false;
+        
+        @Comment("Wand of Teleportation also teleports boats that a player is riding")
+        @LangKey(LANG_PREFIX + ".equipped_item.wand_teleports_boats_ridden")
+        public boolean wandTeleportsBoatsRidden = true;
+        
+        @Comment("Wand of Teleportation also teleports creatures that a player is riding")
+        @LangKey(LANG_PREFIX + ".equipped_item.wand_teleports_creatures_ridden")
+        public boolean wandTeleportsCreaturesRidden = true;
+        
+        @Comment("Wand of Teleportation also teleports minecarts that a player is riding")
+        @LangKey(LANG_PREFIX + ".equipped_item.wand_teleports_minecarts_ridden")
+        public boolean wandTeleportsMinecartsRidden = true;
+    }
     
     @Name("Splash Potion Settings")
     @LangKey(LANG_PREFIX + ".splash_potion")
@@ -62,6 +86,30 @@ public final class ModConfig
         @Comment("Teleport any projectiles within the potion splash radius")
         @LangKey(LANG_PREFIX + ".splash_potion.teleport_projectiles")
         public boolean teleportProjectiles = false;
+    }
+    
+    @Name("Teleport Block Settings")
+    @LangKey(LANG_PREFIX + ".teleport_block")
+    public static TeleportBlockSettings teleportBlockSettings = new TeleportBlockSettings();
+    
+    public static class TeleportBlockSettings
+    {
+        @Comment("When cycling through Teleport Beacon destinations, include saved Teleport Rails")
+        @LangKey(LANG_PREFIX + ".teleport_block.beacon_destinations_include_rails")
+        public boolean beaconDestinationsIncludeRails = false;
+        
+        @Comment("When cycling through Teleport Beacon destinations, include same beacon as an option")
+        @LangKey(LANG_PREFIX + ".teleport_block.beacon_destinations_include_self")
+        public boolean beaconDestinationsIncludeSelf = false;
+
+        @Comment("Cooldown time (in ticks) after a Teleport Rail teleports a minecart, during which it will not teleport another cart")
+        @LangKey(LANG_PREFIX + ".teleport_block.rail_cooldown_ticks")
+        @RangeInt(min = 0, max = 20)
+        public int railCooldownTime = 5;
+        
+        @Comment("When cycling through Teleport Rail destinations, include saved Teleport Beacons")
+        @LangKey(LANG_PREFIX + ".teleport_block.rail_destinations_include_beacons")
+        public boolean railDestinationsIncludeBeacons = false;
     }
     
     @Name("World Settings")

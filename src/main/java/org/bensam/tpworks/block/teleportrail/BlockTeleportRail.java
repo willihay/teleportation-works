@@ -13,6 +13,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.sound.ModSounds;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModSetup;
 import org.bensam.tpworks.util.ModUtil;
 
@@ -40,6 +41,7 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.ChunkCache;
@@ -132,13 +134,14 @@ public class BlockTeleportRail extends BlockRailPowered
     {
         TileEntityTeleportRail te = getTileEntity(world, pos);
         
-        if (te.teleportationHandler.hasActiveDestination())
+        if (te.getCoolDownTime() <= 0 && te.teleportationHandler.hasActiveDestination())
         {
             TeleportDestination destination = te.teleportationHandler.getActiveDestination();
             
             if (te.teleportationHandler.validateDestination(null, destination))
             {
                 TeleportationHelper.teleportEntityAndPassengers(cart, destination);
+                te.addCoolDownTime(ModConfig.teleportBlockSettings.railCooldownTime);
             }
         }
     }
@@ -204,10 +207,12 @@ public class BlockTeleportRail extends BlockRailPowered
                 
                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
             }
-            
-            // Send the name of the rail to the player.
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            TeleportationHelper.displayTeleportBlockName(player, te, destination);
+            else
+            {
+                // Send the name of the rail to the player.
+                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                TeleportationHelper.displayTeleportBlockName(player, te, destination);
+            }
         }
     }
 

@@ -20,6 +20,7 @@ import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.sound.ModSounds;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModSetup;
 import org.bensam.tpworks.util.ModUtil;
 
@@ -29,6 +30,9 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityBoat;
+import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
@@ -203,7 +207,7 @@ public class ItemTeleportationWand extends Item
                         if (player.isSneaking())
                         {
                             // Set or clear destination for dispenser.
-                            TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, dispenserDestination);
+                            TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, dispenserDestination, null);
                             if (nextDestination != null)
                             {
                                 dispenserTeleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -253,7 +257,12 @@ public class ItemTeleportationWand extends Item
                     if (player.isSneaking())
                     {
                         // Set or clear destination for teleport rail.
-                        TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.RAIL, destination);
+                        TeleportDestination nextDestination = null;
+                        if (ModConfig.teleportBlockSettings.railDestinationsIncludeBeacons)
+                            nextDestination = TeleportationHelper.getNextDestination(player, null, destination, uuid);
+                        else
+                            nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.RAIL, destination, uuid);
+                        
                         if (nextDestination != null)
                         {
                             te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -324,7 +333,13 @@ public class ItemTeleportationWand extends Item
                     if (player.isSneaking())
                     {
                         // Set or clear destination for teleport pad.
-                        TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination);
+                        TeleportDestination nextDestination = null;
+                        UUID exceptThisID = ModConfig.teleportBlockSettings.beaconDestinationsIncludeSelf ? null : uuid;
+                        if (ModConfig.teleportBlockSettings.beaconDestinationsIncludeRails)
+                            nextDestination = TeleportationHelper.getNextDestination(player, null, destination, exceptThisID);
+                        else
+                            nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination, exceptThisID);
+                        
                         if (nextDestination != null)
                         {
                             te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -456,8 +471,11 @@ public class ItemTeleportationWand extends Item
                     // Teleport player to the active destination (if it is valid).
                     if (teleportationHandler.validateDestination(entityLiving, activeTeleportDestination))
                     {
-                        // If player is riding a living entity, teleport them both and remount them once teleported.
-                        if (entityLiving.isRiding() && (entityLiving.getRidingEntity() instanceof EntityLivingBase))
+                        // If player is riding some other entity, see if they both can be teleported, and remount them once teleported.
+                        if (entityLiving.isRiding() && (
+                                (entityLiving.getRidingEntity() instanceof IAnimals && ModConfig.equippedItemSettings.wandTeleportsCreaturesRidden)
+                                || (entityLiving.getRidingEntity() instanceof EntityBoat && ModConfig.equippedItemSettings.wandTeleportsBoatsRidden)
+                                || (entityLiving.getRidingEntity() instanceof EntityMinecart && ModConfig.equippedItemSettings.wandTeleportsMinecartsRidden)))
                         {
                             Entity entityRidden = TeleportationHelper.teleport(entityLiving.getRidingEntity(), activeTeleportDestination);
                             TeleportationHelper.teleport(entityLiving, activeTeleportDestination);
