@@ -2,6 +2,7 @@ package org.bensam.tpworks.network;
 
 import javax.annotation.Nullable;
 
+import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 
 import io.netty.buffer.ByteBuf;
@@ -22,12 +23,14 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 public class PacketUpdateTeleportRail implements IMessage
 {
     private BlockPos pos;
+    private int dimension;
     private int isStored; // -1: no change; 0: false; 1: true
     private int isSender; // -1: no change; 0: false; 1: true
     
-    public PacketUpdateTeleportRail(BlockPos pos, @Nullable Boolean isStored, @Nullable Boolean isSender)
+    public PacketUpdateTeleportRail(BlockPos pos, int dimension, @Nullable Boolean isStored, @Nullable Boolean isSender)
     {
         this.pos = pos;
+        this.dimension = dimension;
         this.isStored = isStored == null ? -1 : (isStored.booleanValue() ? 1 : 0);
         this.isSender = isSender == null ? -1 : (isSender.booleanValue() ? 1 : 0);
     }
@@ -47,21 +50,32 @@ public class PacketUpdateTeleportRail implements IMessage
             Minecraft.getMinecraft().addScheduledTask(() ->
             {
                 WorldClient world = Minecraft.getMinecraft().world;
-                TileEntity te = world.getTileEntity(message.pos);
-                if (te instanceof TileEntityTeleportRail)
+                if (message.dimension == world.provider.getDimension())
                 {
-                    TileEntityTeleportRail teTeleportRail = (TileEntityTeleportRail) te;
-                    
-                    if (message.isStored >= 0)
+                    TileEntity te = world.getTileEntity(message.pos);
+                    if (te instanceof TileEntityTeleportRail)
                     {
-                        teTeleportRail.setStoredByPlayer(message.isStored != 0);
+                        TileEntityTeleportRail teTeleportRail = (TileEntityTeleportRail) te;
+                        
+                        if (message.isStored >= 0)
+                        {
+                            teTeleportRail.setStoredByPlayer(message.isStored != 0);
+                        }
+                        
+                        if (message.isSender >= 0)
+                        {
+                            teTeleportRail.setSender(message.isSender != 0);
+                            world.markBlockRangeForRenderUpdate(message.pos, message.pos);
+                        }
                     }
-                    
-                    if (message.isSender >= 0)
-                    {
-                        teTeleportRail.setSender(message.isSender != 0);
-                        world.markBlockRangeForRenderUpdate(message.pos, message.pos);
-                    }
+                }
+                else
+                {
+                    // Ignore the message. It is meant for a tile entity in a different dimension than what the player currently has loaded.
+                    TeleportationWorks.MOD_LOGGER.debug("Skipping rail update for player {} for TE at {} in dimension {}",
+                            Minecraft.getMinecraft().player.getDisplayNameString(),
+                            message.pos,
+                            message.dimension);
                 }
             });
             
@@ -73,6 +87,7 @@ public class PacketUpdateTeleportRail implements IMessage
     public void fromBytes(ByteBuf buf)
     {
         pos = BlockPos.fromLong(buf.readLong());
+        dimension = buf.readInt();
         isStored = (int) (buf.readByte());
         isSender = (int) (buf.readByte());
     }
@@ -81,6 +96,7 @@ public class PacketUpdateTeleportRail implements IMessage
     public void toBytes(ByteBuf buf)
     {
         buf.writeLong(pos.toLong());
+        buf.writeInt(dimension);
         buf.writeByte(isStored);
         buf.writeByte(isSender);
     }

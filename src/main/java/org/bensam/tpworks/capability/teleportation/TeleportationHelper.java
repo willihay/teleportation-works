@@ -15,6 +15,7 @@ import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.item.ItemTeleportationBow;
+import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -35,6 +36,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 /**
  * @author WilliHay
@@ -334,6 +336,10 @@ public class TeleportationHelper
         int entityCurrentDimension = entityToTeleport.dimension;
         WorldServer teleportWorld = ModUtil.getWorldServerForDimension(teleportDimension);
 
+        // Notify players near the teleport destination that an entity is about to teleport there.
+        TeleportationWorks.network.sendToAllAround(new PacketUpdateTeleportIncoming(teleportPos, teleportDimension),
+                new NetworkRegistry.TargetPoint(teleportDimension, teleportPos.getX(), teleportPos.getY(), teleportPos.getZ(), 50.0D));
+        
         // Dismount teleporting entity or passengers riding this entity, if applicable.
         if (entityToTeleport.isRiding())
         {

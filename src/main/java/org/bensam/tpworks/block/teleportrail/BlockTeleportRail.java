@@ -202,7 +202,7 @@ public class BlockTeleportRail extends BlockRailPowered
                     te.teleportationHandler.removeDestination(0);
                     te.setSender(false);
                     te.markDirty();
-                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(pos, null, Boolean.FALSE));
+                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(pos, world.provider.getDimension(), null, Boolean.FALSE));
                 }
                 
                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
@@ -270,19 +270,20 @@ public class BlockTeleportRail extends BlockRailPowered
                 ITeleportationHandler teleportationHandler = placer.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
                 if (teleportationHandler != null)
                 {
+                    int dimension = world.provider.getDimension();
                     TeleportDestination destinationInNetwork = teleportationHandler.getDestinationFromUUID(uuid);
                     if (destinationInNetwork != null)
                     {
                         teleportationHandler.setDestinationAsPlaced(uuid, null, world.provider.getDimension(), pos);
                         if (placer instanceof EntityPlayerMP)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, dimension, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                         }
                         placer.sendMessage(new TextComponentTranslation("message.td.rail.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, dimension, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                     }
                 }
             }

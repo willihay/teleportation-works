@@ -12,6 +12,7 @@ import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportRail;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
+import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.proxy.IProxy;
 
@@ -96,6 +97,7 @@ public class TeleportationWorks
         network.registerMessage(new PacketUpdateTeleportRail.Handler(), PacketUpdateTeleportRail.class, networkPacketID++, Side.CLIENT);
         network.registerMessage(new PacketRequestUpdateTeleportRail.Handler(), PacketRequestUpdateTeleportRail.class, networkPacketID++,
                 Side.SERVER);
+        network.registerMessage(new PacketUpdateTeleportIncoming.Handler(), PacketUpdateTeleportIncoming.class, networkPacketID++, Side.CLIENT);
 
         // Register additional loot tables.
         LootTableList.register(new ResourceLocation(MODID, "chests/spawn_bonus_chest"));

@@ -37,4 +37,10 @@ public interface ITeleportationBlock
      * (valid on CLIENT only)
      */
     void setStoredByPlayer(boolean stored);
+    
+    /**
+     * Called when an entity is teleporting (or about to teleport) to this tile entity location.
+     * (used on CLIENT only)
+     */
+    void setIncomingTeleportInProgress();
 }

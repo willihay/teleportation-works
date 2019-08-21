@@ -48,6 +48,9 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
 
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
+    public boolean incomingTeleportInProgress = false;
+    public long incomingTeleportTimer = 0;
+    public long incomingTeleportTimerStop = 0;
     protected boolean isStored = false; // true when player has stored this TE in their teleport destination network
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
     
@@ -76,9 +79,38 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
 
         if (world.isRemote)
         {
-            if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
+            if (incomingTeleportInProgress)
             {
-                // Spawn beacon particles.
+                // Spawn increased number of beacon particles for an incoming teleport.
+                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY * 2.0D;
+                double blockCenterX = (double) pos.getX() + 0.5D;
+                double blockY = (double) pos.getY() + 0.125D;
+                double blockCenterZ = (double) pos.getZ() + 0.5D;
+                double height = (double) (incomingTeleportTimer % PARTICLE_VERTICAL_POSITIONS);
+                float scaleModifier = (height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
+                double yCoord = blockY + (height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                
+                for (int i = 0; i < 8; i++)
+                {
+                    // Particle i:
+                    double particleISpawnAngle = particleSpawnAngle + ((Math.PI * ((double) i)) / 4.0D);
+                    double xCoord = blockCenterX + (Math.cos(particleISpawnAngle) * (PARTICLE_HORIZONTAL_RADIUS + 0.1D));
+                    double zCoord = blockCenterZ + (Math.sin(particleISpawnAngle) * (PARTICLE_HORIZONTAL_RADIUS + 0.1D));
+                    TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoord, zCoord, scaleModifier);
+                }
+                
+                incomingTeleportTimer++;
+                
+                if (incomingTeleportTimer >= incomingTeleportTimerStop)
+                {
+                    incomingTeleportInProgress = false;
+                    incomingTeleportTimer = 0;
+                    incomingTeleportTimerStop = 0;
+                }
+            }
+            else if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
+            {
+                // Spawn normal beacon particles.
                 particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
                 double blockCenterX = (double) pos.getX() + 0.5D;
                 double blockY = (double) pos.getY() + 0.125D;
@@ -222,6 +254,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         markDirty();
     }
 
+    @Override
     public String getTeleportName()
     {
         return beaconName;
@@ -231,6 +264,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
      * Set the teleport destination display name of this block.
      * Passing in a null or empty string will set a random name of the format [A-Z][0-99].
      */
+    @Override
     public void setTeleportName(@Nullable String name)
     {
         if (name == null || name.isEmpty())
@@ -248,6 +282,23 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         }
     }
 
+    /**
+     * Called when an entity is teleporting (or about to teleport) to this tile entity location.
+     * (used on CLIENT only)
+     */
+    @Override
+    public void setIncomingTeleportInProgress()
+    {
+        incomingTeleportInProgress = true;
+        
+        // Check if the current particle stop timer is complete or near-complete.  
+        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
+        {
+            // If so, add time to the stop timer.
+            incomingTeleportTimerStop += ((long) PARTICLE_VERTICAL_POSITIONS);
+        }
+    }
+    
     @Override
     public String getName()
     {

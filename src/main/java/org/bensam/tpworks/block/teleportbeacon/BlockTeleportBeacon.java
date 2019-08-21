@@ -223,7 +223,7 @@ public class BlockTeleportBeacon extends Block
                     te.teleportationHandler.removeDestination(0);
                     te.setSender(false);
                     te.markDirty();
-                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.FALSE));
+                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(pos, world.provider.getDimension(), null, Boolean.FALSE));
                 }
                 
                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
@@ -290,19 +290,20 @@ public class BlockTeleportBeacon extends Block
                 ITeleportationHandler teleportationHandler = placer.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
                 if (teleportationHandler != null)
                 {
+                    int dimension = world.provider.getDimension();
                     TeleportDestination destinationInNetwork = teleportationHandler.getDestinationFromUUID(uuid);
                     if (destinationInNetwork != null)
                     {
-                        teleportationHandler.setDestinationAsPlaced(uuid, null, world.provider.getDimension(), pos);
+                        teleportationHandler.setDestinationAsPlaced(uuid, null, dimension, pos);
                         if (placer instanceof EntityPlayerMP)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, dimension, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                         }
                         placer.sendMessage(new TextComponentTranslation("message.td.beacon.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, dimension, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                     }
                 }
             }

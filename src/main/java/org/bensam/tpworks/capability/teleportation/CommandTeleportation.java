@@ -304,11 +304,11 @@ public class CommandTeleportation extends CommandBase
         {
             if (destination.destinationType == DestinationType.BEACON)
             {
-                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, Boolean.FALSE, null), player);
+                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, destination.dimension, Boolean.FALSE, null), player);
             }
             else if (destination.destinationType == DestinationType.RAIL)
             {
-                TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, Boolean.FALSE, null), player);
+                TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, destination.dimension, Boolean.FALSE, null), player);
             }
         }
 

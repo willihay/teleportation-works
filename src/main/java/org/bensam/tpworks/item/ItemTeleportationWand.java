@@ -18,6 +18,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilit
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
+import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModConfig;
@@ -59,6 +60,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -250,6 +252,7 @@ public class ItemTeleportationWand extends Item
                 else if (clickedBlock == ModBlocks.TELEPORT_RAIL)
                 {
                     TileEntityTeleportRail te = (TileEntityTeleportRail) world.getTileEntity(pos);
+                    int dimension = world.provider.getDimension();
                     UUID uuid = te.getUniqueID();
                     String name = te.getTeleportName();
                     TeleportDestination destination = te.teleportationHandler.getActiveDestination();
@@ -268,7 +271,7 @@ public class ItemTeleportationWand extends Item
                             te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
                             te.setSender(true);
                             te.markDirty();
-                            TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.TRUE));
+                            TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), dimension, null, Boolean.TRUE));
                             player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
                         }
                         else
@@ -282,7 +285,7 @@ public class ItemTeleportationWand extends Item
                                 te.teleportationHandler.removeDestination(0);
                                 te.setSender(false);
                                 te.markDirty();
-                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), null, Boolean.FALSE));
+                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(te.getPos(), dimension, null, Boolean.FALSE));
                                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                             }
                         }
@@ -295,7 +298,7 @@ public class ItemTeleportationWand extends Item
                             playerTeleportationHandler.removeDestination(uuid);
                             
                             // Send a packet update so the client can get word that this rail is no longer stored for this player.
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), Boolean.FALSE, null), (EntityPlayerMP) player);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
                             player.sendMessage(new TextComponentTranslation("message.td.rail.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                         }
                         else
@@ -307,7 +310,7 @@ public class ItemTeleportationWand extends Item
                                 if (playerTeleportationHandler.replaceOrAddDestination(railDestination))
                                 {
                                     // Send a packet update so the client can get word that this rail is stored for this player.
-                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), Boolean.TRUE, null), (EntityPlayerMP) player);
+                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(te.getPos(), dimension, Boolean.TRUE, null), (EntityPlayerMP) player);
                                     player.sendMessage(new TextComponentTranslation("message.td.rail.add.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                                 }
                             }
@@ -326,6 +329,7 @@ public class ItemTeleportationWand extends Item
                 else if (clickedBlock == ModBlocks.TELEPORT_BEACON && !(player.getCooldownTracker().hasCooldown(this)))
                 {
                     TileEntityTeleportBeacon te = (TileEntityTeleportBeacon) world.getTileEntity(pos);
+                    int dimension = world.provider.getDimension();
                     UUID uuid = te.getUniqueID();
                     String name = te.getTeleportName();
                     TeleportDestination destination = te.teleportationHandler.getActiveDestination();
@@ -345,7 +349,7 @@ public class ItemTeleportationWand extends Item
                             te.teleportationHandler.replaceOrAddFirstDestination(nextDestination);
                             te.setSender(true);
                             te.markDirty();
-                            TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.TRUE));
+                            TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), dimension, null, Boolean.TRUE));
                             player.sendMessage(new TextComponentTranslation("message.td.destination.set.confirmation", new Object[] {TextFormatting.DARK_GREEN + nextDestination.friendlyName}));
                         }
                         else
@@ -359,7 +363,7 @@ public class ItemTeleportationWand extends Item
                                 te.teleportationHandler.removeDestination(0);
                                 te.setSender(false);
                                 te.markDirty();
-                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), null, Boolean.FALSE));
+                                TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(te.getPos(), dimension, null, Boolean.FALSE));
                                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
                             }
                         }
@@ -373,7 +377,7 @@ public class ItemTeleportationWand extends Item
                             playerTeleportationHandler.removeDestination(uuid);
                             
                             // Send a packet update so the client can get word that this beacon is no longer stored for this player.
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), Boolean.FALSE, null), (EntityPlayerMP) player);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
                             player.sendMessage(new TextComponentTranslation("message.td.beacon.delete.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                         }
                         else
@@ -385,7 +389,7 @@ public class ItemTeleportationWand extends Item
                                 if (playerTeleportationHandler.replaceOrAddDestination(beaconDestination))
                                 {
                                     // Send a packet update so the client can get word that this beacon is stored for this player.
-                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), Boolean.TRUE, null), (EntityPlayerMP) player);
+                                    TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(te.getPos(), dimension, Boolean.TRUE, null), (EntityPlayerMP) player);
                                     player.sendMessage(new TextComponentTranslation("message.td.beacon.add.confirmation", new Object[] {TextFormatting.DARK_GREEN + name + TextFormatting.RESET}));
                                 }
                             }
@@ -427,32 +431,52 @@ public class ItemTeleportationWand extends Item
     {
         World world = player.world;
         
-        if (world.isRemote && ((getMaxItemUseDuration(stack) - count) > CHARGE_ANIMATION_DELAY_TICKS))
+        if (world.isRemote)
         {
-            // Create portal-type particles around the player's wand when it's being charged up.
-            Random rand = ModUtil.RANDOM;
-            Vec3d playerPos = player.getPositionVector();
-            
-            // Use an offset vector in front of the player, in the approximate location of the wand, where the particles will tend to be centered.
-            Vec3d particleOffset = Vec3d.fromPitchYaw(0.0F, player.rotationYaw);
-            boolean isRightHand = player.getActiveHand() == EnumHand.MAIN_HAND;
-            if (player.getPrimaryHand() == EnumHandSide.LEFT)
+            if ((getMaxItemUseDuration(stack) - count) > CHARGE_ANIMATION_DELAY_TICKS)
             {
-                isRightHand = !isRightHand;
-            }
-            particleOffset = isRightHand ? particleOffset.rotateYaw((float) (-Math.PI / 6.0D)) : particleOffset.rotateYaw((float) (Math.PI / 6.0D));
-            
-            // Spawn all the particles.
-            for (int i = 0; i < 6; ++i)
-            {
-                double x = playerPos.x + particleOffset.x + ((rand.nextDouble() - 0.5D) * 0.5D);
-                double y = playerPos.y + (rand.nextDouble() * 0.5D);
-                double z = playerPos.z + particleOffset.z + ((rand.nextDouble() - 0.5D) * 0.5D);
-                double speedX = (rand.nextDouble() - 0.5D) * 0.5D;
-                double speedY = (rand.nextDouble() - 0.5D) * 0.5D;
-                double speedZ = (rand.nextDouble() - 0.5D) * 0.5D;
+                // Create portal-type particles around the player's wand when it's being charged up.
+                Random rand = ModUtil.RANDOM;
+                Vec3d playerPos = player.getPositionVector();
+                
+                // Use an offset vector in front of the player, in the approximate location of the wand, where the particles will tend to be centered.
+                Vec3d particleOffset = Vec3d.fromPitchYaw(0.0F, player.rotationYaw);
+                boolean isRightHand = player.getActiveHand() == EnumHand.MAIN_HAND;
+                if (player.getPrimaryHand() == EnumHandSide.LEFT)
+                {
+                    isRightHand = !isRightHand;
+                }
+                particleOffset = isRightHand ? particleOffset.rotateYaw((float) (-Math.PI / 6.0D)) : particleOffset.rotateYaw((float) (Math.PI / 6.0D));
+                
+                // Spawn all the particles.
+                for (int i = 0; i < 6; ++i)
+                {
+                    double x = playerPos.x + particleOffset.x + ((rand.nextDouble() - 0.5D) * 0.5D);
+                    double y = playerPos.y + (rand.nextDouble() * 0.5D);
+                    double z = playerPos.z + particleOffset.z + ((rand.nextDouble() - 0.5D) * 0.5D);
+                    double speedX = (rand.nextDouble() - 0.5D) * 0.5D;
+                    double speedY = (rand.nextDouble() - 0.5D) * 0.5D;
+                    double speedZ = (rand.nextDouble() - 0.5D) * 0.5D;
 
-                world.spawnParticle(EnumParticleTypes.PORTAL, x, y, z, speedX, speedY, speedZ);
+                    world.spawnParticle(EnumParticleTypes.PORTAL, x, y, z, speedX, speedY, speedZ);
+                }
+            }
+        }
+        else // running on server
+        {
+            if ((getMaxItemUseDuration(stack) - count) == CHARGE_ANIMATION_DELAY_TICKS)
+            {
+                // Notify players near the wand teleport destination that an entity is about to teleport there.
+                ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
+                if (teleportationHandler != null)
+                {
+                    TeleportDestination destination = teleportationHandler.getActiveDestination();
+                    if (destination != null)
+                    {
+                        TeleportationWorks.network.sendToAllAround(new PacketUpdateTeleportIncoming(destination.position, destination.dimension),
+                                new NetworkRegistry.TargetPoint(destination.dimension, destination.position.getX(), destination.position.getY(), destination.position.getZ(), 50.0D));
+                    }
+                }
             }
         }
     }

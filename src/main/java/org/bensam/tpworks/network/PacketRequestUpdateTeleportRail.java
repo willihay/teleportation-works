@@ -63,12 +63,12 @@ public class PacketRequestUpdateTeleportRail implements IMessage
                         teleportationHandler.validateDestination(player, destination);
                         
                         // Return a packet indicating the rail is stored. 
-                        return new PacketUpdateTeleportRail(message.pos, Boolean.TRUE, Boolean.valueOf(teTeleportRail.isSender()));
+                        return new PacketUpdateTeleportRail(message.pos, message.dimension, Boolean.TRUE, Boolean.valueOf(teTeleportRail.isSender()));
                     }
                     else
                     {
                         // Return a packet indicating the rail is not stored for this player. 
-                        return new PacketUpdateTeleportRail(message.pos, Boolean.FALSE, Boolean.valueOf(teTeleportRail.isSender()));
+                        return new PacketUpdateTeleportRail(message.pos, message.dimension, Boolean.FALSE, Boolean.valueOf(teTeleportRail.isSender()));
                     }
                 }
             }

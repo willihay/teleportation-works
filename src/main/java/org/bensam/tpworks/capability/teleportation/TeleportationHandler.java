@@ -270,11 +270,11 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                     {
                         if (destination.destinationType == DestinationType.BEACON)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, Boolean.FALSE, null), (EntityPlayerMP) player);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, destination.dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
                         }
                         else if (destination.destinationType == DestinationType.RAIL)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, Boolean.FALSE, null), (EntityPlayerMP) player);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, destination.dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
                         }
                     }
                 }
