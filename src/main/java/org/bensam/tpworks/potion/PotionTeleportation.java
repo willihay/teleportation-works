@@ -8,6 +8,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
@@ -34,6 +35,12 @@ public class PotionTeleportation extends Potion
     public boolean isInstant()
     {
         return true;
+    }
+
+    @Override
+    public boolean shouldRenderHUD(PotionEffect effect)
+    {
+        return false;
     }
 
     /*
