@@ -1,16 +1,16 @@
 {
 	"type": "minecraft:crafting_shaped",
 	"pattern": [
-		"LOL",
-		"LBL",
-		"LOL"
+		"L L",
+		"LSL",
+		"LBL"
 	],
 	"key": {
 		"B": {
 			"item": "tpworks:teleport_beacon"
 		},
-		"O": {
-			"item": "minecraft:obsidian"
+		"S": {
+			"item": "minecraft:stick"
 		},
 		"L": {
 			"item": "minecraft:dye",
