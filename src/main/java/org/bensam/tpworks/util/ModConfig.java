@@ -59,6 +59,10 @@ public final class ModConfig
         @LangKey(LANG_PREFIX + ".splash_potion.teleport_boats_when_ridden")
         public boolean teleportBoatsOnlyWhenRiddenByTeleportableEntity = true;
         
+        @Comment("Teleport any dropped items within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_dropped_items")
+        public boolean teleportDroppedItems = true;
+        
         @Comment("Teleport any hostile creatures (mobs) within the potion splash radius")
         @LangKey(LANG_PREFIX + ".splash_potion.teleport_hostiles")
         public boolean teleportHostileCreatures = true;
@@ -86,6 +90,10 @@ public final class ModConfig
         @Comment("Teleport any projectiles within the potion splash radius")
         @LangKey(LANG_PREFIX + ".splash_potion.teleport_projectiles")
         public boolean teleportProjectiles = false;
+        
+        @Comment("Teleport any lit TNT within the potion splash radius")
+        @LangKey(LANG_PREFIX + ".splash_potion.teleport_tnt_lit")
+        public boolean teleportTNTLit = false;
     }
     
     @Name("Teleport Block Settings")

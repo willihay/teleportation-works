@@ -22,7 +22,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.item.EntityBoat;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.item.EntityTNTPrimed;
 import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
@@ -223,7 +225,7 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
     }
 
     /** 
-     * Selects boats, minecarts, and certain living entities.
+     * Selects boats, minecarts, dropped items, and certain living entities.
      */
     public static final Predicate<Entity> TELEPORTABLE_ENTITIES = new Predicate<Entity>()
     {
@@ -234,7 +236,9 @@ public class EntityTeleportationSplashPotion extends EntityThrowable
                     || (entity instanceof IMob && ModConfig.splashPotionSettings.teleportHostileCreatures) 
                     || (entity instanceof EntityBoat && ModConfig.splashPotionSettings.teleportBoats && !(ModConfig.splashPotionSettings.teleportBoatsOnlyWhenRiddenByTeleportableEntity)) 
                     || (entity instanceof EntityMinecart && ModConfig.splashPotionSettings.teleportMinecarts && !(ModConfig.splashPotionSettings.teleportMinecartsOnlyWhenRiddenByTeleportableEntity))
-                    || ((entity instanceof IProjectile || entity instanceof EntityFireball) && ModConfig.splashPotionSettings.teleportProjectiles);
+                    || ((entity instanceof IProjectile || entity instanceof EntityFireball) && ModConfig.splashPotionSettings.teleportProjectiles)
+                    || (entity instanceof EntityItem && ModConfig.splashPotionSettings.teleportDroppedItems)
+                    || (entity instanceof EntityTNTPrimed && ModConfig.splashPotionSettings.teleportTNTLit);
         }
     };
 
