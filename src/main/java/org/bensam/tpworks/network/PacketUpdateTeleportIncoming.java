@@ -1,6 +1,6 @@
 package org.bensam.tpworks.network;
 
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -45,9 +45,9 @@ public class PacketUpdateTeleportIncoming implements IMessage
                 if (message.dimension == world.provider.getDimension())
                 {
                     TileEntity te = world.getTileEntity(message.pos);
-                    if (te instanceof ITeleportationBlock)
+                    if (te instanceof ITeleportationTileEntity)
                     {
-                        ((ITeleportationBlock) te).setIncomingTeleportInProgress();
+                        ((ITeleportationTileEntity) te).setIncomingTeleportInProgress();
                     }
                 }
                 else

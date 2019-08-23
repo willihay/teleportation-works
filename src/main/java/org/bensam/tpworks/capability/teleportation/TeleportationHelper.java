@@ -16,6 +16,7 @@ import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.item.ItemTeleportationBow;
 import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
+import org.bensam.tpworks.potion.ModPotions;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -28,6 +29,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.server.SPacketMoveVehicle;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
@@ -44,7 +46,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
  */
 public class TeleportationHelper
 {
-    public static void displayTeleportBlockName(EntityPlayer player, ITeleportationBlock teleportBlock, @Nullable TeleportDestination destination)
+    public static void displayTeleportBlockName(EntityPlayer player, ITeleportationTileEntity teleportBlock, @Nullable TeleportDestination destination)
     {
         if (teleportBlock instanceof TileEntityTeleportBeacon)
         {
@@ -398,6 +400,12 @@ public class TeleportationHelper
                 SoundCategory.PLAYERS, 1.0F, 1.0F);
         teleportWorld.playSound((EntityPlayer) null, teleportPos, SoundEvents.ITEM_CHORUS_FRUIT_TELEPORT,
                 SoundCategory.PLAYERS, 1.0F, 1.0F);
+        
+        // Show teleportation particle effects around living entities that have teleported. 
+        if (entityToTeleport instanceof EntityLivingBase)
+        {
+            ((EntityLivingBase) entityToTeleport).addPotionEffect(new PotionEffect(ModPotions.TELEPORTATION_POTION, 200, 0));
+        }
         
         return entityToTeleport;
     }

@@ -10,7 +10,7 @@ import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
 import org.bensam.tpworks.util.ModUtil;
 
@@ -31,7 +31,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  * @author WilliHay
  *
  */
-public class TileEntityTeleportBeacon extends TileEntity implements ITeleportationBlock, IWorldNameable, ITickable
+public class TileEntityTeleportBeacon extends TileEntity implements ITeleportationTileEntity, IWorldNameable, ITickable
 {
     public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init

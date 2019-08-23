@@ -16,7 +16,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
 import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.network.PacketUpdateTeleportRail;
@@ -410,7 +410,7 @@ public class ItemTeleportationWand extends Item
         else if ((clickedBlock == ModBlocks.TELEPORT_BEACON || clickedBlock == ModBlocks.TELEPORT_RAIL) 
                 && !player.isSneaking()) // (and running on client)
         {
-            ITeleportationBlock te = (ITeleportationBlock) world.getTileEntity(pos);
+            ITeleportationTileEntity te = (ITeleportationTileEntity) world.getTileEntity(pos);
             if (te.isStoredByPlayer()) // block is about to be removed from player's teleportation library
             {
                 world.playSound(player, pos, ModSounds.REMOVE_TELEPORT_BEACON,

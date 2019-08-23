@@ -4,7 +4,7 @@ package org.bensam.tpworks.capability.teleportation;
  * @author WilliHay
  *
  */
-public interface ITeleportationBlock
+public interface ITeleportationTileEntity
 {
     /**
      * Return the teleport destination display name of this tile entity.

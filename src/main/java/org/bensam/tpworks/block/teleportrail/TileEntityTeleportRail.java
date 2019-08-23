@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
-import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
@@ -29,7 +29,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  * @author WilliHay
  *
  */
-public class TileEntityTeleportRail extends TileEntity implements ITeleportationBlock, IWorldNameable, ITickable
+public class TileEntityTeleportRail extends TileEntity implements ITeleportationTileEntity, IWorldNameable, ITickable
 {
     public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
