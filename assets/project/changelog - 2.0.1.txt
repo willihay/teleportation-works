@@ -3,7 +3,8 @@ MAJOR RELEASE includes:
 - new Bow of Teleportation item, has advantage of storing its teleport destination independently from your wand list (Sneak+Right-Click to set)
 - new Teleport Rail block teleports minecarts
 - new extended range version of Splash Potion of Teleportation
+- new particle effects
 - new wand features (Sneak+Left-Click and Sneak+Right-Click improvements - see tool tips)
 - improved handling for setting a teleport destination on a dispenser (cycles with each Sneak+Right-Click)
 - 6 new mod console commands
-- 18 new mod config options
+- 20 new mod config options
