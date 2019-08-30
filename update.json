@@ -1,10 +1,11 @@
 {
   "homepage": "https://minecraft.curseforge.com/projects/teleportation-works",
   "promos": {
-    "1.12.2-latest": "2.0.0",
+    "1.12.2-latest": "2.0.2",
     "1.12.2-recommended": "2.0.1"
   },
   "1.12.2": {
+    "2.0.2": "Remove HUD icon seen after teleporting",
     "2.0.1": "MAJOR RELEASE includes:\n - Teleport Beacons can now be set to teleport (Sneak+Right-Click with a wand to cycle destination)\n - new Bow of Teleportation item, has advantage of storing its teleport destination independently from your wand list (Sneak+Right-Click to set)\n - new Teleport Rail block teleports minecarts\n - new Splash Potion of Teleportation II with extended range of effect\n - new particle effects\n - new wand features (Sneak+Left-Click and Sneak+Right-Click improvements - see tool tips)\n - improved handling for setting a teleport destination on a dispenser (cycles with each Sneak+Right-Click)\n - 6 new mod console commands\n - 20 new mod config options",
     "1.0.0": "INITIAL PUBLIC RELEASE"
   }
