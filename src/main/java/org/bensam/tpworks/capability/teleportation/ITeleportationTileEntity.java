@@ -1,5 +1,7 @@
 package org.bensam.tpworks.capability.teleportation;
 
+import java.util.UUID;
+
 /**
  * @author WilliHay
  *
@@ -7,14 +9,29 @@ package org.bensam.tpworks.capability.teleportation;
 public interface ITeleportationTileEntity
 {
     /**
-     * Return the teleport destination display name of this tile entity.
+     * Return the teleportation unique ID of this tile entity.
+     */
+    UUID getUniqueID();
+    
+    /**
+     * Set the teleportation unique ID of this tile entity.
+     */
+    void setDefaultUUID();
+    
+    /**
+     * Return the teleportation display name of this tile entity.
      */
     String getTeleportName();
     
     /**
-     * Set the teleport destination display name of this tile entity.
+     * Set the teleportation display name of this tile entity.
      */
     void setTeleportName(String name);
+    
+    /**
+     * Returns the TeleportationHandler for this tile entity. 
+     */
+    TeleportationHandler getTeleportationHandler();
     
     /**
      * Returns true if a teleport destination is stored in this tile entity.

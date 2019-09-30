@@ -6,8 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
-import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
-import org.bensam.tpworks.network.PacketUpdateTeleportRail;
+import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 
 import com.google.common.collect.Lists;
 
@@ -302,14 +301,7 @@ public class CommandTeleportation extends CommandBase
         // Only need to send a packet update to the client if we can still find the destination in the world.
         if (teleportationHandler.validateDestination(player, destination))
         {
-            if (destination.destinationType == DestinationType.BEACON)
-            {
-                TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, destination.dimension, Boolean.FALSE, null), player);
-            }
-            else if (destination.destinationType == DestinationType.RAIL)
-            {
-                TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, destination.dimension, Boolean.FALSE, null), player);
-            }
+            TeleportationWorks.network.sendTo(new PacketUpdateTeleportTileEntity(destination.position, destination.dimension, Boolean.FALSE, null), player);
         }
 
         // Finally, remove the destination from the player's network.

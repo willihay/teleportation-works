@@ -14,8 +14,7 @@ import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
-import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
-import org.bensam.tpworks.network.PacketUpdateTeleportRail;
+import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -268,14 +267,7 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
                     // Only need to send a packet update to the client if we can still find the destination in the world.
                     if (validateDestination(player, destination))
                     {
-                        if (destination.destinationType == DestinationType.BEACON)
-                        {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(destination.position, destination.dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
-                        }
-                        else if (destination.destinationType == DestinationType.RAIL)
-                        {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(destination.position, destination.dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
-                        }
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportTileEntity(destination.position, destination.dimension, Boolean.FALSE, null), (EntityPlayerMP) player);
                     }
                 }
                 

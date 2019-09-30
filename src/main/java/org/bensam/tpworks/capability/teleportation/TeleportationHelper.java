@@ -129,6 +129,16 @@ public class TeleportationHelper
     }
 
     /**
+     * Get the active destination for the specified entity.
+     * Returns null if the entity doesn't have an active destination or doesn't have the teleportation capability.
+     */
+    @Nullable
+    public static TeleportDestination getActiveDestination(Entity entity)
+    {
+        return getActiveDestination(entity, false);
+    }
+    
+    /**
      * Get the active destination for the specified entity. Will validate too if requested.
      * Returns null if the entity doesn't have an active destination or doesn't have the teleportation capability.
      */

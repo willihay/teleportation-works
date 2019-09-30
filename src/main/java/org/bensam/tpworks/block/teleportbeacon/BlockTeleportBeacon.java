@@ -6,12 +6,14 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 
 import org.bensam.tpworks.TeleportationWorks;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.item.ModItems;
-import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
+import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModSetup;
 import org.bensam.tpworks.util.ModUtil;
@@ -53,7 +55,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * @author WilliHay
  *
  */
-public class BlockTeleportBeacon extends Block
+public class BlockTeleportBeacon extends Block implements ITeleportationBlock
 {
     public static final PropertyBool SENDER = PropertyBool.create("sender");
     protected static final AxisAlignedBB BLOCK_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D);
@@ -76,7 +78,7 @@ public class BlockTeleportBeacon extends Block
     }
 
     @Override
-    public TileEntityTeleportBeacon createTileEntity(World world, IBlockState state)
+    public TileEntity createTileEntity(World world, IBlockState state)
     {
         return new TileEntityTeleportBeacon();
     }
@@ -104,9 +106,9 @@ public class BlockTeleportBeacon extends Block
         boolean isSender = false;
         TileEntity te = world instanceof ChunkCache ? ((ChunkCache)world).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : world.getTileEntity(pos);
         
-        if (te instanceof TileEntityTeleportBeacon)
+        if (te instanceof ITeleportationTileEntity)
         {
-            isSender = ((TileEntityTeleportBeacon) te).isSender();
+            isSender = ((ITeleportationTileEntity) te).isSender();
         }
         
         return state.withProperty(SENDER, Boolean.valueOf(isSender));
@@ -223,7 +225,7 @@ public class BlockTeleportBeacon extends Block
                     te.teleportationHandler.removeDestination(0);
                     te.setSender(false);
                     te.markDirty();
-                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportBeacon(pos, world.provider.getDimension(), null, Boolean.FALSE));
+                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportTileEntity(pos, world.provider.getDimension(), null, Boolean.FALSE));
                 }
                 
                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
@@ -297,19 +299,20 @@ public class BlockTeleportBeacon extends Block
                         teleportationHandler.setDestinationAsPlaced(uuid, null, dimension, pos);
                         if (placer instanceof EntityPlayerMP)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, dimension, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportTileEntity(pos, dimension, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                         }
                         placer.sendMessage(new TextComponentTranslation("message.td.beacon.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportBeacon(pos, dimension, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportTileEntity(pos, dimension, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                     }
                 }
             }
 
-            // Play beacon activation sound.
-            world.playSound(null, pos, ModSounds.ACTIVATE_TELEPORT_BEACON, SoundCategory.BLOCKS, 1.0F, 1.0F);
+            // Play teleport block activation sound.
+            world.playSound((EntityPlayer) null, pos, ModSounds.ACTIVATE_TELEPORT_BEACON,
+                    SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
     }
 

@@ -103,7 +103,7 @@ public interface ITeleportationHandler
     
     /**
      * Removes all TeleportDestinations from the list, excepting the Overworld spawn bed unless directed.
-     * If player is not null, also sends a PacketUpdateTeleportBeacon to inform the client side it has been removed.
+     * If player is not null, also sends a network update packet to inform the client side it has been removed.
      */
     void removeAllDestinations(EntityPlayer player, boolean includeOverworldSpawnBed);
 

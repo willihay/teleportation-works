@@ -6,12 +6,14 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 
 import org.bensam.tpworks.TeleportationWorks;
+import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.item.ModItems;
-import org.bensam.tpworks.network.PacketUpdateTeleportRail;
+import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModSetup;
@@ -41,7 +43,6 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.ChunkCache;
@@ -55,7 +56,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * @author WilliHay
  *
  */
-public class BlockTeleportRail extends BlockRailPowered
+public class BlockTeleportRail extends BlockRailPowered implements ITeleportationBlock
 {
     public static final PropertyBool SENDER = PropertyBool.create("sender");
 
@@ -102,9 +103,9 @@ public class BlockTeleportRail extends BlockRailPowered
         boolean isSender = false;
         TileEntity te = world instanceof ChunkCache ? ((ChunkCache)world).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : world.getTileEntity(pos);
         
-        if (te instanceof TileEntityTeleportRail)
+        if (te instanceof ITeleportationTileEntity)
         {
-            isSender = ((TileEntityTeleportRail) te).isSender();
+            isSender = ((ITeleportationTileEntity) te).isSender();
         }
         
         return state.withProperty(SENDER, Boolean.valueOf(isSender));
@@ -202,7 +203,7 @@ public class BlockTeleportRail extends BlockRailPowered
                     te.teleportationHandler.removeDestination(0);
                     te.setSender(false);
                     te.markDirty();
-                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportRail(pos, world.provider.getDimension(), null, Boolean.FALSE));
+                    TeleportationWorks.network.sendToAll(new PacketUpdateTeleportTileEntity(pos, world.provider.getDimension(), null, Boolean.FALSE));
                 }
                 
                 player.sendMessage(new TextComponentTranslation("message.td.destination.cleared.confirmation"));
@@ -274,16 +275,16 @@ public class BlockTeleportRail extends BlockRailPowered
                     TeleportDestination destinationInNetwork = teleportationHandler.getDestinationFromUUID(uuid);
                     if (destinationInNetwork != null)
                     {
-                        teleportationHandler.setDestinationAsPlaced(uuid, null, world.provider.getDimension(), pos);
+                        teleportationHandler.setDestinationAsPlaced(uuid, null, dimension, pos);
                         if (placer instanceof EntityPlayerMP)
                         {
-                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, dimension, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                            TeleportationWorks.network.sendTo(new PacketUpdateTeleportTileEntity(pos, dimension, Boolean.TRUE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                         }
                         placer.sendMessage(new TextComponentTranslation("message.td.rail.found", new Object[] {TextFormatting.DARK_GREEN + name}));
                     }
                     else
                     {
-                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportRail(pos, dimension, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
+                        TeleportationWorks.network.sendTo(new PacketUpdateTeleportTileEntity(pos, dimension, Boolean.FALSE, Boolean.valueOf(te.isSender())), (EntityPlayerMP) placer);
                     }
                 }
             }

@@ -1,7 +1,7 @@
 package org.bensam.tpworks.network;
 
-import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 
@@ -18,57 +18,57 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 /**
  * @author WilliHay
  * 
- * PacketRequestUpdateTeleportBeacon - sent from client to server when client loads the TileEntity and needs to get its data
+ * PacketRequestUpdateTeleportTileEntity - sent from client to server when client loads the TileEntity and needs to get its data
  * from the server
  */
-public class PacketRequestUpdateTeleportBeacon implements IMessage
+public class PacketRequestUpdateTeleportTileEntity implements IMessage
 {
     private BlockPos pos;
     private int dimension;
     
-    public PacketRequestUpdateTeleportBeacon(BlockPos pos, int dimension)
+    public PacketRequestUpdateTeleportTileEntity(BlockPos pos, int dimension)
     {
         this.pos = pos;
         this.dimension = dimension;
     }
     
-    public PacketRequestUpdateTeleportBeacon(TileEntityTeleportBeacon te)
+    public PacketRequestUpdateTeleportTileEntity(ITeleportationTileEntity te)
     {
-        this(te.getPos(), te.getWorld().provider.getDimension());
+        this(((TileEntity) te).getPos(), ((TileEntity) te).getWorld().provider.getDimension());
     }
     
-    public PacketRequestUpdateTeleportBeacon()
+    public PacketRequestUpdateTeleportTileEntity()
     {}
 
-    public static class Handler implements IMessageHandler<PacketRequestUpdateTeleportBeacon, PacketUpdateTeleportBeacon>
+    public static class Handler implements IMessageHandler<PacketRequestUpdateTeleportTileEntity, PacketUpdateTeleportTileEntity>
     {
         @Override
-        public PacketUpdateTeleportBeacon onMessage(PacketRequestUpdateTeleportBeacon message, MessageContext ctx)
+        public PacketUpdateTeleportTileEntity onMessage(PacketRequestUpdateTeleportTileEntity message, MessageContext ctx)
         {
             EntityPlayer player = ctx.getServerHandler().player;
             World world = FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(message.dimension);
             TileEntity te = world.getTileEntity(message.pos);
             
-            if (te instanceof TileEntityTeleportBeacon)
+            if (te instanceof ITeleportationTileEntity)
             {
                 ITeleportationHandler teleportationHandler = player.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
 
                 if (teleportationHandler != null)
                 {
-                    TileEntityTeleportBeacon teTeleportBeacon = (TileEntityTeleportBeacon) te;
-                    TeleportDestination destination = teleportationHandler.getDestinationFromUUID(teTeleportBeacon.getUniqueID());
+                    ITeleportationTileEntity teTeleportationTileEntity = (ITeleportationTileEntity) te;
+                    TeleportDestination destination = teleportationHandler.getDestinationFromUUID(teTeleportationTileEntity.getUniqueID());
                     if (destination != null)
                     {
                         // Run validation on the destination found in the player's network.
                         teleportationHandler.validateDestination(player, destination);
                         
-                        // Return a packet indicating the beacon is stored. 
-                        return new PacketUpdateTeleportBeacon(message.pos, message.dimension, Boolean.TRUE, Boolean.valueOf(teTeleportBeacon.isSender()));
+                        // Return a packet indicating the tile entity is stored. 
+                        return new PacketUpdateTeleportTileEntity(message.pos, message.dimension, Boolean.TRUE, Boolean.valueOf(teTeleportationTileEntity.isSender()));
                     }
                     else
                     {
-                        // Return a packet indicating the beacon is not stored for this player. 
-                        return new PacketUpdateTeleportBeacon(message.pos, message.dimension, Boolean.FALSE, Boolean.valueOf(teTeleportBeacon.isSender()));
+                        // Return a packet indicating the tile entity is not stored for this player. 
+                        return new PacketUpdateTeleportTileEntity(message.pos, message.dimension, Boolean.FALSE, Boolean.valueOf(teTeleportationTileEntity.isSender()));
                     }
                 }
             }
