@@ -374,15 +374,7 @@ public class TeleportationHelper
                     teleportDimension);
 
             // Transfer teleporting entity to teleport destination in different dimension.
-            if (entityToTeleport instanceof EntityPlayerMP)
-            {
-                teleportWorld.getMinecraftServer().getPlayerList().transferPlayerToDimension(
-                        (EntityPlayerMP) entityToTeleport, teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
-            }
-            else
-            {
-                entityToTeleport = entityToTeleport.changeDimension(teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
-            }
+            entityToTeleport = entityToTeleport.changeDimension(teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
         }
         else
         {
