@@ -98,6 +98,7 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
     }
 
     @Override
+    @Deprecated
     public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos)
     {
         boolean isSender = false;

@@ -101,6 +101,7 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
     }
 
     @Override
+    @Deprecated
     public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos)
     {
         boolean isSender = false;
