@@ -56,6 +56,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     
     // server-only data
     private String beaconName = "";
+    protected int coolDownTime = 0; // set to dampen chain-teleportation involving multiple beacons
     private UUID uniqueID = new UUID(0, 0);
     protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
 
@@ -146,7 +147,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         }
         else // running on server
         {
-            if (totalWorldTime % 10 == 0 && teleportationHandler.hasActiveDestination())
+            if (totalWorldTime % 10 == 0 && teleportationHandler.hasActiveDestination() && coolDownTime <= 0)
             {
                 // Find all the teleportable entities inside the beacon block. 
                 AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
@@ -172,6 +173,11 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                     }
                 }
             }
+            
+            if (coolDownTime > 0)
+                coolDownTime--;
+            else
+                coolDownTime = 0;
         }
     }
 
@@ -323,5 +329,20 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     public ITextComponent getDisplayName()
     {
         return hasCustomName() ? new TextComponentString(getName()) : new TextComponentTranslation(getName());
+    }
+
+    public void addCoolDownTime(int coolDown)
+    {
+        coolDownTime += coolDown;
+    }
+    
+    public int getCoolDownTime()
+    {
+        return coolDownTime;
+    }
+    
+    public void setCoolDownTime(int coolDown)
+    {
+        coolDownTime = coolDown;
     }
 }
