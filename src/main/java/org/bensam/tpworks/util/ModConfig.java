@@ -102,6 +102,11 @@ public final class ModConfig
     
     public static class TeleportBlockSettings
     {
+        @Comment("Cooldown time (in ticks) after a Teleport Beacon receives an entity before it can teleport an entity")
+        @LangKey(LANG_PREFIX + ".teleport_block.beacon_cooldown_ticks")
+        @RangeInt(min = 0, max = 100)
+        public int beaconCooldownTime = 30;
+        
         @Comment("When cycling through Teleport Beacon destinations, include saved Teleport Rails")
         @LangKey(LANG_PREFIX + ".teleport_block.beacon_destinations_include_rails")
         public boolean beaconDestinationsIncludeRails = false;

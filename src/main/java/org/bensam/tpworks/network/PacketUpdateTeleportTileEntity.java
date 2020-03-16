@@ -3,7 +3,7 @@ package org.bensam.tpworks.network;
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
-import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -16,18 +16,18 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 /**
  * @author WilliHay
- *
- * PacketUpdateTeleportRail - sent from server to client to update the stored and sender status
- * of the teleport rail on the client; used whenever the status changes on the server
+ * 
+ * PacketUpdateTeleportTileEntity - sent from server to client to update the stored and sender status
+ * of the teleport-type tile entity on the client; used whenever the status changes on the server
  */
-public class PacketUpdateTeleportRail implements IMessage
+public class PacketUpdateTeleportTileEntity implements IMessage
 {
     private BlockPos pos;
     private int dimension;
     private int isStored; // -1: no change; 0: false; 1: true
     private int isSender; // -1: no change; 0: false; 1: true
-    
-    public PacketUpdateTeleportRail(BlockPos pos, int dimension, @Nullable Boolean isStored, @Nullable Boolean isSender)
+
+    public PacketUpdateTeleportTileEntity(BlockPos pos, int dimension, @Nullable Boolean isStored, @Nullable Boolean isSender)
     {
         this.pos = pos;
         this.dimension = dimension;
@@ -38,33 +38,31 @@ public class PacketUpdateTeleportRail implements IMessage
     /*
      * Constructor for Forge to call via reflection, which will then call fromBytes() to initialize fields
      */
-    public PacketUpdateTeleportRail()
+    public PacketUpdateTeleportTileEntity()
     {}
     
-    public static class Handler implements IMessageHandler<PacketUpdateTeleportRail, IMessage>
+    public static class Handler implements IMessageHandler<PacketUpdateTeleportTileEntity, IMessage>
     {
         @Override
-        public IMessage onMessage(PacketUpdateTeleportRail message, MessageContext ctx)
+        public IMessage onMessage(PacketUpdateTeleportTileEntity message, MessageContext ctx)
         {
-            // Update the teleport beacon in the client, scheduling this execution on the main thread instead of the Netty networking thread.
+            // Update the teleport tile entity in the client, scheduling this execution on the main thread instead of the Netty networking thread.
             Minecraft.getMinecraft().addScheduledTask(() ->
             {
                 WorldClient world = Minecraft.getMinecraft().world;
                 if (message.dimension == world.provider.getDimension())
                 {
                     TileEntity te = world.getTileEntity(message.pos);
-                    if (te instanceof TileEntityTeleportRail)
+                    if (te instanceof ITeleportationTileEntity)
                     {
-                        TileEntityTeleportRail teTeleportRail = (TileEntityTeleportRail) te;
-                        
                         if (message.isStored >= 0)
                         {
-                            teTeleportRail.setStoredByPlayer(message.isStored != 0);
+                            ((ITeleportationTileEntity) te).setStoredByPlayer(message.isStored != 0);
                         }
                         
                         if (message.isSender >= 0)
                         {
-                            teTeleportRail.setSender(message.isSender != 0);
+                            ((ITeleportationTileEntity) te).setSender(message.isSender != 0);
                             world.markBlockRangeForRenderUpdate(message.pos, message.pos);
                         }
                     }
@@ -72,7 +70,7 @@ public class PacketUpdateTeleportRail implements IMessage
                 else
                 {
                     // Ignore the message. It is meant for a tile entity in a different dimension than what the player currently has loaded.
-                    TeleportationWorks.MOD_LOGGER.debug("Skipping rail update for player {} for TE at {} in dimension {}",
+                    TeleportationWorks.MOD_LOGGER.debug("Skipping update of teleporting tile entity for player {} for TE at {} in dimension {}",
                             Minecraft.getMinecraft().player.getDisplayNameString(),
                             message.pos,
                             message.dimension);

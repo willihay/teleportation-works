@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
-import org.bensam.tpworks.network.PacketRequestUpdateTeleportRail;
+import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.util.ModUtil;
@@ -55,7 +55,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     protected int coolDownTime = 0; // set to control rapid fire teleportations if a rail gets included in a tight teleport loop
     private String railName = "";
     private UUID uniqueID = new UUID(0, 0);
-    public final TeleportationHandler teleportationHandler = new TeleportationHandler();
+    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
 
     @Override
     public void onLoad()
@@ -66,7 +66,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             particleSpawnAngle = ModUtil.RANDOM.nextDouble() * Math.PI;
             
             // Request an update from the server to get current values for isStored and isSender for this TE for the current player (i.e. client).
-            TeleportationWorks.network.sendToServer(new PacketRequestUpdateTeleportRail(this));
+            TeleportationWorks.network.sendToServer(new PacketRequestUpdateTeleportTileEntity(this));
         }
     }
 
@@ -205,6 +205,12 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     }
 
     @Override
+    public TeleportationHandler getTeleportationHandler()
+    {
+        return teleportationHandler;
+    }
+
+    @Override
     public boolean isStoredByPlayer()
     {
         return isStored;
@@ -216,21 +222,13 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         isStored = stored;
     }
     
-    public void addCoolDownTime(int coolDown)
-    {
-        coolDownTime += coolDown;
-    }
-    
-    public int getCoolDownTime()
-    {
-        return coolDownTime;
-    }
-    
+    @Override
     public UUID getUniqueID()
     {
         return uniqueID;
     }
 
+    @Override
     public void setDefaultUUID()
     {
         uniqueID = UUID.randomUUID();
@@ -298,5 +296,15 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     public ITextComponent getDisplayName()
     {
         return this.hasCustomName() ? new TextComponentString(this.getName()) : new TextComponentTranslation(this.getName());
+    }
+
+    public void addCoolDownTime(int coolDown)
+    {
+        coolDownTime += coolDown;
+    }
+    
+    public int getCoolDownTime()
+    {
+        return coolDownTime;
     }
 }

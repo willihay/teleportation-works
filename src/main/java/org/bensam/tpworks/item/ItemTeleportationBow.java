@@ -158,7 +158,7 @@ public class ItemTeleportationBow extends ItemBow
                     {
                         if (destination == null)
                         {
-                            player.sendMessage(new TextComponentTranslation("message.td.beacon.destination.none_available"));
+                            player.sendMessage(new TextComponentTranslation("message.td.destination.none_available"));
                         }
                         else
                         {

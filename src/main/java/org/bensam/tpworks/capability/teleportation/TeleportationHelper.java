@@ -17,6 +17,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportDestination.Destinati
 import org.bensam.tpworks.item.ItemTeleportationBow;
 import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.potion.ModPotions;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.block.Block;
@@ -128,6 +129,16 @@ public class TeleportationHelper
         return null;
     }
 
+    /**
+     * Get the active destination for the specified entity.
+     * Returns null if the entity doesn't have an active destination or doesn't have the teleportation capability.
+     */
+    @Nullable
+    public static TeleportDestination getActiveDestination(Entity entity)
+    {
+        return getActiveDestination(entity, false);
+    }
+    
     /**
      * Get the active destination for the specified entity. Will validate too if requested.
      * Returns null if the entity doesn't have an active destination or doesn't have the teleportation capability.
@@ -326,6 +337,16 @@ public class TeleportationHelper
         if (safePos == null)
             return entityToTeleport; // no safe position found - do an early return instead of the requested teleport
         
+        // If teleporting to a beacon, add to its cooldown timer to control teleportation chain rate. 
+        if (destination.destinationType == DestinationType.BEACON)
+        {
+            TileEntity te = teleportWorld.getTileEntity(safePos);
+            if (te instanceof TileEntityTeleportBeacon)
+            {
+                ((TileEntityTeleportBeacon) te).setCoolDownTime(ModConfig.teleportBlockSettings.beaconCooldownTime);
+            }
+        }
+        
         return teleport(currentWorld, entityToTeleport, teleportDimension, safePos, rotationYaw);
     }
     
@@ -364,15 +385,7 @@ public class TeleportationHelper
                     teleportDimension);
 
             // Transfer teleporting entity to teleport destination in different dimension.
-            if (entityToTeleport instanceof EntityPlayerMP)
-            {
-                teleportWorld.getMinecraftServer().getPlayerList().transferPlayerToDimension(
-                        (EntityPlayerMP) entityToTeleport, teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
-            }
-            else
-            {
-                entityToTeleport = entityToTeleport.changeDimension(teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
-            }
+            entityToTeleport = entityToTeleport.changeDimension(teleportDimension, new CustomTeleporter(teleportWorld, teleportPos));
         }
         else
         {

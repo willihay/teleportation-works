@@ -9,11 +9,9 @@ import org.bensam.tpworks.client.particle.ModParticlesBase;
 import org.bensam.tpworks.entity.EntityTeleportationSplashPotion;
 import org.bensam.tpworks.entity.EntityTeleportationTippedArrow;
 import org.bensam.tpworks.item.ModItems;
-import org.bensam.tpworks.network.PacketRequestUpdateTeleportBeacon;
-import org.bensam.tpworks.network.PacketRequestUpdateTeleportRail;
-import org.bensam.tpworks.network.PacketUpdateTeleportBeacon;
+import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
 import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
-import org.bensam.tpworks.network.PacketUpdateTeleportRail;
+import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.proxy.IProxy;
 
 import net.minecraft.block.BlockDispenser;
@@ -57,7 +55,7 @@ public class TeleportationWorks
     public static final String MODID = "tpworks";
     public static final String NAME = "Teleportation Works";
     public static final String VERSION = "@VERSION@";
-    //public static final String VERSION = "1.12.2-2.0.2"; // used when debugging dedicated server
+    //public static final String VERSION = "1.12.2-2.1.0"; // used when debugging dedicated server
     public static final String ACCEPTED_MINECRAFT_VERSIONS = "[1.12.2]";
     public static final String FINGERPRINT = "@FINGERPRINT@";
     public static final String DEPENDENCIES = "" +
@@ -91,11 +89,8 @@ public class TeleportationWorks
 
         // Setup network channel and register our messages with the side on which it is received.
         network = NetworkRegistry.INSTANCE.newSimpleChannel(MODID);
-        network.registerMessage(new PacketUpdateTeleportBeacon.Handler(), PacketUpdateTeleportBeacon.class, networkPacketID++, Side.CLIENT);
-        network.registerMessage(new PacketRequestUpdateTeleportBeacon.Handler(), PacketRequestUpdateTeleportBeacon.class, networkPacketID++,
-                Side.SERVER);
-        network.registerMessage(new PacketUpdateTeleportRail.Handler(), PacketUpdateTeleportRail.class, networkPacketID++, Side.CLIENT);
-        network.registerMessage(new PacketRequestUpdateTeleportRail.Handler(), PacketRequestUpdateTeleportRail.class, networkPacketID++,
+        network.registerMessage(new PacketUpdateTeleportTileEntity.Handler(), PacketUpdateTeleportTileEntity.class, networkPacketID++, Side.CLIENT);
+        network.registerMessage(new PacketRequestUpdateTeleportTileEntity.Handler(), PacketRequestUpdateTeleportTileEntity.class, networkPacketID++,
                 Side.SERVER);
         network.registerMessage(new PacketUpdateTeleportIncoming.Handler(), PacketUpdateTeleportIncoming.class, networkPacketID++, Side.CLIENT);
 
