@@ -147,7 +147,7 @@ public class ItemTeleportationBow extends ItemBow
                     if (ModConfig.equippedItemSettings.bowDestinationsIncludeRails)
                         nextDestination = TeleportationHelper.getNextDestination(player, null, destination, null);
                     else
-                        nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination, null);
+                        nextDestination = TeleportationHelper.getNextDestination(player, new DestinationType[] {DestinationType.BEACON, DestinationType.CUBE}, destination, null);
 
                     if (nextDestination != null)
                     {

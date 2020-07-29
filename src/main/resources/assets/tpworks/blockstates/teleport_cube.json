@@ -1,0 +1,17 @@
+{
+    "forge_marker": 1,
+    "variants": {
+        "triggered": {
+            "true": {},
+            "false": {}
+        },
+        "facing": {
+            "down":  { "model": "tpworks:teleport_cube_vertical", "x": 180 },
+            "up":    { "model": "tpworks:teleport_cube_vertical" },
+            "north": { "model": "tpworks:teleport_cube" },
+            "south": { "model": "tpworks:teleport_cube", "y": 180 },
+            "west":  { "model": "tpworks:teleport_cube", "y": 270 },
+            "east":  { "model": "tpworks:teleport_cube", "y": 90 }
+        }
+    }
+}

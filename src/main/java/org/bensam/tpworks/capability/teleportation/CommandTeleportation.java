@@ -184,7 +184,7 @@ public class CommandTeleportation extends CommandBase
                 boolean foundOne = false;
                 do
                 {
-                     destination = TeleportationHelper.getNextDestination(player, destinationType, destination, null);
+                     destination = TeleportationHelper.getNextDestination(player, new DestinationType[] {destinationType}, destination, null);
                      if (destination != null)
                      {
                          if (targetType != TargetType.INVALID || !teleportationHandler.validateDestination(player, destination))
@@ -252,7 +252,7 @@ public class CommandTeleportation extends CommandBase
                     destinationType = DestinationType.RAIL;
 
                 TeleportDestination prevDestination = null;
-                TeleportDestination destination = TeleportationHelper.getNextDestination(player, destinationType, null, null);
+                TeleportDestination destination = TeleportationHelper.getNextDestination(player, new DestinationType[] {destinationType}, null, null);
                 while (destination != null)
                 {
                     if (targetType != TargetType.INVALID || !teleportationHandler.validateDestination(player, destination))
@@ -266,7 +266,7 @@ public class CommandTeleportation extends CommandBase
                         prevDestination = destination;
                     }
                     
-                    destination = TeleportationHelper.getNextDestination(player, destinationType, prevDestination, null);
+                    destination = TeleportationHelper.getNextDestination(player, new DestinationType[] {destinationType}, prevDestination, null);
                 }
                 
                 if (!foundOne)

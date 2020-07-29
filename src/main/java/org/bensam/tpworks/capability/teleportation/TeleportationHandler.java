@@ -12,6 +12,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
@@ -597,6 +598,44 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
             }
             break;
             
+        case CUBE:
+            {
+                TileEntity teCube = destinationWorld.getTileEntity(destination.position);
+                UUID destinationUUID = destination.getUUID();
+                if (destination.position.equals(BlockPos.ORIGIN) 
+                        || destinationBlock != ModBlocks.TELEPORT_CUBE
+                        || !(teCube instanceof TileEntityTeleportCube)
+                        || !(((TileEntityTeleportCube) teCube).getUniqueID().equals(destinationUUID)))
+                {
+                    // Something must have happened to the cube. (Moved by another player?)
+                    // Try to find it somewhere else.
+                    destination.position = BlockPos.ORIGIN;
+                    BlockPos cubePos = null;
+                    // Integer[] dimensions = DimensionManager.getStaticDimensionIDs(); // not using because for some reason, even though getStaticDimensionIDs is public and appears to work, it has a comment that says "not for public use" 
+                    int[] dimensions = DimensionManager.getRegisteredDimensions().values().stream().flatMap(Collection::stream).mapToInt(Integer::intValue).toArray();
+                    for (int dimension : dimensions)
+                    {
+                        World world = ModUtil.getWorldServerForDimension(dimension);
+                        cubePos = TeleportationHelper.findTeleportCube(world, destinationUUID);
+                        if (cubePos != null)
+                        {
+                            teCube = world.getTileEntity(cubePos);
+                            destination.position = cubePos;
+                            destination.dimension = dimension;
+                            break;
+                        }
+                    }
+                }
+                
+                isValid = !(destination.position.equals(BlockPos.ORIGIN));
+                if (isValid)
+                {
+                    // Make sure friendly name is correct.
+                    destination.friendlyName = ((TileEntityTeleportCube)teCube).getTeleportName();
+                }
+            }
+            break;
+        
         case RAIL:
             {
                 TileEntity teRail = destinationWorld.getTileEntity(destination.position);

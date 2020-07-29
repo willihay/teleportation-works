@@ -11,7 +11,10 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
+import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportcube.BlockTeleportCube;
+import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination.DestinationType;
 import org.bensam.tpworks.item.ItemTeleportationBow;
@@ -60,6 +63,17 @@ public class TeleportationHelper
                 player.sendMessage(new TextComponentTranslation("message.td.beacon.display.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
             }
         }
+        else if (teleportBlock instanceof TileEntityTeleportCube)
+        {
+            if (destination == null)
+            {
+                player.sendMessage(new TextComponentTranslation("message.td.cube.display.no_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName()}));
+            }
+            else
+            {
+                player.sendMessage(new TextComponentTranslation("message.td.cube.display.with_destination", new Object[] {TextFormatting.DARK_GREEN + teleportBlock.getTeleportName(), TextFormatting.DARK_GREEN + destination.friendlyName}));
+            }
+        }
         else if (teleportBlock instanceof TileEntityTeleportRail)
         {
             if (destination == null)
@@ -90,6 +104,30 @@ public class TeleportationHelper
     }
 
     @Nullable
+    public static BlockPos findSafeTeleportPosToCube(int dimension, BlockPos cubePos)
+    {
+        if (cubePos.equals(BlockPos.ORIGIN))
+            return null;
+        
+        World world = ModUtil.getWorldServerForDimension(dimension);
+        IBlockState blockState = world.getBlockState(cubePos);
+        Block block = blockState.getBlock();
+        
+        if (block != ModBlocks.TELEPORT_CUBE)
+            return null; // not a cube
+        
+        BlockPos teleportPos = BlockTeleportCube.getTeleportPosition(world, cubePos);
+        IBlockState teleportBlockState = world.getBlockState(teleportPos);
+        if (!teleportBlockState.getMaterial().isSolid()
+                && !world.getBlockState(teleportPos.up()).getMaterial().isSolid())
+        {
+            return teleportPos;
+        }
+        
+        return null;
+    }
+
+    @Nullable
     public static BlockPos findTeleportBeacon(World world, UUID beaconUUID)
     {
         if (world == null)
@@ -101,6 +139,26 @@ public class TeleportationHelper
         {
             if (te instanceof TileEntityTeleportBeacon
                     && ((TileEntityTeleportBeacon) te).getUniqueID().equals(beaconUUID))
+            {
+                return te.getPos();
+            }
+        }
+        
+        return null;
+    }
+
+    @Nullable
+    public static BlockPos findTeleportCube(World world, UUID cubeUUID)
+    {
+        if (world == null)
+            return null;
+        
+        List<TileEntity> tileEntityList = world.loadedTileEntityList;
+
+        for (TileEntity te : tileEntityList)
+        {
+            if (te instanceof TileEntityTeleportCube
+                    && ((TileEntityTeleportCube) te).getUniqueID().equals(cubeUUID))
             {
                 return te.getPos();
             }
@@ -195,11 +253,11 @@ public class TeleportationHelper
     /**
      * Get the NEXT teleport destination of the specified type, AFTER the one specified in afterDestination if non-null, from the entity's teleportation network.
      * Can optionally specify a UUID of a teleport block that should NOT be returned.
-     * If destinationType is null, it will match any Beacon or Rail.
+     * If destinationType is null, it will match any Beacon, Cube, or Rail.
      * Returns null if the end of the list is reached and no blocks of the specified type have been found.
      */
     @Nullable
-    public static TeleportDestination getNextDestination(Entity entity, @Nullable DestinationType destinationType, @Nullable TeleportDestination afterDestination, @Nullable UUID notThisID)
+    public static TeleportDestination getNextDestination(Entity entity, @Nullable DestinationType[] destinationTypes, @Nullable TeleportDestination afterDestination, @Nullable UUID notThisID)
     {
         ITeleportationHandler teleportationHandler = entity.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
         if (teleportationHandler != null)
@@ -213,15 +271,42 @@ public class TeleportationHelper
                 }
             }
             
-            Predicate<TeleportDestination> filter = (destinationType != null) 
-                    ? (d -> (d.destinationType == destinationType && !d.getUUID().equals(notThisID))) 
-                    : (d -> ((d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.RAIL) && !d.getUUID().equals(notThisID)));
+            Predicate<TeleportDestination> filter = (d -> !d.getUUID().equals(notThisID));
+            if (destinationTypes != null)
+            {
+                Predicate<TeleportDestination> typeFilter = getTeleportDestinationPredicate(destinationTypes[0]);
+                for (int i = 1; i < destinationTypes.length; i++)
+                {
+                    typeFilter = typeFilter.or(getTeleportDestinationPredicate(destinationTypes[i]));
+                }
+                
+                filter = filter.and(typeFilter);
+            }
+            
+//            Predicate<TeleportDestination> filter = (destinationType != null) 
+//                    ? (d -> (d.destinationType == destinationType && !d.getUUID().equals(notThisID))) 
+//                    : (d -> ((d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.CUBE || d.destinationType == DestinationType.RAIL) && !d.getUUID().equals(notThisID)));
             return teleportationHandler.getNextDestination(afterDestination, filter);
         }
         
         return null;
     }
 
+    private static Predicate<TeleportDestination> getTeleportDestinationPredicate(DestinationType destinationType)
+    {
+        switch (destinationType)
+        {
+        case BEACON:
+            return (d -> (d.destinationType == DestinationType.BEACON));
+        case CUBE:
+            return (d -> (d.destinationType == DestinationType.CUBE));
+        case RAIL:
+            return (d -> (d.destinationType == DestinationType.RAIL));
+        default:
+            return null;
+        }
+    }
+    
     public static void remountRider(Entity rider, Entity entityRidden)
     {
         if (!rider.isRiding() 
@@ -322,6 +407,9 @@ public class TeleportationHelper
                 safePos = destination.position;
             }
             break;
+        case CUBE:
+            safePos = findSafeTeleportPosToCube(teleportDimension, destination.position);
+            break;
         case BLOCKPOS:
             IBlockState state = teleportWorld.getBlockState(destination.position);
             Block block = state.getBlock();
@@ -337,13 +425,17 @@ public class TeleportationHelper
         if (safePos == null)
             return entityToTeleport; // no safe position found - do an early return instead of the requested teleport
         
-        // If teleporting to a beacon, add to its cooldown timer to control teleportation chain rate. 
-        if (destination.destinationType == DestinationType.BEACON)
+        // If teleporting to a beacon or cube, add to its cooldown timer to control teleportation chain rate. 
+        if (destination.destinationType == DestinationType.BEACON || destination.destinationType == DestinationType.CUBE)
         {
             TileEntity te = teleportWorld.getTileEntity(safePos);
             if (te instanceof TileEntityTeleportBeacon)
             {
                 ((TileEntityTeleportBeacon) te).setCoolDownTime(ModConfig.teleportBlockSettings.beaconCooldownTime);
+            }
+            else if (te instanceof TileEntityTeleportCube)
+            {
+                ((TileEntityTeleportCube) te).setCoolDownTime(ModConfig.teleportBlockSettings.cubeCooldownTime);
             }
         }
         

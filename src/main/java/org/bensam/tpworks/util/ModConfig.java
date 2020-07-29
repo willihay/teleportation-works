@@ -115,12 +115,17 @@ public final class ModConfig
         @LangKey(LANG_PREFIX + ".teleport_block.beacon_destinations_include_self")
         public boolean beaconDestinationsIncludeSelf = false;
 
+        @Comment("Cooldown time (in ticks) after a Teleport Cube receives an entity before it can teleport an entity")
+        @LangKey(LANG_PREFIX + ".teleport_block.cube_cooldown_ticks")
+        @RangeInt(min = 0, max = 100)
+        public int cubeCooldownTime = 30;
+        
         @Comment("Cooldown time (in ticks) after a Teleport Rail teleports a minecart, during which it will not teleport another cart")
         @LangKey(LANG_PREFIX + ".teleport_block.rail_cooldown_ticks")
         @RangeInt(min = 0, max = 20)
         public int railCooldownTime = 5;
         
-        @Comment("When cycling through Teleport Rail destinations, include saved Teleport Beacons")
+        @Comment("When cycling through Teleport Rail destinations, include saved Teleport Beacons and Cubes")
         @LangKey(LANG_PREFIX + ".teleport_block.rail_destinations_include_beacons")
         public boolean railDestinationsIncludeBeacons = false;
     }

@@ -189,12 +189,9 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
 
             if (uuid == null || uuid.equals(new UUID(0, 0)) || name == null || name.isEmpty())
             {
-                TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Beacon block activated with invalid UUID or name fields. Setting to defaults...");
+                TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Beacon block activated with invalid UUID or name field. Setting to defaults...");
                 te.setDefaultUUID();
                 te.setTeleportName(null);
-                
-                uuid = te.getUniqueID();
-                name = te.getTeleportName();
             }
             
             // Send the name of the beacon to the player if they're not using a teleport wand.
@@ -384,7 +381,7 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
      */
     @SideOnly(Side.CLIENT)
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+    public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
     {
         String sneakBind = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
         String attackBind = Minecraft.getMinecraft().gameSettings.keyBindAttack.getDisplayName();

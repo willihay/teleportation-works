@@ -197,10 +197,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                     uniqueID,
                     destination == null ? "EMPTY" : destination);
         }
-        else
-        {
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: no NBT data to read on client side");
-        }
 
         super.readFromNBT(compound);
     }

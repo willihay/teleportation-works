@@ -163,12 +163,9 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
 
             if (uuid == null || uuid.equals(new UUID(0, 0)) || name == null || name.isEmpty())
             {
-                TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Rail block activated with invalid UUID or name fields. Setting to defaults...");
+                TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Rail block activated with invalid UUID or name field. Setting to defaults...");
                 te.setDefaultUUID();
                 te.setTeleportName(null);
-                
-                uuid = te.getUniqueID();
-                name = te.getTeleportName();
             }
             
             if (player.getHeldItem(hand).getItem() == ModItems.TELEPORTATION_WAND)
@@ -234,7 +231,6 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
             double centerX = pos.getX() + 0.5D;
             double centerY = pos.getY() + 1.0D;
             double centerZ = pos.getZ() + 0.5D;
-
             for (int i = 0; i < 64; ++i)
             {
                 double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
@@ -363,7 +359,7 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
      */
     @SideOnly(Side.CLIENT)
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+    public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
     {
         String sneakBind = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
         String attackBind = Minecraft.getMinecraft().gameSettings.keyBindAttack.getDisplayName();

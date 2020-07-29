@@ -159,14 +159,10 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
             isSender = teleportationHandler.hasActiveDestination();
             
             TeleportDestination destination = teleportationHandler.getActiveDestination();
-            TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportRail.readFromNBT: railName = {}, uniqueID = {}, destination = {}", 
+            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.readFromNBT: railName = {}, uniqueID = {}, destination = {}", 
                     railName, 
                     uniqueID, 
                     destination == null ? "EMPTY" : destination);
-        }
-        else
-        {
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.readFromNBT: no NBT data to read on client side");
         }
 
         super.readFromNBT(compound);
@@ -183,7 +179,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         compound.setTag("tpHandler", teleportationHandler.serializeNBT());
         
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportRail.writeToNBT: railName = {}, uniqueID = {}, {}, destination = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.writeToNBT: railName = {}, uniqueID = {}, {}, destination = {}", 
                 railName, 
                 uniqueID, 
                 pos, 
