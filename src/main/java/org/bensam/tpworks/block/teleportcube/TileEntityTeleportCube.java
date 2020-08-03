@@ -1,6 +1,7 @@
 package org.bensam.tpworks.block.teleportcube;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -12,12 +13,22 @@ import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
 
+import com.google.common.base.Predicate;
+
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.block.BlockSourceImpl;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.dispenser.IBehaviorDispenseItem;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityBoat;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -27,6 +38,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
@@ -96,21 +108,67 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         {
             if (!teleportedHere.isEmpty())
             {
-                // check inventory for rideable items
-                
-                // try to put teleported living players, mobs, and other animals into the rideable item
+                // Try to place teleported living players, mobs, and other animals into/onto a rideable entity.
                 for (Entity entity : teleportedHere)
                 {
-                    if ((entity instanceof EntityPlayer && !((EntityPlayer)entity).isSpectator()) 
-                        || (entity instanceof IAnimals))
+                    if (!(entity instanceof EntityPlayer) && !(entity instanceof IAnimals))
                     {
-                        
+                        continue; // entity is not a player or animal
                     }
+                    
+                    if (entity.isRiding())
+                    {
+                        continue; // entity is already riding something (unexpected)
+                    }
+                    
+                    boolean canTryToMountEntity = ((entity instanceof EntityPlayer) 
+                            && ModConfig.teleportBlockSettings.cubeMountsPlayersToRideables)
+                        || ((entity instanceof IAnimals)
+                            && ModConfig.teleportBlockSettings.cubeMountsAnimalsToRideables);
+                    if (!canTryToMountEntity)
+                    {
+                        continue; // entity is prohibited by config rules from trying to mount
+                    }
+                    
+                    // See if there is a rideable entity nearby and try to mount it.
+                    if (mountNearbyEntity(entity))
+                    {
+                        continue;
+                    }
+                    
+                    // If that doesn't work, dispense the next item from inventory and
+                    // try to get entity to ride it.
+                    dispenseNextInventoryItem();
+                    mountNearbyEntity(entity);
                 }
                 
                 teleportedHere.clear();
             }
         }
+    }
+    
+    public boolean mountNearbyEntity(Entity rider)
+    {
+        EnumFacing enumFacing = world.getBlockState(pos).getValue(BlockTeleportCube.FACING);
+        AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos.offset(enumFacing));
+        List<Entity> entitiesInBB = world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, new Predicate<Entity>()
+        {
+            public boolean apply(@Nullable Entity entity)
+            {
+                return entity instanceof EntityBoat || entity instanceof EntityMinecart || entity instanceof AbstractHorse;
+            }
+        });
+        
+        // Try to ride one of them.
+        for (Entity rideableEntity : entitiesInBB)
+        {
+            if (rider.startRiding(rideableEntity))
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     @Override
@@ -140,6 +198,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
                     destination == null ? "EMPTY" : destination);
         }
 
+        // TODO: can we just move this up with other deserialization (i.e. do we only need it on the server?)
         if (compound.hasKey("items")) 
         {
             itemStackHandler.deserializeNBT((NBTTagCompound) compound.getTag("items"));
@@ -283,14 +342,6 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
 //        }
     }
     
-    public void addTeleportedEntity(Entity entity)
-    {
-        if (!world.isRemote)
-        {
-            teleportedHere.add(entity);
-        }
-    }
-    
     @Override
     public String getName()
     {
@@ -324,6 +375,14 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         coolDownTime = coolDown;
     }
 
+    public void addTeleportedEntity(Entity entity)
+    {
+        if (!world.isRemote)
+        {
+            teleportedHere.add(entity);
+        }
+    }
+    
     public boolean canInteractWith(EntityPlayer player) 
     {
         // If player is too far away from this tile entity, they cannot use it.
@@ -340,6 +399,39 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         return new ContainerGuiTeleportCube(playerInventory.getDisplayName().getUnformattedText(), createContainer(playerInventory));
     }
     
+    @Nullable
+    public ItemStack dispenseNextInventoryItem()
+    {
+        for (int slot = 0; slot < INVENTORY_SIZE; ++slot)
+        {
+            ItemStack nextItem = itemStackHandler.extractItem(slot, 1, false);
+            if (!nextItem.isEmpty())
+            {
+                IBehaviorDispenseItem dispensedItem = BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.getObject(nextItem.getItem());
+                return dispensedItem.dispense(new BlockSourceImpl(world, pos), nextItem);
+            }
+        }
+        
+        return null;
+    }
+    
+    public void dropInventoryItems(World world)
+    {
+        double x = (double)pos.getX();
+        double y = (double)pos.getY();
+        double z = (double)pos.getZ();
+
+        for (int i = 0; i < INVENTORY_SIZE; ++i)
+        {
+            ItemStack itemstack = itemStackHandler.extractItem(i, 64, false);
+
+            if (!itemstack.isEmpty())
+            {
+                spawnItemStack(world, x, y, z, itemstack);
+            }
+        }
+    }
+
     public int getNumberOfOccupiedSlots()
     {
         int occupiedSlots = 0;
@@ -357,24 +449,6 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         return occupiedSlots;
     }
     
-    public void dropInventoryItems(World world)
-    {
-        BlockPos pos = this.getPos();
-        double x = (double)pos.getX();
-        double y = (double)pos.getY();
-        double z = (double)pos.getZ();
-
-        for (int i = 0; i < INVENTORY_SIZE; ++i)
-        {
-            ItemStack itemstack = itemStackHandler.extractItem(i, 64, false);
-
-            if (!itemstack.isEmpty())
-            {
-                spawnItemStack(world, x, y, z, itemstack);
-            }
-        }
-    }
-
     public static void spawnItemStack(World world, double x, double y, double z, ItemStack stack)
     {
         float f = ModUtil.RANDOM.nextFloat() * 0.8F + 0.1F;

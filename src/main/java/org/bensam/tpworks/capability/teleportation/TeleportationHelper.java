@@ -351,7 +351,7 @@ public class TeleportationHelper
         // Get a map of all the entities that are riding other entities, so the pair can be remounted later, after teleportation.
         HashMap<Entity, Entity> riderMap = ModUtil.getRiders(teleportingEntities);
         
-        // Teleport the cart and all its passengers.
+        // Teleport all entities.
         for (Entity entityToTeleport : teleportingEntities)
         {
             Entity teleportedEntity = null;
@@ -425,10 +425,11 @@ public class TeleportationHelper
         if (safePos == null)
             return entityToTeleport; // no safe position found - do an early return instead of the requested teleport
         
+        TileEntity te = teleportWorld.getTileEntity(destination.position);
+
         // If teleporting to a beacon or cube, add to its cooldown timer to control teleportation chain rate. 
         if (destination.destinationType == DestinationType.BEACON || destination.destinationType == DestinationType.CUBE)
         {
-            TileEntity te = teleportWorld.getTileEntity(safePos);
             if (te instanceof TileEntityTeleportBeacon)
             {
                 ((TileEntityTeleportBeacon) te).setCoolDownTime(ModConfig.teleportBlockSettings.beaconCooldownTime);
@@ -438,8 +439,17 @@ public class TeleportationHelper
                 ((TileEntityTeleportCube) te).setCoolDownTime(ModConfig.teleportBlockSettings.cubeCooldownTime);
             }
         }
-        
-        return teleport(currentWorld, entityToTeleport, teleportDimension, safePos, rotationYaw);
+
+        // Teleport the entity.
+        Entity teleportedEntity = teleport(currentWorld, entityToTeleport, teleportDimension, safePos, rotationYaw);
+
+        // If entity teleported to a cube, add it to the list of entities that have teleported there. 
+        if (te instanceof TileEntityTeleportCube)
+        {
+            ((TileEntityTeleportCube) te).addTeleportedEntity(teleportedEntity);
+        }
+
+        return teleportedEntity;
     }
     
     public static Entity teleport(World currentWorld, Entity entityToTeleport, int teleportDimension,
@@ -493,7 +503,8 @@ public class TeleportationHelper
             }
             else
             {
-                // If we can't do it the "pretty way", just force it! This should be a safe teleport position. Hopefully they survive teh magiks. :P
+                // If we can't do it the "pretty way", just force it!
+                // This should be a safe teleport position. Hopefully they survive teh magiks. :P
                 TeleportationWorks.MOD_LOGGER.info("Calling setPositionAndUpdate...");
                 entityToTeleport.setPositionAndUpdate(teleportPos.getX() + 0.5D, teleportPos.getY() + 0.25D,
                         teleportPos.getZ() + 0.5D);

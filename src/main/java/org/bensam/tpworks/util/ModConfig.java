@@ -120,6 +120,14 @@ public final class ModConfig
         @RangeInt(min = 0, max = 100)
         public int cubeCooldownTime = 30;
         
+        @Comment("Mobs and animals that teleport to a Teleport Cube will be mounted on nearby rideable entities or rideable cube inventory")
+        @LangKey(LANG_PREFIX + ".teleport_block.cube_mounts_animals")
+        public boolean cubeMountsAnimalsToRideables = false;
+        
+        @Comment("Players that teleport to a Teleport Cube will be mounted on nearby rideable entities or rideable cube inventory")
+        @LangKey(LANG_PREFIX + ".teleport_block.cube_mounts_players")
+        public boolean cubeMountsPlayersToRideables = true;
+        
         @Comment("Cooldown time (in ticks) after a Teleport Rail teleports a minecart, during which it will not teleport another cart")
         @LangKey(LANG_PREFIX + ".teleport_block.rail_cooldown_ticks")
         @RangeInt(min = 0, max = 20)
