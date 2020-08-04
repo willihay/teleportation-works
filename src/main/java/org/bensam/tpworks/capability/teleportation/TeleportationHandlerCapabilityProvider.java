@@ -30,7 +30,7 @@ public class TeleportationHandlerCapabilityProvider implements ICapabilitySerial
             public NBTBase writeNBT(Capability<ITeleportationHandler> capability,
                                     ITeleportationHandler instance, EnumFacing side)
             {
-                TeleportationWorks.MOD_LOGGER.info("TeleportationHandlerCapabilityProvider storage writeNBT called");
+                TeleportationWorks.MOD_LOGGER.debug("TeleportationHandlerCapabilityProvider storage writeNBT called");
 
                 // TODO: have ITeleportationHandler extend INBTSerializable<NBTTagCompound> so that no cast to TeleportationHandler is necessary here, or in readNBT.
                 TeleportationHandler teleportationHandler = (TeleportationHandler)instance;
@@ -41,7 +41,7 @@ public class TeleportationHandlerCapabilityProvider implements ICapabilitySerial
             public void readNBT(Capability<ITeleportationHandler> capability,
                                 ITeleportationHandler instance, EnumFacing side, NBTBase nbt)
             {
-                TeleportationWorks.MOD_LOGGER.info("TeleportationHandlerCapabilityProvider storage readNBT called");
+                TeleportationWorks.MOD_LOGGER.debug("TeleportationHandlerCapabilityProvider storage readNBT called");
                 if (!(instance instanceof TeleportationHandler))
                     throw new RuntimeException("Cannot deserialize instance of ITeleportationHandler to the default TeleportationHandler implementation");
                 

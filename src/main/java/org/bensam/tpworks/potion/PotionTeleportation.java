@@ -49,7 +49,7 @@ public class PotionTeleportation extends Potion
      */
     public Entity affectEntity(Entity source, @Nonnull TileEntity indirectSource, @Nonnull Entity entityAffected, @Nonnull TeleportDestination destination)
     {
-        TeleportationWorks.MOD_LOGGER.info("PotionTeleportation.affectEntity {} from {} at {}", 
+        TeleportationWorks.MOD_LOGGER.debug("PotionTeleportation.affectEntity {} from {} at {}", 
                 entityAffected.getDisplayName().getFormattedText(),
                 indirectSource.getDisplayName().getFormattedText(),
                 indirectSource.getPos());
@@ -70,7 +70,7 @@ public class PotionTeleportation extends Potion
      */
     public Entity affectEntity(Entity source, @Nonnull Entity indirectSource, @Nonnull Entity entityAffected, @Nonnull TeleportDestination destination)
     {
-        TeleportationWorks.MOD_LOGGER.info("PotionTeleportation.affectEntity {} from {} at {}", 
+        TeleportationWorks.MOD_LOGGER.debug("PotionTeleportation.affectEntity {} from {} at {}", 
                 entityAffected.getDisplayName().getFormattedText(),
                 indirectSource.getDisplayName().getFormattedText(),
                 indirectSource.getPosition());

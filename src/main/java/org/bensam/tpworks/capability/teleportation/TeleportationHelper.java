@@ -499,15 +499,19 @@ public class TeleportationHelper
             if (entityToTeleport instanceof EntityLivingBase && ((EntityLivingBase) entityToTeleport)
                     .attemptTeleport(teleportPos.getX() + 0.5D, teleportPos.up().getY() + 0.25D, teleportPos.getZ() + 0.5D))
             {
-                TeleportationWorks.MOD_LOGGER.info("attemptTeleport succeeded");
+                TeleportationWorks.MOD_LOGGER.info("Teleported {} in dimension {}",
+                        entityToTeleport.getDisplayName().getFormattedText(),
+                        teleportDimension);
             }
             else
             {
                 // If we can't do it the "pretty way", just force it!
                 // This should be a safe teleport position. Hopefully they survive teh magiks. :P
-                TeleportationWorks.MOD_LOGGER.info("Calling setPositionAndUpdate...");
                 entityToTeleport.setPositionAndUpdate(teleportPos.getX() + 0.5D, teleportPos.getY() + 0.25D,
                         teleportPos.getZ() + 0.5D);
+                TeleportationWorks.MOD_LOGGER.info("Force-Teleported {} in dimension {}", 
+                        entityToTeleport.getDisplayName().getFormattedText(), 
+                        teleportDimension);
             }
         }
 
