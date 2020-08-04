@@ -327,16 +327,19 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         return hasCustomName() ? new TextComponentString(getName()) : new TextComponentTranslation(getName());
     }
 
+    @Override
     public void addCoolDownTime(int coolDown)
     {
         coolDownTime += coolDown;
     }
     
+    @Override
     public int getCoolDownTime()
     {
         return coolDownTime;
     }
     
+    @Override
     public void setCoolDownTime(int coolDown)
     {
         coolDownTime = coolDown;

@@ -271,21 +271,24 @@ public class TeleportationHelper
                 }
             }
             
+            // Build up the destination filter logic.
+            // Start with a filter that only allows destinations whose UUID does not equal 'notThisID'.
             Predicate<TeleportDestination> filter = (d -> !d.getUUID().equals(notThisID));
+            
+            // If limitations on the destination types are requested, add those to the filter too. 
             if (destinationTypes != null)
             {
                 Predicate<TeleportDestination> typeFilter = getTeleportDestinationPredicate(destinationTypes[0]);
                 for (int i = 1; i < destinationTypes.length; i++)
                 {
+                    // Use 'or' conditional so that the filter will match any of the destination types passed in through the array. 
                     typeFilter = typeFilter.or(getTeleportDestinationPredicate(destinationTypes[i]));
                 }
                 
+                // Add the destination type filter to the previous filter using an 'and' conditional because both must be matched.
                 filter = filter.and(typeFilter);
             }
             
-//            Predicate<TeleportDestination> filter = (destinationType != null) 
-//                    ? (d -> (d.destinationType == destinationType && !d.getUUID().equals(notThisID))) 
-//                    : (d -> ((d.destinationType == DestinationType.BEACON || d.destinationType == DestinationType.CUBE || d.destinationType == DestinationType.RAIL) && !d.getUUID().equals(notThisID)));
             return teleportationHandler.getNextDestination(afterDestination, filter);
         }
         
@@ -302,8 +305,10 @@ public class TeleportationHelper
             return (d -> (d.destinationType == DestinationType.CUBE));
         case RAIL:
             return (d -> (d.destinationType == DestinationType.RAIL));
+        case SPAWNBED:
+            return (d -> (d.destinationType == DestinationType.SPAWNBED));
         default:
-            return null;
+            return (d -> (d.destinationType == DestinationType.BLOCKPOS));
         }
     }
     

@@ -287,6 +287,7 @@ public class ItemTeleportationWand extends Item
                         }
                         else
                         {
+                            // Other types of teleportation blocks allow all other teleportation block types as destinations.
                             nextDestination = TeleportationHelper.getNextDestination(player, null, destination, uuid);
                         }
                         

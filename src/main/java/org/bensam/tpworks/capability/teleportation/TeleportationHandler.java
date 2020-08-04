@@ -31,13 +31,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.util.INBTSerializable;
 
 /**
  * @author WilliHay
  *
  */
-public class TeleportationHandler implements ITeleportationHandler, INBTSerializable<NBTTagCompound>
+public class TeleportationHandler implements ITeleportationHandler
 {
     public static final String OVERWORLD_SPAWNBED_DISPLAY_NAME = "Overworld Spawn Bed";
     
@@ -47,6 +46,62 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
     
     public TeleportationHandler()
     {
+    }
+
+    @Override
+    public NBTTagCompound serializeNBT()
+    {
+        NBTTagCompound compound = new NBTTagCompound();
+        this.writeToNBT(compound);
+        return compound;
+    }
+    
+    protected NBTTagCompound writeToNBT(NBTTagCompound compound)
+    {
+        compound.setInteger("activeDestinationIndex", activeDestinationIndex);
+        
+        NBTTagList nbtTagList = new NBTTagList();
+        for (TeleportDestination destination : destinations)
+        {
+            nbtTagList.appendTag(destination.serializeNBT());
+        }
+        compound.setTag("destinations", nbtTagList);
+
+        if (specialDestination != null)
+        {
+            compound.setTag("specialDestination", specialDestination.serializeNBT());
+        }
+        
+        return compound;
+    }
+
+    @Override
+    public void deserializeNBT(NBTTagCompound nbt)
+    {
+        this.readFromNBT(nbt);        
+    }
+    
+    protected void readFromNBT(NBTTagCompound compound)
+    {
+        if (compound.hasKey("activeDestinationIndex"))
+        {
+            activeDestinationIndex = compound.getInteger("activeDestinationIndex");
+        }
+        
+        if (compound.hasKey("destinations"))
+        {
+            NBTTagList nbtTagList = (NBTTagList) compound.getTag("destinations");
+            for (int i = 0; i < nbtTagList.tagCount(); ++i)
+            {
+                NBTTagCompound destinationTag = nbtTagList.getCompoundTagAt(i);
+                this.replaceOrAddDestination(new TeleportDestination(destinationTag));
+            }
+        }
+        
+        if (compound.hasKey("specialDestination"))
+        {
+            specialDestination = new TeleportDestination(compound.getCompoundTag("specialDestination"));
+        }
     }
 
     @Override
@@ -679,62 +734,6 @@ public class TeleportationHandler implements ITeleportationHandler, INBTSerializ
         }
         
         return isValid;
-    }
-
-    @Override
-    public NBTTagCompound serializeNBT()
-    {
-        NBTTagCompound compound = new NBTTagCompound();
-        this.writeToNBT(compound);
-        return compound;
-    }
-    
-    protected NBTTagCompound writeToNBT(NBTTagCompound compound)
-    {
-        compound.setInteger("activeDestinationIndex", activeDestinationIndex);
-        
-        NBTTagList nbtTagList = new NBTTagList();
-        for (TeleportDestination destination : destinations)
-        {
-            nbtTagList.appendTag(destination.serializeNBT());
-        }
-        compound.setTag("destinations", nbtTagList);
-
-        if (specialDestination != null)
-        {
-            compound.setTag("specialDestination", specialDestination.serializeNBT());
-        }
-        
-        return compound;
-    }
-
-    @Override
-    public void deserializeNBT(NBTTagCompound nbt)
-    {
-        this.readFromNBT(nbt);        
-    }
-    
-    protected void readFromNBT(NBTTagCompound compound)
-    {
-        if (compound.hasKey("activeDestinationIndex"))
-        {
-            activeDestinationIndex = compound.getInteger("activeDestinationIndex");
-        }
-        
-        if (compound.hasKey("destinations"))
-        {
-            NBTTagList nbtTagList = (NBTTagList) compound.getTag("destinations");
-            for (int i = 0; i < nbtTagList.tagCount(); ++i)
-            {
-                NBTTagCompound destinationTag = nbtTagList.getCompoundTagAt(i);
-                this.replaceOrAddDestination(new TeleportDestination(destinationTag));
-            }
-        }
-        
-        if (compound.hasKey("specialDestination"))
-        {
-            specialDestination = new TeleportDestination(compound.getCompoundTag("specialDestination"));
-        }
     }
     
     /*

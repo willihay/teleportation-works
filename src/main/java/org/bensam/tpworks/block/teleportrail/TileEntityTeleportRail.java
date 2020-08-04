@@ -294,13 +294,21 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         return this.hasCustomName() ? new TextComponentString(this.getName()) : new TextComponentTranslation(this.getName());
     }
 
+    @Override
     public void addCoolDownTime(int coolDown)
     {
         coolDownTime += coolDown;
     }
-    
+
+    @Override
     public int getCoolDownTime()
     {
         return coolDownTime;
+    }
+
+    @Override
+    public void setCoolDownTime(int coolDown)
+    {
+        coolDownTime = coolDown;
     }
 }

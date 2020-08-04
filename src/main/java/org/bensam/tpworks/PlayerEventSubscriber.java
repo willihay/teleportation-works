@@ -2,7 +2,6 @@ package org.bensam.tpworks;
 
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
-import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
@@ -30,10 +29,10 @@ public class PlayerEventSubscriber
                 return;
 
             EntityPlayer clonePlayer = event.getEntityPlayer();
-            TeleportationHandler cloneTeleportationHandler = (TeleportationHandler) (clonePlayer.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null));
+            ITeleportationHandler cloneTeleportationHandler = clonePlayer.getCapability(TeleportationHandlerCapabilityProvider.TELEPORTATION_CAPABILITY, null);
             
             // Copy the TeleportationHandler data from the old player to the cloned player object.
-            cloneTeleportationHandler.deserializeNBT(((TeleportationHandler) oldTeleportationHandler).serializeNBT());
+            cloneTeleportationHandler.deserializeNBT(oldTeleportationHandler.serializeNBT());
         }
     }
     

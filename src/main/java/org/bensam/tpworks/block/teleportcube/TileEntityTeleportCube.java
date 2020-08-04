@@ -360,16 +360,19 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         return hasCustomName() ? new TextComponentString(getName()) : new TextComponentTranslation(getName());
     }
 
+    @Override
     public void addCoolDownTime(int coolDown)
     {
         coolDownTime += coolDown;
     }
     
+    @Override
     public int getCoolDownTime()
     {
         return coolDownTime;
     }
     
+    @Override
     public void setCoolDownTime(int coolDown)
     {
         coolDownTime = coolDown;
