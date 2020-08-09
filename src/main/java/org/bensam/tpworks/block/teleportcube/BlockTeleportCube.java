@@ -67,7 +67,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class BlockTeleportCube extends BlockContainer implements ITeleportationBlock
 {
     public static final PropertyDirection FACING = BlockDirectional.FACING;
-    public static final PropertyBool TRIGGERED = PropertyBool.create("triggered");
+    public static final PropertyBool POWERED = PropertyBool.create("powered");
 
     public BlockTeleportCube(@Nonnull String name)
     {
@@ -77,7 +77,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         ModSetup.setCreativeTab(this);
         setHardness(2.5F); // enchantment table = 5.0F
         //setResistance(2000.F); // enchantment table = 2000.F
-        setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(TRIGGERED, Boolean.valueOf(false)));
+        setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(POWERED, Boolean.valueOf(false)));
     }
 
     @Override
@@ -103,7 +103,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     protected BlockStateContainer createBlockState()
     {
-        return new BlockStateContainer(this, new IProperty[] {FACING, TRIGGERED});
+        return new BlockStateContainer(this, new IProperty[] {FACING, POWERED});
     }
 
     /**
@@ -112,7 +112,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public IBlockState getStateFromMeta(int meta)
     {
-        return this.getDefaultState().withProperty(FACING, EnumFacing.byIndex(meta & 7)).withProperty(TRIGGERED, Boolean.valueOf((meta & 8) > 0));
+        return this.getDefaultState().withProperty(FACING, EnumFacing.byIndex(meta & 7)).withProperty(POWERED, Boolean.valueOf((meta & 8) > 0));
     }
 
     /**
@@ -124,7 +124,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         int i = 0;
         i = i | ((EnumFacing)state.getValue(FACING)).getIndex();
 
-        if (((Boolean)state.getValue(TRIGGERED)).booleanValue())
+        if (((Boolean)state.getValue(POWERED)).booleanValue())
         {
             i |= 8;
         }
@@ -189,19 +189,24 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        return this.getDefaultState().withProperty(FACING, EnumFacing.getDirectionFromEntityLiving(pos, placer)).withProperty(TRIGGERED, Boolean.valueOf(false));
+        return this.getDefaultState().withProperty(FACING, EnumFacing.getDirectionFromEntityLiving(pos, placer)).withProperty(POWERED, Boolean.valueOf(false));
     }
 
     /**
      * Get the position where entities teleporting to this block should teleport to.
+     * NOTE: If the block is facing down, the teleport position will be adjusted by the specified height.
      */
-    public static BlockPos getTeleportPosition(World world, BlockPos pos)
+    public static BlockPos getTeleportPosition(World world, BlockPos pos, int height)
     {
-        EnumFacing enumfacing = (EnumFacing)world.getBlockState(pos).getValue(FACING);
-        double d0 = pos.getX() + (1.0D * (double)enumfacing.getXOffset());
-        double d1 = pos.getY() + (1.0D * (double)enumfacing.getYOffset());
-        double d2 = pos.getZ() + (1.0D * (double)enumfacing.getZOffset());
-        return new BlockPos(d0, d1, d2);
+        EnumFacing facing = (EnumFacing)world.getBlockState(pos).getValue(FACING);
+        if (facing == EnumFacing.DOWN)
+        {
+            return pos.offset(facing, height);
+        }
+        else
+        {
+            return pos.offset(facing);
+        }
     }
 
     /**
@@ -305,7 +310,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
                 }
             }
 
-            world.setBlockState(pos, state.withProperty(FACING, enumfacing).withProperty(TRIGGERED, Boolean.valueOf(false)), 2);
+            world.setBlockState(pos, state.withProperty(FACING, enumfacing).withProperty(POWERED, Boolean.valueOf(false)), 2);
         }
     }
 
@@ -395,54 +400,8 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
      */
     public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos)
     {
-        boolean flag = world.isBlockPowered(pos) || world.isBlockPowered(pos.up());
-        boolean flag1 = ((Boolean)state.getValue(TRIGGERED)).booleanValue();
-
-        if (flag && !flag1)
-        {
-            world.scheduleUpdate(pos, this, this.tickRate(world));
-            world.setBlockState(pos, state.withProperty(TRIGGERED, Boolean.valueOf(true)), 4);
-        }
-        else if (!flag && flag1)
-        {
-            world.setBlockState(pos, state.withProperty(TRIGGERED, Boolean.valueOf(false)), 4);
-        }
-    }
-
-    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand)
-    {
-        if (!world.isRemote)
-        {
-            // Find all the teleportable entities adjacent to the cube's face.
-            EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
-            AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos.offset(enumfacing));
-            List<Entity> entitiesInBB = world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
-
-            if (!entitiesInBB.isEmpty())
-            {
-                TileEntityTeleportCube te = getTileEntity(world, pos);
-                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-                if (destination != null && te.teleportationHandler.validateDestination(null, destination))
-                {
-                    // Teleport these eligible entities.
-                    for (Entity entityInBB : entitiesInBB)
-                    {
-                        if (entityInBB.isBeingRidden() || entityInBB.isRiding())
-                        {
-                            TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
-                            
-                            // For-loop probably now has entities that have already teleported, so schedule another update to catch remaining entities in BB.
-                            world.scheduleUpdate(pos, this, this.tickRate(world));
-                            break;
-                        }
-                        else
-                        {
-                            TeleportationHelper.teleport(entityInBB, destination);
-                        }
-                    }
-                }
-            }
-        }
+        boolean powered = world.isBlockPowered(pos) /*|| world.isBlockPowered(pos.up())*/;
+        world.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(powered)), 3);
     }
 
     @Override

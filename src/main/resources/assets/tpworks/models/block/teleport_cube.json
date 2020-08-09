@@ -2,7 +2,7 @@
     "parent": "block/orientable",
     "textures": {
         "top": "tpworks:blocks/cube_teleport_side",
-        "front": "tpworks:blocks/cube_teleport_front",
+        "front": "tpworks:blocks/cube_teleport_unpowered",
         "side": "tpworks:blocks/cube_teleport_side"
     }
 }

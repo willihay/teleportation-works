@@ -1,17 +1,34 @@
 {
     "forge_marker": 1,
+    "defaults": {
+        "model": "tpworks:teleport_cube",
+        "textures": {
+            "front": "tpworks:blocks/cube_teleport_unpowered"
+        }
+    },
     "variants": {
-        "triggered": {
-            "true": {},
+        "normal": [{}],
+        "inventory": [{}],
+        "powered": {
+            "true": {
+                "textures": {
+                    "front": "tpworks:blocks/cube_teleport_powered"
+                }
+            },
             "false": {}
         },
         "facing": {
-            "down":  { "model": "tpworks:teleport_cube_vertical", "x": 180 },
-            "up":    { "model": "tpworks:teleport_cube_vertical" },
-            "north": { "model": "tpworks:teleport_cube" },
-            "south": { "model": "tpworks:teleport_cube", "y": 180 },
-            "west":  { "model": "tpworks:teleport_cube", "y": 270 },
-            "east":  { "model": "tpworks:teleport_cube", "y": 90 }
+            "down":  { 
+                "model": "tpworks:teleport_cube_vertical", 
+                "x": 180 
+            },
+            "up":    {
+                "model": "tpworks:teleport_cube_vertical" 
+            },
+            "north": {},
+            "south": { "y": 180 },
+            "west":  { "y": 270 },
+            "east":  { "y": 90 }
         }
     }
 }

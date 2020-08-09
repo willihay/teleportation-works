@@ -35,8 +35,10 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.network.play.server.SPacketMoveVehicle;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -104,7 +106,7 @@ public class TeleportationHelper
     }
 
     @Nullable
-    public static BlockPos findSafeTeleportPosToCube(int dimension, BlockPos cubePos)
+    public static BlockPos findSafeTeleportPosToCube(int dimension, BlockPos cubePos, float height)
     {
         if (cubePos.equals(BlockPos.ORIGIN))
             return null;
@@ -116,15 +118,19 @@ public class TeleportationHelper
         if (block != ModBlocks.TELEPORT_CUBE)
             return null; // not a cube
         
-        BlockPos teleportPos = BlockTeleportCube.getTeleportPosition(world, cubePos);
-        IBlockState teleportBlockState = world.getBlockState(teleportPos);
-        if (!teleportBlockState.getMaterial().isSolid()
-                && !world.getBlockState(teleportPos.up()).getMaterial().isSolid())
+        int heightInBlocks = MathHelper.ceil(height);
+        BlockPos teleportPos = BlockTeleportCube.getTeleportPosition(world, cubePos, heightInBlocks);
+        
+        for (int i = 0; i < heightInBlocks; ++i)
         {
-            return teleportPos;
+            IBlockState teleportBlockState = world.getBlockState(teleportPos.up(i));
+            if (teleportBlockState.getMaterial().isSolid())
+            {
+                return null; // teleport position not safe
+            }
         }
         
-        return null;
+        return teleportPos;
     }
 
     @Nullable
@@ -413,7 +419,7 @@ public class TeleportationHelper
             }
             break;
         case CUBE:
-            safePos = findSafeTeleportPosToCube(teleportDimension, destination.position);
+            safePos = findSafeTeleportPosToCube(teleportDimension, destination.position, entityToTeleport.height);
             break;
         case BLOCKPOS:
             IBlockState state = teleportWorld.getBlockState(destination.position);

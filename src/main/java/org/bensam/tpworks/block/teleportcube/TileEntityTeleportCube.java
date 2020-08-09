@@ -12,13 +12,13 @@ import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
+import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
 import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
 
 import com.google.common.base.Predicate;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.block.BlockSourceImpl;
 import net.minecraft.block.state.IBlockState;
@@ -106,6 +106,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     {
         if (!world.isRemote)
         {
+            // Process any entities that were teleported here since last update.
             if (!teleportedHere.isEmpty())
             {
                 // Try to place teleported living players, mobs, and other animals into/onto a rideable entity.
@@ -144,6 +145,46 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
                 
                 teleportedHere.clear();
             }
+            
+            // See if there are entities to teleport away.
+            if (teleportationHandler.hasActiveDestination() && coolDownTime <= 0)
+            {
+                // Is the cube powered?
+                IBlockState blockState = world.getBlockState(pos);
+                if (blockState.getValue(BlockTeleportCube.POWERED))
+                {
+                    // Find all the teleportable entities adjacent to the cube's face.
+                    EnumFacing enumfacing = blockState.getValue(BlockTeleportCube.FACING);
+                    AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos.offset(enumfacing));
+                    List<Entity> entitiesInBB = world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
+    
+                    if (!entitiesInBB.isEmpty())
+                    {
+                        TeleportDestination destination = teleportationHandler.getActiveDestination();
+                        if (destination != null && teleportationHandler.validateDestination(null, destination))
+                        {
+                            // Teleport these eligible entities.
+                            for (Entity entityInBB : entitiesInBB)
+                            {
+                                if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                                {
+                                    TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
+                                    break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
+                                }
+                                else
+                                {
+                                    TeleportationHelper.teleport(entityInBB, destination);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (coolDownTime > 0)
+                coolDownTime--;
+            else
+                coolDownTime = 0;
         }
     }
     

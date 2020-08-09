@@ -78,8 +78,9 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     {
         long totalWorldTime = world.getTotalWorldTime();
 
-        if (world.isRemote)
+        if (world.isRemote) // running on client
         {
+            // Handle particle generation and updates.
             if (incomingTeleportInProgress)
             {
                 // Spawn increased number of beacon particles for an incoming teleport.
