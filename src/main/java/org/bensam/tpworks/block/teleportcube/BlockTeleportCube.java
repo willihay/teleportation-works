@@ -167,7 +167,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return 11;
+        return state.getValue(POWERED) ? 11 : 4;
     }
 
     /**
@@ -400,7 +400,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
      */
     public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos)
     {
-        boolean powered = world.isBlockPowered(pos) /*|| world.isBlockPowered(pos.up())*/;
+        boolean powered = world.isBlockPowered(pos);
         world.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(powered)), 3);
     }
 
