@@ -114,6 +114,10 @@ public final class ModConfig
         @Comment("When cycling through Teleport Beacon destinations, include same beacon as an option")
         @LangKey(LANG_PREFIX + ".teleport_block.beacon_destinations_include_self")
         public boolean beaconDestinationsIncludeSelf = false;
+        
+        @Comment({"Teleport entities as soon as they are in range and beacon cool down time reaches 0", "When false, there is a variable delay"})
+        @LangKey(LANG_PREFIX + ".teleport_block.beacon_teleports_immediately")
+        public boolean beaconTeleportsImmediately = false;
 
         @Comment("Cooldown time (in ticks) after a Teleport Cube receives an entity before it can teleport an entity")
         @LangKey(LANG_PREFIX + ".teleport_block.cube_cooldown_ticks")
@@ -128,6 +132,10 @@ public final class ModConfig
         @LangKey(LANG_PREFIX + ".teleport_block.cube_mounts_players")
         public boolean cubeMountsPlayersToRideables = true;
         
+        @Comment({"Teleport entities as soon as they are in range and cube cool down time reaches 0", "When false, there is a variable delay"})
+        @LangKey(LANG_PREFIX + ".teleport_block.cube_teleports_immediately")
+        public boolean cubeTeleportsImmediately = false;
+
         @Comment("Cooldown time (in ticks) after a Teleport Rail teleports a minecart, during which it will not teleport another cart")
         @LangKey(LANG_PREFIX + ".teleport_block.rail_cooldown_ticks")
         @RangeInt(min = 0, max = 20)
