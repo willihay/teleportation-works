@@ -88,14 +88,42 @@ public class TeleportationHelper
             }
         }
     }
-    
+
     @Nullable
-    public static BlockPos findSafeTeleportPosNearBed(int dimension, BlockPos bedPos)
+    public static BlockPos findSafeTeleportPos(World world, Entity entityToTeleport, TeleportDestination destination)
     {
-        if (bedPos.equals(BlockPos.ORIGIN))
+        BlockPos safePos = null;
+        BlockPos destinationPos = destination.position;
+        
+        if (destinationPos.equals(BlockPos.ORIGIN))
             return null;
         
-        World world = ModUtil.getWorldServerForDimension(dimension);
+        // Calculate a safe position at the teleport destination to which the entity can be teleported.
+        switch (destination.destinationType)
+        {
+        case SPAWNBED:
+            safePos = findSafeTeleportPosNearBed(world, destinationPos);
+            break;
+        case BEACON:
+        case RAIL:
+            safePos = findSafeTeleportPosToPassableBlock(world, destinationPos, entityToTeleport.height);
+            break;
+        case CUBE:
+            safePos = findSafeTeleportPosToCube(world, destinationPos, entityToTeleport.height);
+            break;
+        case BLOCKPOS:
+            safePos = findSafeTeleportPosToBlock(world, destinationPos, entityToTeleport.height);
+            break;
+        default:
+            break;
+        }
+        
+        return safePos;
+    }
+
+    @Nullable
+    private static BlockPos findSafeTeleportPosNearBed(World world, BlockPos bedPos)
+    {
         IBlockState blockState = world.getBlockState(bedPos);
         Block block = blockState.getBlock();
         
@@ -106,12 +134,8 @@ public class TeleportationHelper
     }
 
     @Nullable
-    public static BlockPos findSafeTeleportPosToCube(int dimension, BlockPos cubePos, float height)
+    private static BlockPos findSafeTeleportPosToCube(World world, BlockPos cubePos, float height)
     {
-        if (cubePos.equals(BlockPos.ORIGIN))
-            return null;
-        
-        World world = ModUtil.getWorldServerForDimension(dimension);
         IBlockState blockState = world.getBlockState(cubePos);
         Block block = blockState.getBlock();
         
@@ -131,6 +155,43 @@ public class TeleportationHelper
         }
         
         return teleportPos;
+    }
+
+    @Nullable
+    private static BlockPos findSafeTeleportPosToPassableBlock(World world, BlockPos blockPos, float height)
+    {
+        if (height <= 1.0F)
+            return blockPos;
+        
+        int heightAboveInBlocks = MathHelper.ceil(height - 1.0F);
+        
+        for (int i = 1; i <= heightAboveInBlocks; ++i)
+        {
+            IBlockState teleportBlockState = world.getBlockState(blockPos.up(i));
+            if (teleportBlockState.getMaterial().isSolid())
+            {
+                return null; // teleport position not safe
+            }
+        }
+        
+        return blockPos;
+    }
+
+    @Nullable
+    private static BlockPos findSafeTeleportPosToBlock(World world, BlockPos blockPos, float height)
+    {
+        int heightInBlocks = MathHelper.ceil(height);
+        
+        for (int i = 0; i < heightInBlocks; ++i)
+        {
+            IBlockState teleportBlockState = world.getBlockState(blockPos.up(i));
+            if (teleportBlockState.getMaterial().isSolid())
+            {
+                return null; // teleport position not safe
+            }
+        }
+        
+        return blockPos;
     }
 
     @Nullable
@@ -339,6 +400,8 @@ public class TeleportationHelper
      */
     public static void teleportEntityAndPassengers(Entity entity, TeleportDestination destination)
     {
+        World teleportWorld = ModUtil.getWorldServerForDimension(destination.dimension);
+        
         // Start a list of teleporting entities and add the target entity.
         List<Entity> teleportingEntities = new ArrayList<>();
         teleportingEntities.add(entity);
@@ -356,6 +419,21 @@ public class TeleportationHelper
             for (Entity passengerOfPassenger : passenger.getPassengers())
             {
                 teleportingEntities.add(passengerOfPassenger);
+            }
+        }
+        
+        // Check to make sure none of the teleporting entities are already at the destination.
+        // (If so, the group may have already teleported this tick.)
+        for (Entity entityToTeleport : teleportingEntities)
+        {
+            if (entityToTeleport.dimension != destination.dimension)
+            {
+                continue;
+            }
+            
+            if (entityToTeleport.getPosition().equals(findSafeTeleportPos(teleportWorld, entityToTeleport, destination)))
+            {
+                return; // cancel the teleport because we found an entity that is already at the destination
             }
         }
         
@@ -402,37 +480,9 @@ public class TeleportationHelper
         World currentWorld = entityToTeleport.world;
         int teleportDimension = destination.dimension;
         World teleportWorld = ModUtil.getWorldServerForDimension(teleportDimension);
-        BlockPos safePos = null;
+        BlockPos safePos = findSafeTeleportPos(teleportWorld, entityToTeleport, destination);
         float rotationYaw = entityToTeleport.rotationYaw;
 
-        // Calculate a safe position at the teleport destination to which the entity can be teleported.
-        switch (destination.destinationType)
-        {
-        case SPAWNBED:
-            safePos = findSafeTeleportPosNearBed(teleportDimension, destination.position);
-            break;
-        case BEACON:
-        case RAIL:
-            if (!teleportWorld.getBlockState(destination.position.up()).getMaterial().isSolid())
-            {
-                safePos = destination.position;
-            }
-            break;
-        case CUBE:
-            safePos = findSafeTeleportPosToCube(teleportDimension, destination.position, entityToTeleport.height);
-            break;
-        case BLOCKPOS:
-            IBlockState state = teleportWorld.getBlockState(destination.position);
-            Block block = state.getBlock();
-            if (block.canSpawnInBlock())
-            {
-                safePos = destination.position;
-            }
-            break;
-        default:
-            break;
-        }
-        
         if (safePos == null)
             return entityToTeleport; // no safe position found - do an early return instead of the requested teleport
         

@@ -12,6 +12,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
 
 import net.minecraft.entity.Entity;
@@ -148,7 +149,9 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         }
         else // running on server
         {
-            if (totalWorldTime % 10 == 0 && teleportationHandler.hasActiveDestination() && coolDownTime <= 0)
+            if ((ModConfig.teleportBlockSettings.beaconTeleportsImmediately || totalWorldTime % 10 == 0) 
+                && teleportationHandler.hasActiveDestination() 
+                && coolDownTime <= 0)
             {
                 // Find all the teleportable entities inside the beacon block. 
                 AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
@@ -161,10 +164,12 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                     {
                         for (Entity entityInBB : entitiesInBB)
                         {
+                            if (entityInBB.isDead)
+                                continue;
+                            
                             if (entityInBB.isBeingRidden() || entityInBB.isRiding())
                             {
                                 TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
-                                break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
                             }
                             else
                             {

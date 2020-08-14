@@ -104,6 +104,8 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     @Override
     public void update()
     {
+        long totalWorldTime = world.getTotalWorldTime();
+        
         if (!world.isRemote)
         {
             // Process any entities that were teleported here since last update.
@@ -119,7 +121,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
                     
                     if (entity.isRiding())
                     {
-                        continue; // entity is already riding something (unexpected)
+                        continue; // entity is already riding something
                     }
                     
                     boolean canTryToMountEntity = ((entity instanceof EntityPlayer) 
@@ -147,7 +149,9 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
             }
             
             // See if there are entities to teleport away.
-            if (teleportationHandler.hasActiveDestination() && coolDownTime <= 0)
+            if ((ModConfig.teleportBlockSettings.cubeTeleportsImmediately || totalWorldTime % 5 == 0) 
+                    && teleportationHandler.hasActiveDestination() 
+                    && coolDownTime <= 0)
             {
                 // Is the cube powered?
                 IBlockState blockState = world.getBlockState(pos);
@@ -166,10 +170,12 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
                             // Teleport these eligible entities.
                             for (Entity entityInBB : entitiesInBB)
                             {
+                                if (entityInBB.isDead)
+                                    continue;
+                                
                                 if (entityInBB.isBeingRidden() || entityInBB.isRiding())
                                 {
                                     TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
-                                    break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
                                 }
                                 else
                                 {
@@ -215,10 +221,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     @Override
     public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState)
     {
-        // TODO: make sure we actually do need this for this TE
-        
-        // Need to override this method so that teleport rails are treated like vanilla rails. This prevents this TE from getting deleted in some scenarios!
-        // (For an example of when it would get unwittingly deleted, see Chunk.setBlockState.) 
+        // Need to override this method to prevent this TE from getting removed in Chunk.setBlockState when state changes (e.g. powered <-> unpowered)!
         return oldState.getBlock() != newState.getBlock();
     }
 
