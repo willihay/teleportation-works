@@ -378,7 +378,10 @@ public class TeleportationHelper
             return (d -> (d.destinationType == DestinationType.BLOCKPOS));
         }
     }
-    
+
+    /**
+     * Remount rider to entity ridden.
+     */
     public static void remountRider(Entity rider, Entity entityRidden)
     {
         if (!rider.isRiding() 
@@ -395,6 +398,21 @@ public class TeleportationHelper
         }
     }
 
+    /**
+     * Notify players near the teleport destination that an entity is about to teleport there.
+     */
+    public static void sendIncomingTeleportMessage(TeleportDestination destination)
+    {
+        World teleportWorld = ModUtil.getWorldServerForDimension(destination.dimension);
+        TileEntity te = teleportWorld.getTileEntity(destination.position);
+        
+        if (te instanceof ITeleportationTileEntity)
+        {
+            TeleportationWorks.network.sendToAllAround(new PacketUpdateTeleportIncoming(destination.position, destination.dimension),
+                    new NetworkRegistry.TargetPoint(destination.dimension, destination.position.getX(), destination.position.getY(), destination.position.getZ(), 50.0D));
+        }
+    }
+    
     /**
      * Teleport an entity, anything it is riding, and all its passengers, remounting them as needed after teleporting them all.
      */
@@ -480,13 +498,14 @@ public class TeleportationHelper
         World currentWorld = entityToTeleport.world;
         int teleportDimension = destination.dimension;
         World teleportWorld = ModUtil.getWorldServerForDimension(teleportDimension);
+        BlockPos destinationPos = destination.position;
         BlockPos safePos = findSafeTeleportPos(teleportWorld, entityToTeleport, destination);
         float rotationYaw = entityToTeleport.rotationYaw;
 
         if (safePos == null)
             return entityToTeleport; // no safe position found - do an early return instead of the requested teleport
         
-        TileEntity te = teleportWorld.getTileEntity(destination.position);
+        TileEntity te = teleportWorld.getTileEntity(destinationPos);
 
         // If teleporting to a beacon or cube, add to its cooldown timer to control teleportation chain rate. 
         if (destination.destinationType == DestinationType.BEACON || destination.destinationType == DestinationType.CUBE)
@@ -501,6 +520,9 @@ public class TeleportationHelper
             }
         }
 
+        // Notify players near the teleport destination that an entity is about to teleport there.
+        sendIncomingTeleportMessage(destination);
+        
         // Teleport the entity.
         Entity teleportedEntity = teleport(currentWorld, entityToTeleport, teleportDimension, safePos, rotationYaw);
 
@@ -513,7 +535,7 @@ public class TeleportationHelper
         return teleportedEntity;
     }
     
-    public static Entity teleport(World currentWorld, Entity entityToTeleport, int teleportDimension,
+    private static Entity teleport(World currentWorld, Entity entityToTeleport, int teleportDimension,
                                 BlockPos teleportPos, float playerRotationYaw)
     {
         if (currentWorld.isRemote) // running on client
@@ -522,10 +544,6 @@ public class TeleportationHelper
         int entityCurrentDimension = entityToTeleport.dimension;
         WorldServer teleportWorld = ModUtil.getWorldServerForDimension(teleportDimension);
 
-        // Notify players near the teleport destination that an entity is about to teleport there.
-        TeleportationWorks.network.sendToAllAround(new PacketUpdateTeleportIncoming(teleportPos, teleportDimension),
-                new NetworkRegistry.TargetPoint(teleportDimension, teleportPos.getX(), teleportPos.getY(), teleportPos.getZ(), 50.0D));
-        
         // Dismount teleporting entity or passengers riding this entity, if applicable.
         if (entityToTeleport.isRiding())
         {

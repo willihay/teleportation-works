@@ -57,6 +57,7 @@ import net.minecraftforge.items.ItemStackHandler;
 public class TileEntityTeleportCube extends TileEntity implements ITeleportationTileEntity, IWorldNameable, ITickable
 {
     public static final int INVENTORY_SIZE = 9;
+    public static final int INVENTORY_STACK_LIMIT = 64;
     public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
 
@@ -377,8 +378,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     {
         incomingTeleportInProgress = true;
         
-        // Check if the current particle stop timer is complete or near-complete.  
-        // TODO Setup particle indicator.
+        // Check if the current particle stop timer is complete or near-complete, or if it hasn't started.  
 //        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
 //        {
 //            // If so, add time to the stop timer.
@@ -494,6 +494,11 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         }
         
         return occupiedSlots;
+    }
+    
+    public ItemStack getStackInInventory(int slot)
+    {
+        return itemStackHandler.getStackInSlot(slot);
     }
     
     public static void spawnItemStack(World world, double x, double y, double z, ItemStack stack)

@@ -446,8 +446,7 @@ public class ItemTeleportationWand extends Item
                 TeleportDestination destination = TeleportationHelper.getActiveDestination(player);
                 if (destination != null)
                 {
-                    TeleportationWorks.network.sendToAllAround(new PacketUpdateTeleportIncoming(destination.position, destination.dimension),
-                            new NetworkRegistry.TargetPoint(destination.dimension, destination.position.getX(), destination.position.getY(), destination.position.getZ(), 50.0D));
+                    TeleportationHelper.sendIncomingTeleportMessage(destination);
                 }
             }
         }

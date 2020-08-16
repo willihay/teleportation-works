@@ -53,6 +53,7 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.IBlockAccess;
@@ -516,7 +517,22 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Deprecated
     public int getComparatorInputOverride(IBlockState blockState, World world, BlockPos pos)
     {
-        return Container.calcRedstone(world.getTileEntity(pos));
+        TileEntityTeleportCube te = getTileEntity(world, pos);
+        
+        float fractionalCount = 0.0F;
+
+        for (int slot = 0; slot < TileEntityTeleportCube.INVENTORY_SIZE; ++slot)
+        {
+            ItemStack itemstack = te.getStackInInventory(slot);
+
+            if (!itemstack.isEmpty())
+            {
+                fractionalCount += (float)itemstack.getCount() / (float)Math.min(TileEntityTeleportCube.INVENTORY_STACK_LIMIT, itemstack.getMaxStackSize());
+            }
+        }
+
+        fractionalCount = fractionalCount / (float)TileEntityTeleportCube.INVENTORY_SIZE;
+        return MathHelper.floor(fractionalCount * 14.0F) + (fractionalCount > 0.0F ? 1 : 0); // return a value between 0 and 15, in proportion to the inventory fullness
     }
 
     /**

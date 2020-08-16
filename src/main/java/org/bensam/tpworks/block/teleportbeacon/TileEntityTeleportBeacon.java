@@ -36,7 +36,6 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
 {
     public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
-    public static Vec3d TELEPORTER_DETECTION_RANGE = new Vec3d(0.5D, 0.5D, 0.5D);
     
     // particle path characteristics
     public static final double PARTICLE_ANGULAR_VELOCITY = Math.PI / 10.0D; // (PI/10 radians/tick) x (20 ticks/sec) = 1 complete circle / second for each particle
@@ -307,7 +306,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     {
         incomingTeleportInProgress = true;
         
-        // Check if the current particle stop timer is complete or near-complete.  
+        // Check if the current particle stop timer is complete or near-complete, or if it hasn't started.  
         if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
         {
             // If so, add time to the stop timer.

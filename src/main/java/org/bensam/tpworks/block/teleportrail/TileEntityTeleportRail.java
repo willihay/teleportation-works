@@ -268,7 +268,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     {
         incomingTeleportInProgress = true;
         
-        // Check if the current particle stop timer is complete or near-complete.  
+        // Check if the current particle stop timer is complete or near-complete, or if it hasn't started.  
         if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
         {
             // If so, add time to the stop timer.
