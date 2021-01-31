@@ -1,12 +1,12 @@
 {
-	"type": "minecraft:crafting_shapeless",
-	"ingredients": [
-		{
-			"item": "minecraft:ender_eye"
-		}
-	],
-	"result": {
-		"item": "tpworks:ender_eye_shard",
-		"count": 4
-	}
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:ender_eye"
+    }
+  ],
+  "result": {
+    "item": "tpworks:ender_eye_shard",
+    "count": 4
+  }
 }

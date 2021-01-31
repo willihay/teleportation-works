@@ -1,6 +1,7 @@
 package org.bensam.tpworks.block.teleportbeacon;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -59,7 +60,8 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
 {
     public static final PropertyBool SENDER = PropertyBool.create("sender");
     protected static final AxisAlignedBB BLOCK_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D);
-    
+    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
+
     public BlockTeleportBeacon(@Nonnull String name)
     {
         super(Material.ROCK);
@@ -259,6 +261,7 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
                 double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 
+                // EnumParticleTypes.PORTAL spawns net.minecraft.client.particle.ParticlePortal
                 world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
             }
         }
@@ -312,6 +315,49 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
             world.playSound((EntityPlayer) null, pos, ModSounds.ACTIVATE_TELEPORT_BEACON,
                     SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random rand)
+    {
+        TileEntityTeleportBeacon te = getTileEntity(world, pos);
+        if (!te.incomingTeleportInProgress 
+                && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
+        {
+            if (te.isSender())
+            {
+                // Spawn sparkling teleport particles that are pulled towards concentric circles.
+                double centerY = (double) pos.getY() + 0.125D;
+
+                for (int i = 0; i < 4; ++i)
+                {
+                    double centerX = (double) pos.getX() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                    double centerZ = (double) pos.getZ() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                    double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (0.5D + ModUtil.RANDOM.nextDouble());
+                    double ySpeed = 0.5D + ModUtil.RANDOM.nextDouble();
+                    double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (0.5D + ModUtil.RANDOM.nextDouble());
+
+                    // EnumParticleTypes.PORTAL spawns net.minecraft.client.particle.ParticlePortal
+                    world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
+                }
+            }
+            else
+            {
+                // Spawn sparkling teleportation particles.
+                double particleX = (double) pos.getX() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                double particleY = (double) pos.getY() + 0.125D + ModUtil.RANDOM.nextDouble();
+                double particleZ = (double) pos.getZ() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+
+                particleX = (double) pos.getX() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                particleY = (double) pos.getY() + 0.125D + ModUtil.RANDOM.nextDouble();
+                particleZ = (double) pos.getZ() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+            }
+        }
+
+        super.randomDisplayTick(state, world, pos, rand);
     }
 
     @Override

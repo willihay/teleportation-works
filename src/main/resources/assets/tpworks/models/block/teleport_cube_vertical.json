@@ -1,7 +1,0 @@
-{
-    "parent": "block/orientable_vertical",
-    "textures": {
-        "front": "tpworks:blocks/cube_teleport_unpowered",
-        "side": "tpworks:blocks/cube_teleport_side"
-    }
-}

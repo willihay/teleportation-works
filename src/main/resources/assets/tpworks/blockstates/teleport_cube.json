@@ -1,34 +1,80 @@
 {
     "forge_marker": 1,
     "defaults": {
-        "model": "tpworks:teleport_cube",
-        "textures": {
-            "front": "tpworks:blocks/cube_teleport_unpowered"
-        }
+        "model": "tpworks:teleport_cube"
     },
     "variants": {
         "normal": [{}],
         "inventory": [{}],
         "powered": {
-            "true": {
-                "textures": {
-                    "front": "tpworks:blocks/cube_teleport_powered"
-                }
-            },
+            "true": { "textures": { "facing_base": "tpworks:blocks/cube_teleport_lit" } },
             "false": {}
         },
         "facing": {
-            "down":  { 
-                "model": "tpworks:teleport_cube_vertical", 
-                "x": 180 
+            "down": {
+                "submodel": {
+                    "side_down": { "model": "tpworks:teleport_cube_facing", "x": 90 },
+                    "side_up": { "model": "tpworks:teleport_cube_side", "x": -90 },
+                    "side_north": { "model": "tpworks:teleport_cube_side" },
+                    "side_south": { "model": "tpworks:teleport_cube_side", "y": 180 },
+                    "side_west": { "model": "tpworks:teleport_cube_side", "y": 270 },
+                    "side_east": { "model": "tpworks:teleport_cube_side", "y": 90 }
+                }
             },
-            "up":    {
-                "model": "tpworks:teleport_cube_vertical" 
+            "up": {
+                "submodel": {
+                    "side_down": { "model": "tpworks:teleport_cube_side", "x": 90 },
+                    "side_up": { "model": "tpworks:teleport_cube_facing", "x": -90 },
+                    "side_north": { "model": "tpworks:teleport_cube_side" },
+                    "side_south": { "model": "tpworks:teleport_cube_side", "y": 180 },
+                    "side_west": { "model": "tpworks:teleport_cube_side", "y": 270 },
+                    "side_east": { "model": "tpworks:teleport_cube_side", "y": 90 }
+                }
             },
-            "north": {},
-            "south": { "y": 180 },
-            "west":  { "y": 270 },
-            "east":  { "y": 90 }
+            "north": {
+                "submodel": {
+                    "side_down": { "model": "tpworks:teleport_cube_side", "x": 90 },
+                    "side_up": { "model": "tpworks:teleport_cube_side", "x": -90 },
+                    "side_north": { "model": "tpworks:teleport_cube_facing" },
+                    "side_south": { "model": "tpworks:teleport_cube_side", "y": 180 },
+                    "side_west": { "model": "tpworks:teleport_cube_side", "y": 270 },
+                    "side_east": { "model": "tpworks:teleport_cube_side", "y": 90 }
+                }
+            },
+            "south": {
+                "submodel": {
+                    "side_down": { "model": "tpworks:teleport_cube_side", "x": 90 },
+                    "side_up": { "model": "tpworks:teleport_cube_side", "x": -90 },
+                    "side_north": { "model": "tpworks:teleport_cube_side" },
+                    "side_south": { "model": "tpworks:teleport_cube_facing", "y": 180 },
+                    "side_west": { "model": "tpworks:teleport_cube_side", "y": 270 },
+                    "side_east": { "model": "tpworks:teleport_cube_side", "y": 90 }
+                }
+            },
+            "west": {
+                "submodel": {
+                    "side_down": { "model": "tpworks:teleport_cube_side", "x": 90 },
+                    "side_up": { "model": "tpworks:teleport_cube_side", "x": -90 },
+                    "side_north": { "model": "tpworks:teleport_cube_side" },
+                    "side_south": { "model": "tpworks:teleport_cube_side", "y": 180 },
+                    "side_west": { "model": "tpworks:teleport_cube_facing", "y": 270 },
+                    "side_east": { "model": "tpworks:teleport_cube_side", "y": 90 }
+                }
+            },
+            "east": {
+                "submodel": {
+                    "side_down": { "model": "tpworks:teleport_cube_side", "x": 90 },
+                    "side_up": { "model": "tpworks:teleport_cube_side", "x": -90 },
+                    "side_north": { "model": "tpworks:teleport_cube_side" },
+                    "side_south": { "model": "tpworks:teleport_cube_side", "y": 180 },
+                    "side_west": { "model": "tpworks:teleport_cube_side", "y": 270 },
+                    "side_east": { "model": "tpworks:teleport_cube_facing", "y": 90 }
+                }
+            }
+        },
+        "sender": {
+            "true":  { "textures": { "edge": "tpworks:blocks/cube_teleport_lit" } },
+            "false": {}
         }
     }
 }

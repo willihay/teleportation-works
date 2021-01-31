@@ -1,0 +1,49 @@
+{
+    "__comment": "Model generated using MrCrayfish's Model Creator (https://mrcrayfish.com/tools?id=mc)",
+    "textures": {
+        "edge": "tpworks:blocks/cube_teleport_side",
+        "side_base": "tpworks:blocks/cube_teleport_side"
+    },
+    "elements": [
+        {
+            "name": "Base",
+            "from": [ 1, 1, 0 ], 
+            "to": [ 15, 15, 1 ], 
+            "faces": {
+                "north": { "texture": "#side_base", "uv": [ 1, 1, 15, 15 ] }
+            }
+        },
+        {
+            "name": "Top_Edge",
+            "from": [ 0, 15, 0 ], 
+            "to": [ 16, 16, 1 ], 
+            "faces": {
+                "north": { "texture": "#edge", "uv": [ 0, 0, 16, 1 ] }
+            }
+        },
+        {
+            "name": "Bottom_Edge",
+            "from": [ 0, 0, 0 ], 
+            "to": [ 16, 1, 1 ], 
+            "faces": {
+                "north": { "texture": "#edge", "uv": [ 0, 15, 16, 16 ] }
+            }
+        },
+        {
+            "name": "Left_Edge",
+            "from": [ 15, 1, 0 ], 
+            "to": [ 16, 15, 1 ], 
+            "faces": {
+                "north": { "texture": "#edge", "uv": [ 0, 1, 1, 15 ] }
+            }
+        },
+        {
+            "name": "Right_Edge",
+            "from": [ 0, 1, 0 ], 
+            "to": [ 1, 15, 1 ], 
+            "faces": {
+                "north": { "texture": "#edge", "uv": [ 15, 1, 16, 15 ] }
+            }
+        }
+    ]
+}

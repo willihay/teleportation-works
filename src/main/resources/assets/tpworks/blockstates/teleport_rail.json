@@ -2,8 +2,8 @@
     "forge_marker": 1,
     "variants": {
         "powered": {
-            "true": {},
-            "false": {}
+            "true":  { "textures": { "base": "tpworks:blocks/rail_teleport_base_lit" } },
+            "false": { "textures": { "base": "tpworks:blocks/rail_teleport_base" } }
         },
         "shape": {
             "north_south":     { "model": "tpworks:teleport_rail_flat" },
@@ -14,8 +14,8 @@
             "ascending_south": { "model": "tpworks:teleport_rail_raised_sw" }
         },
         "sender": {
-            "true":  { "textures": { "rail": "tpworks:blocks/rail_teleport_lit" } },
-            "false": { "textures": { "rail": "tpworks:blocks/rail_teleport" } }
+            "true":  { "textures": { "rail": "tpworks:blocks/rail_teleport_lapis_lit" } },
+            "false": { "textures": { "rail": "tpworks:blocks/rail_teleport_base" } }
         }
     }
 }

@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
@@ -33,12 +34,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Enchantments;
-import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.stats.StatList;
@@ -51,13 +50,14 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -69,6 +69,8 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
 {
     public static final PropertyDirection FACING = BlockDirectional.FACING;
     public static final PropertyBool POWERED = PropertyBool.create("powered");
+    public static final PropertyBool SENDER = PropertyBool.create("sender");
+    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
 
     public BlockTeleportCube(@Nonnull String name)
     {
@@ -78,7 +80,10 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         ModSetup.setCreativeTab(this);
         setHardness(2.5F); // enchantment table = 5.0F
         //setResistance(2000.F); // enchantment table = 2000.F
-        setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(POWERED, Boolean.valueOf(false)));
+        setDefaultState(this.blockState.getBaseState()
+                .withProperty(FACING, EnumFacing.NORTH)
+                .withProperty(POWERED, Boolean.valueOf(false))
+                .withProperty(SENDER, Boolean.valueOf(false)));
     }
 
     @Override
@@ -104,7 +109,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     protected BlockStateContainer createBlockState()
     {
-        return new BlockStateContainer(this, new IProperty[] {FACING, POWERED});
+        return new BlockStateContainer(this, new IProperty[] {FACING, POWERED, SENDER});
     }
 
     /**
@@ -113,7 +118,9 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public IBlockState getStateFromMeta(int meta)
     {
-        return this.getDefaultState().withProperty(FACING, EnumFacing.byIndex(meta & 7)).withProperty(POWERED, Boolean.valueOf((meta & 8) > 0));
+        return this.getDefaultState()
+                .withProperty(FACING, EnumFacing.byIndex(meta & 7))
+                .withProperty(POWERED, Boolean.valueOf((meta & 8) > 0));
     }
 
     /**
@@ -131,6 +138,24 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         }
 
         return i;
+    }
+
+    /**
+     * Get the actual Block state of this Block at the given position. This applies the SENDER property, which is not visible in the metadata.
+     */
+    @Override
+    @Deprecated
+    public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos)
+    {
+        boolean isSender = false;
+        TileEntity te = world instanceof ChunkCache ? ((ChunkCache)world).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : world.getTileEntity(pos);
+        
+        if (te instanceof ITeleportationTileEntity)
+        {
+            isSender = ((ITeleportationTileEntity) te).isSender();
+        }
+        
+        return state.withProperty(SENDER, Boolean.valueOf(isSender));
     }
 
     /**
@@ -168,7 +193,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return state.getValue(POWERED) ? 11 : 4;
+        return (state.getValue(POWERED) || getActualState(state, world, pos).getValue(SENDER)) ? 11 : 4;
     }
 
     /**
@@ -190,7 +215,9 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        return this.getDefaultState().withProperty(FACING, EnumFacing.getDirectionFromEntityLiving(pos, placer)).withProperty(POWERED, Boolean.valueOf(false));
+        return this.getDefaultState()
+                .withProperty(FACING, EnumFacing.getDirectionFromEntityLiving(pos, placer))
+                .withProperty(POWERED, Boolean.valueOf(false));
     }
 
     /**
@@ -274,15 +301,21 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
      * Called after the block is set in the Chunk data, but before the Tile Entity is set
      */
     @Override
-    public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
+    public void onBlockAdded(World world, BlockPos pos, IBlockState state)
     {
-        super.onBlockAdded(worldIn, pos, state);
-        this.setDefaultDirection(worldIn, pos, state);
+        super.onBlockAdded(world, pos, state);
+        this.setDefaultDirection(world, pos, state);
+        
+        if (!world.isRemote)
+        {
+            boolean powered = world.isBlockPowered(pos);
+            world.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(powered)), 2);
+        }
     }
 
     private void setDefaultDirection(World world, BlockPos pos, IBlockState state)
     {
-        if (!world.isRemote)
+        if (!world.isRemote) // running on server
         {
             EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
             boolean flag = world.getBlockState(pos.north()).isFullBlock();
@@ -311,7 +344,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
                 }
             }
 
-            world.setBlockState(pos, state.withProperty(FACING, enumfacing).withProperty(POWERED, Boolean.valueOf(false)), 2);
+            world.setBlockState(pos, state.withProperty(FACING, enumfacing), 2);
         }
     }
 
@@ -339,6 +372,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
                 double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 
+                // EnumParticleTypes.PORTAL spawns net.minecraft.client.particle.ParticlePortal
                 world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
             }
         }
@@ -399,10 +433,77 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
+    @Override
     public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos)
     {
         boolean powered = world.isBlockPowered(pos);
         world.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(powered)), 3);
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random rand)
+    {
+        TileEntityTeleportCube te = getTileEntity(world, pos);
+        if (!te.incomingTeleportInProgress 
+                && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
+        {
+            EnumFacing enumFacing = (EnumFacing)state.getValue(FACING);
+            BlockPos blockAdjacentToFacing = pos.offset(enumFacing);
+            
+            if (state.getValue(POWERED) && te.isSender())
+            {
+                // Spawn sparkling teleport particles that are pulled towards concentric circles.
+                double xSpeed = 0;
+                double ySpeed = 0;
+                double zSpeed = 0;
+                double adjacentVectorX = blockAdjacentToFacing.getX() - pos.getX();
+                double adjacentVectorY = blockAdjacentToFacing.getY() - pos.getY();
+                double adjacentVectorZ = blockAdjacentToFacing.getZ() - pos.getZ();
+
+                for (int i = 0; i < 4; ++i)
+                {
+                    double centerX = (double) pos.getX() + 0.5D;
+                    double centerY = (double) pos.getY() + 0.5D;
+                    double centerZ = (double) pos.getZ() + 0.5D;
+                    if (adjacentVectorY != 0.0D) // block adjacent to face is above or below
+                    {
+                        centerX += (ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D;
+                        centerZ += (ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D;
+                        xSpeed = ModUtil.RANDOM.nextDouble() - 0.5D;
+                        ySpeed = adjacentVectorY * (0.5D + ModUtil.RANDOM.nextDouble() * 1.5D);
+                        zSpeed = ModUtil.RANDOM.nextDouble() - 0.5D;
+                    }
+                    else
+                    {
+                        centerX += (ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D;
+                        centerY += (ModUtil.RANDOM.nextDouble() - 0.5D) * 0.3D;
+                        centerZ += (ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D;
+                        xSpeed = adjacentVectorX * (0.5D + ModUtil.RANDOM.nextDouble() * 1.5D);
+                        ySpeed = ModUtil.RANDOM.nextDouble() - 0.5D;
+                        zSpeed = adjacentVectorZ * (0.5D + ModUtil.RANDOM.nextDouble() * 1.5D);
+                    }
+
+                    // EnumParticleTypes.PORTAL spawns net.minecraft.client.particle.ParticlePortal
+                    world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
+                }
+            }
+            else
+            {
+                // Spawn sparkling teleportation particles in block adjacent to face.
+                double particleX = (double) blockAdjacentToFacing.getX() + ModUtil.RANDOM.nextDouble();
+                double particleY = (double) blockAdjacentToFacing.getY() + ModUtil.RANDOM.nextDouble();
+                double particleZ = (double) blockAdjacentToFacing.getZ() + ModUtil.RANDOM.nextDouble();
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+
+                particleX = (double) blockAdjacentToFacing.getX() + ModUtil.RANDOM.nextDouble();
+                particleY = (double) blockAdjacentToFacing.getY() + ModUtil.RANDOM.nextDouble();
+                particleZ = (double) blockAdjacentToFacing.getZ() + ModUtil.RANDOM.nextDouble();
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+            }
+        }
+
+        super.randomDisplayTick(state, world, pos, rand);
     }
 
     @Override

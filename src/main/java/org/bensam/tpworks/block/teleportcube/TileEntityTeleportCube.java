@@ -13,6 +13,7 @@ import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
+import org.bensam.tpworks.item.ItemTeleportationWand;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
 import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
@@ -32,7 +33,12 @@ import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemBoat;
+import net.minecraft.item.ItemMinecart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -48,6 +54,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 /**
@@ -58,8 +65,11 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
 {
     public static final int INVENTORY_SIZE = 9;
     public static final int INVENTORY_STACK_LIMIT = 64;
-    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
+
+    // particle path characteristics
+    public static final double PARTICLE_STREAM_HEIGHT_POSITIONS = 12.0D; // number of vertical particle positions when particles stream vertically 1 position / tick
+    public static final double PARTICLE_STREAM_HEIGHT_POSITIONS_PER_BLOCK = 8.0D; // = 1/8 of a block per vertical position of a particle
 
     private boolean isSender = false; // true when a teleport destination is stored in this TE
 
@@ -107,17 +117,115 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     {
         long totalWorldTime = world.getTotalWorldTime();
         
-        if (!world.isRemote)
+        if (world.isRemote) // running on client
+        {
+            if (incomingTeleportInProgress)
+            {
+                // Handle particle generation and updates.
+                EnumFacing enumFacing = world.getBlockState(pos).getValue(BlockTeleportCube.FACING);
+                BlockPos blockAdjacentToFacing = pos.offset(enumFacing);
+
+                // Spawn streaming teleportation particles.
+                double streamHeight = ((double) (incomingTeleportTimer % PARTICLE_STREAM_HEIGHT_POSITIONS)) / PARTICLE_STREAM_HEIGHT_POSITIONS_PER_BLOCK;
+                double particleY = 0;
+                if (enumFacing == EnumFacing.DOWN)
+                {
+                    particleY = (double) pos.getY() - streamHeight;
+                }
+                else
+                {
+                    particleY = (double) blockAdjacentToFacing.getY() + streamHeight;
+                }
+                
+                for (int i = 0; i < 4; ++i)
+                {
+                    double particleX = (double) blockAdjacentToFacing.getX() + ModUtil.RANDOM.nextDouble();
+                    double particleZ = (double) blockAdjacentToFacing.getZ() + ModUtil.RANDOM.nextDouble();
+                    TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+                }
+
+                incomingTeleportTimer++;
+                
+                if (incomingTeleportTimer >= incomingTeleportTimerStop)
+                {
+                    incomingTeleportInProgress = false;
+                    incomingTeleportTimer = 0;
+                    incomingTeleportTimerStop = 0;
+                }
+            }
+        }
+        else // running on server
         {
             // Process any entities that were teleported here since last update.
             if (!teleportedHere.isEmpty())
             {
                 // Try to place teleported living players, mobs, and other animals into/onto a rideable entity.
+                // Try to stash unridden minecarts and boats in the cube's inventory.
                 for (Entity entity : teleportedHere)
                 {
                     if (!(entity instanceof EntityPlayer) && !(entity instanceof IAnimals))
                     {
-                        continue; // entity is not a player or animal
+                        // Stash unridden minecarts and boats in the cube's inventory. 
+                        if (entity instanceof EntityMinecart) 
+                        {
+                            if (((EntityMinecart) entity).getType().equals(EntityMinecart.Type.RIDEABLE) 
+                                && !entity.isBeingRidden())
+                            {
+                                int slot = getEmptySlot();
+                                if (slot != -1)
+                                {
+                                    ItemStack itemstack = new ItemStack(Items.MINECART, 1);
+                                    if (entity.hasCustomName())
+                                    {
+                                        itemstack.setStackDisplayName(entity.getCustomNameTag());
+                                    }
+                                    itemStackHandler.insertItem(slot, itemstack, false);
+                                    
+                                    entity.setDead();
+                                }
+                            }
+                        }
+                        else if (entity instanceof EntityBoat) 
+                        {
+                            if (!entity.isBeingRidden())
+                            {
+                                int slot = getEmptySlot();
+                                if (slot != -1)
+                                {
+                                    ItemStack itemstack = new ItemStack(((EntityBoat) entity).getItemBoat(), 1);
+                                    if (entity.hasCustomName())
+                                    {
+                                        itemstack.setStackDisplayName(entity.getCustomNameTag());
+                                    }
+                                    itemStackHandler.insertItem(slot, itemstack, false);
+                                    
+                                    entity.setDead();
+                                }
+                            }
+                        }
+                        else if (entity instanceof EntityItem)
+                        {
+                            
+                            ItemStack itemstack = ((EntityItem) entity).getItem();
+                            Item item = itemstack.getItem();
+                            if (item.equals(Items.MINECART) 
+                                    || item.getClass().equals(ItemBoat.class))
+                            {
+                                int slot = getEmptySlot();
+                                if (slot != -1)
+                                {
+                                    if (entity.hasCustomName())
+                                    {
+                                        itemstack.setStackDisplayName(entity.getCustomNameTag());
+                                    }
+                                    itemStackHandler.insertItem(slot, itemstack, false);
+                                    
+                                    entity.setDead();
+                                }
+                            }
+                        }
+                        
+                        continue;
                     }
                     
                     if (entity.isRiding())
@@ -379,11 +487,11 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         incomingTeleportInProgress = true;
         
         // Check if the current particle stop timer is complete or near-complete, or if it hasn't started.  
-//        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
-//        {
-//            // If so, add time to the stop timer.
-//            incomingTeleportTimerStop += ((long) PARTICLE_VERTICAL_POSITIONS);
-//        }
+        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (ItemTeleportationWand.CHARGE_UP_TIME_TICKS / 2))
+        {
+            // If so, add time to the stop timer.
+            incomingTeleportTimerStop += ItemTeleportationWand.CHARGE_UP_TIME_TICKS;
+        }
     }
     
     @Override
@@ -479,6 +587,21 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         }
     }
 
+    public int getEmptySlot()
+    {
+        for (int i = 0; i < INVENTORY_SIZE; ++i)
+        {
+            ItemStack itemstack = itemStackHandler.getStackInSlot(i);
+            
+            if (itemstack.isEmpty())
+            {
+                return i;
+            }
+        }
+        
+        return -1;
+    }
+    
     public int getNumberOfOccupiedSlots()
     {
         int occupiedSlots = 0;

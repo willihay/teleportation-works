@@ -1,8 +1,45 @@
 {
-    "parent": "block/orientable",
+    "parent": "block/block",
+    "ambientocclusion": false,
+    "display": {
+        "gui": {
+            "rotation": [ 30, 135, 0 ],
+            "translation": [ 0, 0, 0 ],
+            "scale": [ 0.675, 0.675, 0.675 ]
+        },
+        "ground": {
+            "rotation": [ 0, 0, 0 ],
+            "translation": [ 0, 3, 0],
+            "scale":[ 0.3, 0.3, 0.3 ]
+        },
+        "firstperson_righthand": {
+            "rotation": [ 0, 135, 0 ],
+            "translation": [ 0, 1.5, 0 ],
+            "scale": [ 0.45, 0.45, 0.45 ]
+        },
+        "thirdperson_righthand": {
+            "rotation": [ 0, 135, 0 ],
+            "translation": [ 0, 2.5, 0 ],
+            "scale": [ 0.425, 0.425, 0.425 ]
+        }
+    },
     "textures": {
-        "top": "tpworks:blocks/cube_teleport_side",
-        "front": "tpworks:blocks/cube_teleport_unpowered",
-        "side": "tpworks:blocks/cube_teleport_side"
-    }
+        "particle": "tpworks:blocks/cube_teleport_facing",
+        "side": "tpworks:blocks/cube_teleport_side",
+        "facing": "tpworks:blocks/cube_teleport_facing"
+    },
+    "elements": [
+        {
+            "from": [ 1, 1, 1 ], 
+            "to": [ 15, 15, 15 ], 
+            "faces": {
+                "north": { "texture": "#facing", "uv": [ 0, 0, 16, 16 ] },
+                "east": { "texture": "#side", "uv": [ 0, 0, 16, 16 ] },
+                "south": { "texture": "#side", "uv": [ 0, 0, 16, 16 ] },
+                "west": { "texture": "#side", "uv": [ 0, 0, 16, 16 ] },
+                "up": { "texture": "#side", "uv": [ 0, 0, 16, 16 ] },
+                "down": { "texture": "#side", "uv": [ 0, 0, 16, 16 ] }
+            }
+        }
+    ]
 }
