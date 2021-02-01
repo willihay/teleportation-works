@@ -8,7 +8,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
-import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
 import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
@@ -20,7 +19,6 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
-import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModConfig;
@@ -63,7 +61,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 

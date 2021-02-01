@@ -7,25 +7,27 @@ import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
 import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.IWorldNameable;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 /**
@@ -116,27 +118,32 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                 && teleportationHandler.hasActiveDestination() 
                 && coolDownTime <= 0)
             {
-                // Find all the teleportable entities inside the beacon block. 
-                AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
-                List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
-
-                if (!entitiesInBB.isEmpty())
+                // Is the beacon powered?
+                IBlockState blockState = world.getBlockState(pos);
+                if (blockState.getValue(BlockTeleportBeacon.POWERED))
                 {
-                    TeleportDestination destination = teleportationHandler.getActiveDestination();
-                    if (teleportationHandler.validateDestination(null, destination))
+                    // Find all the teleportable entities inside the beacon block. 
+                    AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
+                    List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
+
+                    if (!entitiesInBB.isEmpty())
                     {
-                        for (Entity entityInBB : entitiesInBB)
+                        TeleportDestination destination = teleportationHandler.getActiveDestination();
+                        if (teleportationHandler.validateDestination(null, destination))
                         {
-                            if (entityInBB.isDead)
-                                continue;
-                            
-                            if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                            for (Entity entityInBB : entitiesInBB)
                             {
-                                TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
-                            }
-                            else
-                            {
-                                TeleportationHelper.teleport(entityInBB, destination);
+                                if (entityInBB.isDead)
+                                    continue;
+                                
+                                if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                                {
+                                    TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
+                                }
+                                else
+                                {
+                                    TeleportationHelper.teleport(entityInBB, destination);
+                                }
                             }
                         }
                     }
@@ -148,6 +155,13 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
             else
                 coolDownTime = 0;
         }
+    }
+
+    @Override
+    public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState)
+    {
+        // Need to override this method to prevent this TE from getting removed in Chunk.setBlockState when state changes (e.g. powered <-> unpowered)!
+        return oldState.getBlock() != newState.getBlock();
     }
 
     @Override

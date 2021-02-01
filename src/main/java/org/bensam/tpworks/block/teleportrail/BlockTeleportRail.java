@@ -130,22 +130,25 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return 13;
+        return state.getValue(POWERED) ? 13 : 7;
     }
 
     @Override
     public void onMinecartPass(World world, EntityMinecart cart, BlockPos pos)
     {
-        TileEntityTeleportRail te = getTileEntity(world, pos);
-        
-        if (te.getCoolDownTime() <= 0 && te.teleportationHandler.hasActiveDestination())
+        IBlockState blockState = world.getBlockState(pos);
+        if (blockState.getValue(POWERED))
         {
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            
-            if (te.teleportationHandler.validateDestination(null, destination))
+            TileEntityTeleportRail te = getTileEntity(world, pos);
+            if (te.getCoolDownTime() <= 0 && te.teleportationHandler.hasActiveDestination())
             {
-                TeleportationHelper.teleportEntityAndPassengers(cart, destination);
-                te.addCoolDownTime(ModConfig.teleportBlockSettings.railCooldownTime);
+                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                
+                if (te.teleportationHandler.validateDestination(null, destination))
+                {
+                    TeleportationHelper.teleportEntityAndPassengers(cart, destination);
+                    te.addCoolDownTime(ModConfig.teleportBlockSettings.railCooldownTime);
+                }
             }
         }
     }
@@ -303,7 +306,7 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
         if (!te.incomingTeleportInProgress 
                 && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
         {
-            if (te.isSender())
+            if (state.getValue(POWERED) && te.isSender())
             {
                 // Spawn sparkling teleport particles that are pulled towards rails.
                 double centerY = (double) pos.getY() + 0.125D;
@@ -412,8 +415,8 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
         String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
         
         tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine1"));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine2", sneakBind, useItemBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine3", sneakBind, attackBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine4"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine2"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine3", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine4", sneakBind, attackBind));
     }
 }

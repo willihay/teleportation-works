@@ -72,9 +72,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public void update()
     {
-        long totalWorldTime = world.getTotalWorldTime();
-
-        if (world.isRemote)
+        if (world.isRemote) // running on client
         {
             if (incomingTeleportInProgress)
             {

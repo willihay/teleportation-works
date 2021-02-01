@@ -120,19 +120,20 @@ item.teleportation_wand.tipLine4=- %s+%s to change your active destination.
 # Blocks
 tile.teleport_beacon.name=Teleport Beacon
 tile.teleport_beacon.tipLine1=- Toggle inclusion in your network using a Wand of Teleportation.
-tile.teleport_beacon.tipLine2=- %s+%s with a Wand to change active destination.
-tile.teleport_beacon.tipLine3=- %s+%s to clear its destination.
-tile.teleport_beacon.tipLine4=- Rename a beacon in an anvil.
+tile.teleport_beacon.tipLine2=- Redstone-powered beacons can teleport nearby entities to a destination.
+tile.teleport_beacon.tipLine3=- %s+%s with a Wand to change active destination.
+tile.teleport_beacon.tipLine4=- %s+%s to clear its destination.
 tile.teleport_cube.name=Teleport Cube
 tile.teleport_cube.tipLine1=- Toggle inclusion in your network using a Wand of Teleportation.
-tile.teleport_cube.tipLine2=- %s+%s with a Wand to change active destination.
-tile.teleport_cube.tipLine3=- %s+%s to clear its destination.
-tile.teleport_cube.tipLine4=- Rename a cube in an anvil.
+tile.teleport_cube.tipLine2=- Place minecarts and boats in its inventory for incoming teleported players to ride.
+tile.teleport_cube.tipLine3=- Redstone-powered cubes can teleport nearby entities to a destination.
+tile.teleport_cube.tipLine4=- %s+%s with a Wand to change active destination.
+tile.teleport_cube.tipLine5=- %s+%s to clear its destination.
 tile.teleport_rail.name=Teleport Rail
 tile.teleport_rail.tipLine1=- Toggle inclusion in your network using a Wand of Teleportation.
-tile.teleport_rail.tipLine2=- %s+%s with a Wand to change active destination.
-tile.teleport_rail.tipLine3=- %s+%s to clear its destination.
-tile.teleport_rail.tipLine4=- Rename a rail in an anvil.
+tile.teleport_rail.tipLine2=- Redstone-powered rails can teleport minecarts to a destination.
+tile.teleport_rail.tipLine3=- %s+%s with a Wand to change active destination.
+tile.teleport_rail.tipLine4=- %s+%s to clear its destination.
 
 # Entities
 entity.tpworks:teleportation_tipped_arrow.name=Arrow of Teleportation

@@ -1,0 +1,14 @@
+FEATURE RELEASE includes:
+New Teleport Block:
+-Cube indicates incoming teleportation with a vertical particle stream.
+-Lapis edges of cube now appear lit when a destination is defined.
+-If an unridden boat or empty minecart teleports to a Cube, the Cube will grab it and stick it in its inventory, if there is room.
+-Added support for cubes in /td commands.
+
+Particle effect changes:
+-Default effect is for sparkling teleport particles to appear above the beacon and rail, and adjacent to the facing side of the cube, instead of the particle vortex.
+-When a destination is defined, sparkling teleport particles will be pulled towards the base of the beacon and rail, and towards the facing side of the cube.
+
+Teleport Rail changes:
+-Rail has a new redstone rail texture alongside the lapis. The redstone appears lit when the rail is powered.
+-Rail crafting recipe has changed. Beacon ingredient position is now top center, and redstone is now required at bottom center.

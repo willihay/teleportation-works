@@ -7,13 +7,16 @@ import org.bensam.tpworks.block.ModBlocks;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.inventory.Container;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * @author WilliHay
  *
  */
+@SideOnly(Side.CLIENT)
 public class ContainerGuiTeleportCube extends GuiContainer
 {
     public static final int WIDTH = 176;
@@ -25,14 +28,16 @@ public class ContainerGuiTeleportCube extends GuiContainer
 
     private static final ResourceLocation BACKGROUND = new ResourceLocation(TeleportationWorks.MODID, "textures/gui/teleport_cube.png");
     private String inventoryName;
+    private TileEntityTeleportCube teTeleportCube;
     
-    public ContainerGuiTeleportCube(String inventoryName, Container inventorySlots)
+    public ContainerGuiTeleportCube(InventoryPlayer playerInventory, TileEntityTeleportCube te)
     {
-        super(inventorySlots);
+        super(new ContainerTeleportCube(playerInventory, te));
         
         xSize = WIDTH;
         ySize = HEIGHT;
-        this.inventoryName = inventoryName;
+        this.inventoryName = playerInventory.getDisplayName().getUnformattedText();
+        this.teTeleportCube = te;
     }
 
     @Override
@@ -47,6 +52,7 @@ public class ContainerGuiTeleportCube extends GuiContainer
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY)
     {
         fontRenderer.drawString(ModBlocks.TELEPORT_CUBE.getLocalizedName(), CUBE_INVENTORY_LABEL_XPOS, CUBE_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
+        //fontRenderer.drawString(teTeleportCube.getName(), CUBE_INVENTORY_LABEL_XPOS, CUBE_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
         fontRenderer.drawString(inventoryName, PLAYER_INVENTORY_LABEL_XPOS, PLAYER_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
     }
 }

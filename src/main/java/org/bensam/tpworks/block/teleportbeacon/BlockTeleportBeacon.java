@@ -22,6 +22,7 @@ import org.bensam.tpworks.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
@@ -58,6 +59,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 public class BlockTeleportBeacon extends Block implements ITeleportationBlock
 {
+    public static final PropertyBool POWERED = PropertyBool.create("powered");
     public static final PropertyBool SENDER = PropertyBool.create("sender");
     protected static final AxisAlignedBB BLOCK_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D);
     public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
@@ -70,7 +72,9 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
         ModSetup.setCreativeTab(this);
         setHardness(5.0F); // enchantment table = 5.0F
         setResistance(2000.F); // enchantment table = 2000.F
-        setDefaultState(this.blockState.getBaseState().withProperty(SENDER, Boolean.valueOf(false)));
+        setDefaultState(this.blockState.getBaseState()
+                .withProperty(POWERED, Boolean.valueOf(false))
+                .withProperty(SENDER, Boolean.valueOf(false)));
     }
 
     @Override
@@ -93,13 +97,25 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
     @Override
     protected BlockStateContainer createBlockState()
     {
-        return new BlockStateContainer(this, SENDER);
+        return new BlockStateContainer(this, new IProperty[] {POWERED, SENDER});
     }
 
+    /**
+     * Convert the given metadata into a BlockState for this Block
+     */
+    @Override
+    public IBlockState getStateFromMeta(int meta)
+    {
+        return this.getDefaultState().withProperty(POWERED, Boolean.valueOf((meta & 1) > 0));
+    }
+
+    /**
+     * Convert the BlockState into the correct metadata value
+     */
     @Override
     public int getMetaFromState(IBlockState state)
     {
-        return 0;
+        return ((Boolean)state.getValue(POWERED)).booleanValue() ? 1 : 0;
     }
 
     @Override
@@ -167,13 +183,38 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return 13;
+        return state.getValue(POWERED) ? 13 : 7;
     }
 
     @Override
     public BlockRenderLayer getRenderLayer()
     {
         return BlockRenderLayer.CUTOUT;
+    }
+
+    /**
+     * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
+     * IBlockstate
+     */
+    @Override
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    {
+        return this.getDefaultState().withProperty(POWERED, Boolean.valueOf(false));
+    }
+
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
+    @Override
+    public void onBlockAdded(World world, BlockPos pos, IBlockState state)
+    {
+        super.onBlockAdded(world, pos, state);
+        
+        if (!world.isRemote)
+        {
+            boolean powered = world.isBlockPowered(pos);
+            world.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(powered)), 2);
+        }
     }
 
     /**
@@ -317,6 +358,18 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
         }
     }
 
+    /**
+     * Called when a neighboring block was changed and marks that this state should perform any checks during a neighbor
+     * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
+     * block, etc.
+     */
+    @Override
+    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos)
+    {
+        boolean powered = world.isBlockPowered(pos);
+        world.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(powered)), 3);
+    }
+
     @SideOnly(Side.CLIENT)
     @Override
     public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random rand)
@@ -325,7 +378,7 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
         if (!te.incomingTeleportInProgress 
                 && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
         {
-            if (te.isSender())
+            if (state.getValue(POWERED) && te.isSender())
             {
                 // Spawn sparkling teleport particles that are pulled towards concentric circles.
                 double centerY = (double) pos.getY() + 0.125D;
@@ -423,6 +476,21 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
     }
 
     /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
+    @Override
+    public void breakBlock(World world, BlockPos pos, IBlockState state)
+    {
+        if (state.getValue(POWERED))
+        {
+            world.notifyNeighborsOfStateChange(pos, this, false);
+            world.notifyNeighborsOfStateChange(pos.down(), this, false);
+        }
+
+        super.breakBlock(world, pos, state);
+    }
+
+    /**
      * Add custom lines of information to the mouseover description.
      */
     @SideOnly(Side.CLIENT)
@@ -434,8 +502,8 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
         String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
         
         tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine1"));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine2", sneakBind, useItemBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine3", sneakBind, attackBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine4"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine2"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine3", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_beacon.tipLine4", sneakBind, attackBind));
     }
 }

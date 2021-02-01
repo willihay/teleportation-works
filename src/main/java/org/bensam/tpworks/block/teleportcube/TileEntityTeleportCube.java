@@ -23,7 +23,6 @@ import com.google.common.base.Predicate;
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.block.BlockSourceImpl;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.dispenser.IBehaviorDispenseItem;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityBoat;
@@ -32,13 +31,9 @@ import net.minecraft.entity.item.EntityMinecart;
 import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Items;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBoat;
-import net.minecraft.item.ItemMinecart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -54,7 +49,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 /**
@@ -542,16 +536,6 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     {
         // If player is too far away from this tile entity, they cannot use it.
         return !isInvalid() && player.getDistanceSq(pos.add(0.5D, 0.5D, 0.5D)) <= 64D;
-    }
-    
-    public Container createContainer(InventoryPlayer playerInventory)
-    {
-        return new ContainerTeleportCube(playerInventory, this);
-    }
-
-    public GuiContainer createGuiContainer(InventoryPlayer playerInventory)
-    {
-        return new ContainerGuiTeleportCube(playerInventory.getDisplayName().getUnformattedText(), createContainer(playerInventory));
     }
     
     @Nullable

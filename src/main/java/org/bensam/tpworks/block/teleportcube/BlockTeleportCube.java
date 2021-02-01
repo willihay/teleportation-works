@@ -193,7 +193,7 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return (state.getValue(POWERED) || getActualState(state, world, pos).getValue(SENDER)) ? 11 : 4;
+        return (state.getValue(POWERED) || getActualState(state, world, pos).getValue(SENDER)) ? 13 : 7;
     }
 
     /**
@@ -594,6 +594,12 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         TileEntityTeleportCube te = getTileEntity(world, pos);
         te.dropInventoryItems(world);
         
+        if (state.getValue(POWERED))
+        {
+            world.notifyNeighborsOfStateChange(pos, this, false);
+            world.notifyNeighborsOfStateChange(pos.down(), this, false);
+        }
+
         world.updateComparatorOutputLevel(pos, this);
 
         super.breakBlock(world, pos, state);
@@ -648,8 +654,9 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
         
         tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine1"));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine2", sneakBind, useItemBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine3", sneakBind, attackBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine4"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine2"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine3"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine4", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_cube.tipLine5", sneakBind, attackBind));
     }
 }

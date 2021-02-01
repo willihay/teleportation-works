@@ -1,5 +1,7 @@
 package org.bensam.tpworks.util;
 
+import org.bensam.tpworks.block.teleportcube.ContainerGuiTeleportCube;
+import org.bensam.tpworks.block.teleportcube.ContainerTeleportCube;
 import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,7 +27,10 @@ public final class ModGuiHandler implements IGuiHandler
         switch (ID)
         {
         case TELEPORT_CUBE:
-            return ((TileEntityTeleportCube) te).createContainer(player.inventory);
+            if (te instanceof TileEntityTeleportCube)
+            {
+                return new ContainerTeleportCube(player.inventory, (TileEntityTeleportCube) te);
+            }
         default:
             return null;
         }
@@ -40,7 +45,10 @@ public final class ModGuiHandler implements IGuiHandler
         switch (ID)
         {
         case TELEPORT_CUBE:
-            return ((TileEntityTeleportCube) te).createGuiContainer(player.inventory);
+            if (te instanceof TileEntityTeleportCube)
+            {
+                return new ContainerGuiTeleportCube(player.inventory, (TileEntityTeleportCube) te);
+            }
         default:
             return null;
         }
