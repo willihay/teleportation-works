@@ -109,8 +109,6 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     @Override
     public void update()
     {
-        long totalWorldTime = world.getTotalWorldTime();
-        
         if (world.isRemote) // running on client
         {
             if (incomingTeleportInProgress)
@@ -252,9 +250,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
             }
             
             // See if there are entities to teleport away.
-            if ((ModConfig.teleportBlockSettings.cubeTeleportsImmediately || totalWorldTime % 5 == 0) 
-                    && teleportationHandler.hasActiveDestination() 
-                    && coolDownTime <= 0)
+            if (teleportationHandler.hasActiveDestination() && coolDownTime <= 0)
             {
                 // Is the cube powered?
                 IBlockState blockState = world.getBlockState(pos);
@@ -331,34 +327,35 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     @Override
     public void readFromNBT(NBTTagCompound compound)
     {
-        if (FMLCommonHandler.instance().getEffectiveSide().isServer())
+        cubeName = compound.getString("cubeName");
+        uniqueID = compound.getUniqueId("uniqueID");
+        
+        if (compound.hasKey("tpHandler"))
         {
-            cubeName = compound.getString("cubeName");
-            uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
             isSender = teleportationHandler.hasActiveDestination();
-            
-            TeleportDestination destination = teleportationHandler.getActiveDestination();
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.readFromNBT: cubeName = {}, uniqueID = {}, destination = {}", 
-                    cubeName, 
-                    uniqueID,
-                    destination == null ? "EMPTY" : destination);
         }
-
-        // TODO: can we just move this up with other deserialization (i.e. do we only need it on the server?)
+        
         if (compound.hasKey("items")) 
         {
             itemStackHandler.deserializeNBT((NBTTagCompound) compound.getTag("items"));
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.readFromNBT: slots occupied = {}", getNumberOfOccupiedSlots());
         }
         
+        TeleportDestination destination = teleportationHandler.getActiveDestination();
+        TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportCube.readFromNBT ({}): cubeName = {}, uniqueID = {}, destination = {}, slots occupied = {}", 
+                FMLCommonHandler.instance().getEffectiveSide(),
+                cubeName, 
+                uniqueID,
+                destination == null ? "EMPTY" : destination,
+                getNumberOfOccupiedSlots());
+
         super.readFromNBT(compound);
     }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        if (!cubeName.isEmpty())
+        if (hasCustomName())
         {
             compound.setString("cubeName", cubeName);
         }
@@ -368,7 +365,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         compound.setTag("items", itemStackHandler.serializeNBT());
 
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.writeToNBT: cubeName = {}, uniqueID = {}, {}, destination = {}, slots occupied = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.writeToNBT ({}): cubeName = {}, uniqueID = {}, {}, destination = {}, slots occupied = {}", 
                 cubeName, 
                 uniqueID, 
                 pos,

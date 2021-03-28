@@ -120,7 +120,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
             {
                 // Is the beacon powered?
                 IBlockState blockState = world.getBlockState(pos);
-                if (blockState.getValue(BlockTeleportBeacon.POWERED))
+                if (blockState.getValue(BlockTeleportBeacon.POWERED) || !ModConfig.teleportBlockSettings.beaconRequiresPowerToTeleport)
                 {
                     // Find all the teleportable entities inside the beacon block. 
                     AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);

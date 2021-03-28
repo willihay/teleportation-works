@@ -16,6 +16,7 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.item.ModItems;
 import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.sound.ModSounds;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModSetup;
 import org.bensam.tpworks.util.ModUtil;
 
@@ -378,7 +379,7 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
         if (!te.incomingTeleportInProgress 
                 && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
         {
-            if (state.getValue(POWERED) && te.isSender())
+            if ((state.getValue(POWERED) || !ModConfig.teleportBlockSettings.beaconRequiresPowerToTeleport) && te.isSender())
             {
                 // Spawn sparkling teleport particles that are pulled towards concentric circles.
                 double centerY = (double) pos.getY() + 0.125D;

@@ -42,6 +42,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.stats.StatList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -357,6 +358,22 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         world.setBlockState(pos, state.withProperty(FACING, EnumFacing.getDirectionFromEntityLiving(pos, placer)), 2);
 
         TileEntityTeleportCube te = getTileEntity(world, pos);
+        
+        String worldType = world.isRemote ? "client" : "server";
+        if (stack.hasDisplayName())
+        {
+            TeleportationWorks.MOD_LOGGER.info("Cube name ({}): {}; Stack display name: {}", worldType, te.getTeleportName(), stack.getDisplayName());
+        }
+        else
+        {
+            TeleportationWorks.MOD_LOGGER.info("Cube name ({}): {}; Stack loc name: {}", worldType, te.getTeleportName(), stack.getDisplayName());
+        }
+
+        if (stack.hasDisplayName())
+        {
+            // Make sure cube name is updated with any changes in the item stack (e.g. was renamed in anvil).
+            te.setTeleportName(stack.getDisplayName());
+        }
 
         if (world.isRemote) // running on client
         {
@@ -378,12 +395,6 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
         }
         else
         {
-            if (stack.hasDisplayName())
-            {
-                // Make sure cube name is updated with any changes in the item stack (e.g. was renamed in anvil).
-                te.setTeleportName(stack.getDisplayName());
-            }
-
             String name = te.getTeleportName();
             UUID uuid = te.getUniqueID();
             

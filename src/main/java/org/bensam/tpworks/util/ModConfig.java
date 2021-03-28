@@ -115,6 +115,10 @@ public final class ModConfig
         @LangKey(LANG_PREFIX + ".teleport_block.beacon_destinations_include_self")
         public boolean beaconDestinationsIncludeSelf = false;
         
+        @Comment({"Require redstone power to teleport entities from a Teleport Beacon"})
+        @LangKey(LANG_PREFIX + ".teleport_block.beacon_requires_power_to_teleport")
+        public boolean beaconRequiresPowerToTeleport = true;
+        
         @Comment({"Teleport entities as soon as they are in range and beacon cool down time reaches 0", "When false, there is a variable delay"})
         @LangKey(LANG_PREFIX + ".teleport_block.beacon_teleports_immediately")
         public boolean beaconTeleportsImmediately = false;
@@ -132,10 +136,6 @@ public final class ModConfig
         @LangKey(LANG_PREFIX + ".teleport_block.cube_mounts_players")
         public boolean cubeMountsPlayersToRideables = true;
         
-        @Comment({"Teleport entities as soon as they are in range and cube cool down time reaches 0", "When false, there is a variable delay"})
-        @LangKey(LANG_PREFIX + ".teleport_block.cube_teleports_immediately")
-        public boolean cubeTeleportsImmediately = false;
-
         @Comment("Cooldown time (in ticks) after a Teleport Rail teleports a minecart, during which it will not teleport another cart")
         @LangKey(LANG_PREFIX + ".teleport_block.rail_cooldown_ticks")
         @RangeInt(min = 0, max = 20)
@@ -144,6 +144,10 @@ public final class ModConfig
         @Comment("When cycling through Teleport Rail destinations, include saved Teleport Beacons and Cubes")
         @LangKey(LANG_PREFIX + ".teleport_block.rail_destinations_include_beacons")
         public boolean railDestinationsIncludeBeacons = false;
+
+        @Comment({"Require redstone power to teleport entities from a Teleport Rail"})
+        @LangKey(LANG_PREFIX + ".teleport_block.rail_requires_power_to_teleport")
+        public boolean railRequiresPowerToTeleport = true;
     }
     
     @Name("World Settings")
@@ -157,12 +161,36 @@ public final class ModConfig
         @RequiresWorldRestart
         public boolean addItemsToSpawnChest = false;
         
-        public enum CraftingDifficulty { NORMAL, HARD };
+        // TODO: Move to ModSettings?
+        public enum CraftingDifficulty 
+        { 
+            NORMAL, 
+            HARD 
+        };
+
         @Comment("HARD difficulty requires an Eye of Ender instead of an Ender Pearl in wands, bows, and beacons")
         @LangKey(LANG_PREFIX + ".world.crafting_difficulty")
         public CraftingDifficulty craftingDifficulty = CraftingDifficulty.NORMAL;
     }
+    /*
+    @Name("Mod Settings")
+    @LangKey(LANG_PREFIX + ".mod")
+    public static ModSettings modSettings = new ModSettings();
     
+    public static class ModSettings
+    {
+        public enum DebugLevel
+        {
+            OFF,
+            MINIMAL,
+            VERBOSE
+        };
+        
+        @Comment("Amount of mod activity information sent to debug log")
+        @LangKey(LANG_PREFIX + ".mod.debug_level")
+        public DebugLevel debugLevel = DebugLevel.OFF;
+    }
+    */
     @Mod.EventBusSubscriber(modid = TeleportationWorks.MODID)
     private static class EventHandler
     {

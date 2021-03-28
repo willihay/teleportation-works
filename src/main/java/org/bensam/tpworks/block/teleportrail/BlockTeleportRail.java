@@ -137,7 +137,7 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
     public void onMinecartPass(World world, EntityMinecart cart, BlockPos pos)
     {
         IBlockState blockState = world.getBlockState(pos);
-        if (blockState.getValue(POWERED))
+        if (blockState.getValue(POWERED) || !ModConfig.teleportBlockSettings.railRequiresPowerToTeleport)
         {
             TileEntityTeleportRail te = getTileEntity(world, pos);
             if (te.getCoolDownTime() <= 0 && te.teleportationHandler.hasActiveDestination())
@@ -306,7 +306,7 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
         if (!te.incomingTeleportInProgress 
                 && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
         {
-            if (state.getValue(POWERED) && te.isSender())
+            if ((state.getValue(POWERED) || !ModConfig.teleportBlockSettings.railRequiresPowerToTeleport) && te.isSender())
             {
                 // Spawn sparkling teleport particles that are pulled towards rails.
                 double centerY = (double) pos.getY() + 0.125D;
