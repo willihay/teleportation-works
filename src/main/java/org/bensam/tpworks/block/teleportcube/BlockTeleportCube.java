@@ -359,16 +359,6 @@ public class BlockTeleportCube extends BlockContainer implements ITeleportationB
 
         TileEntityTeleportCube te = getTileEntity(world, pos);
         
-        String worldType = world.isRemote ? "client" : "server";
-        if (stack.hasDisplayName())
-        {
-            TeleportationWorks.MOD_LOGGER.info("Cube name ({}): {}; Stack display name: {}", worldType, te.getTeleportName(), stack.getDisplayName());
-        }
-        else
-        {
-            TeleportationWorks.MOD_LOGGER.info("Cube name ({}): {}; Stack loc name: {}", worldType, te.getTeleportName(), stack.getDisplayName());
-        }
-
         if (stack.hasDisplayName())
         {
             // Make sure cube name is updated with any changes in the item stack (e.g. was renamed in anvil).

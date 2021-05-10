@@ -228,6 +228,12 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
     {
         TileEntityTeleportRail te = getTileEntity(world, pos);
 
+        if (stack.hasDisplayName())
+        {
+            // Make sure rail name is updated with any changes in the item stack (e.g. was renamed in anvil).
+            te.setTeleportName(stack.getDisplayName());
+        }
+
         if (world.isRemote) // running on client
         {
             te.blockPlacedTime = world.getTotalWorldTime();
@@ -248,12 +254,6 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
         }
         else // running on server
         {
-            if (stack.hasDisplayName())
-            {
-                // Make sure rail name is updated with any changes in the item stack (e.g. was renamed in anvil).
-                te.setTeleportName(stack.getDisplayName());
-            }
-
             String name = te.getTeleportName();
             UUID uuid = te.getUniqueID();
             

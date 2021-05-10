@@ -289,6 +289,12 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
     {
         TileEntityTeleportBeacon te = getTileEntity(world, pos);
 
+        if (stack.hasDisplayName())
+        {
+            // Make sure beacon name is updated with any changes in the item stack (e.g. was renamed in anvil).
+            te.setTeleportName(stack.getDisplayName());
+        }
+
         if (world.isRemote) // running on client
         {
             te.blockPlacedTime = world.getTotalWorldTime();
@@ -309,12 +315,6 @@ public class BlockTeleportBeacon extends Block implements ITeleportationBlock
         }
         else
         {
-            if (stack.hasDisplayName())
-            {
-                // Make sure beacon name is updated with any changes in the item stack (e.g. was renamed in anvil).
-                te.setTeleportName(stack.getDisplayName());
-            }
-
             String name = te.getTeleportName();
             UUID uuid = te.getUniqueID();
             
