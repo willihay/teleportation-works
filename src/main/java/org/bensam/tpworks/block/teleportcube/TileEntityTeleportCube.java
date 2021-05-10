@@ -36,6 +36,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBoat;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
@@ -65,7 +67,10 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     public static final double PARTICLE_STREAM_HEIGHT_POSITIONS = 12.0D; // number of vertical particle positions when particles stream vertically 1 position / tick
     public static final double PARTICLE_STREAM_HEIGHT_POSITIONS_PER_BLOCK = 8.0D; // = 1/8 of a block per vertical position of a particle
 
+    private String cubeName = "";
     private boolean isSender = false; // true when a teleport destination is stored in this TE
+    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+    private UUID uniqueID = new UUID(0, 0);
 
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -76,10 +81,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
     
     // server-only data
-    private String cubeName = "";
     protected int coolDownTime = 0; // set to dampen chain-teleportation involving multiple beacons and/or cubes
-    private UUID uniqueID = new UUID(0, 0);
-    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
     private Set<Entity> teleportedHere = new LinkedHashSet<>();
 
     // item stack handler holds the contents of our inventory slots
@@ -93,6 +95,44 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         }
     };
     
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate.
+     * Handled in client by {@link onDataPacket}.
+     */
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.getUpdatePacket: {} at pos {}", getName(), pos);
+        
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = getUpdateTag();
+        final int METADATA = 0;
+        return new SPacketUpdateTileEntity(this.pos, METADATA, updateTagDescribingTileEntityState);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.onDataPacket: {} at pos {}", getName(), pos);
+
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = pkt.getNbtCompound();
+        handleUpdateTag(updateTagDescribingTileEntityState);
+        
+        super.onDataPacket(net, pkt);
+    }
+
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to the client in TileEntity.handleUpdateTag.
+     */
+    @Override
+    public NBTTagCompound getUpdateTag()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.getUpdateTag: {} at pos {}", getName(), pos);
+        return writeToNBT(new NBTTagCompound());
+    }
+
     @Override
     public void onLoad()
     {
@@ -342,10 +382,11 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         }
         
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportCube.readFromNBT ({}): cubeName = {}, uniqueID = {}, destination = {}, slots occupied = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.readFromNBT ({}): cubeName = {}, uniqueID = {}, pos = {}, destination = {}, slots occupied = {}", 
                 FMLCommonHandler.instance().getEffectiveSide(),
                 cubeName, 
                 uniqueID,
+                pos,
                 destination == null ? "EMPTY" : destination,
                 getNumberOfOccupiedSlots());
 
@@ -365,7 +406,7 @@ public class TileEntityTeleportCube extends TileEntity implements ITeleportation
         compound.setTag("items", itemStackHandler.serializeNBT());
 
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.writeToNBT ({}): cubeName = {}, uniqueID = {}, {}, destination = {}, slots occupied = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportCube.writeToNBT: cubeName = {}, uniqueID = {}, pos = {}, destination = {}, slots occupied = {}", 
                 cubeName, 
                 uniqueID, 
                 pos,

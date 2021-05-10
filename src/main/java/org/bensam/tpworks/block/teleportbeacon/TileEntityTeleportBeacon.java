@@ -19,6 +19,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -45,7 +47,10 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     public static final double PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING = 32.0D;
     public static final double PARTICLE_VORTEX_HEIGHT_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
+    private String beaconName = "";
     private boolean isSender = false; // true when a teleport destination is stored in this TE
+    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+    private UUID uniqueID = new UUID(0, 0);
 
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -56,10 +61,45 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
     
     // server-only data
-    private String beaconName = "";
     protected int coolDownTime = 0; // set to dampen chain-teleportation involving multiple beacons
-    private UUID uniqueID = new UUID(0, 0);
-    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate.
+     * Handled in client by {@link onDataPacket}.
+     */
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.getUpdatePacket: {} at pos {}", getName(), pos);
+        
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = getUpdateTag();
+        final int METADATA = 0;
+        return new SPacketUpdateTileEntity(this.pos, METADATA, updateTagDescribingTileEntityState);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.onDataPacket: {} at pos {}", getName(), pos);
+
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = pkt.getNbtCompound();
+        handleUpdateTag(updateTagDescribingTileEntityState);
+        
+        super.onDataPacket(net, pkt);
+    }
+
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to the client in TileEntity.handleUpdateTag.
+     */
+    @Override
+    public NBTTagCompound getUpdateTag()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.getUpdateTag: {} at pos {}", getName(), pos);
+        return writeToNBT(new NBTTagCompound());
+    }
 
     @Override
     public void onLoad()
@@ -167,19 +207,22 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     @Override
     public void readFromNBT(NBTTagCompound compound)
     {
-        if (FMLCommonHandler.instance().getEffectiveSide().isServer())
+        beaconName = compound.getString("beaconName");
+        uniqueID = compound.getUniqueId("uniqueID");
+        
+        if (compound.hasKey("tpHandler"))
         {
-            beaconName = compound.getString("beaconName");
-            uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
             isSender = teleportationHandler.hasActiveDestination();
-            
-            TeleportDestination destination = teleportationHandler.getActiveDestination();
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: beaconName = {}, uniqueID = {}, destination = {}", 
-                    beaconName, 
-                    uniqueID,
-                    destination == null ? "EMPTY" : destination);
         }
+        
+        TeleportDestination destination = teleportationHandler.getActiveDestination();
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT ({}): beaconName = {}, uniqueID = {}, pos = {}, destination = {}", 
+                FMLCommonHandler.instance().getEffectiveSide(),
+                beaconName, 
+                uniqueID,
+                pos,
+                destination == null ? "EMPTY" : destination);
 
         super.readFromNBT(compound);
     }
@@ -187,7 +230,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        if (!beaconName.isEmpty())
+        if (hasCustomName())
         {
             compound.setString("beaconName", beaconName);
         }
@@ -195,7 +238,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         compound.setTag("tpHandler", teleportationHandler.serializeNBT());
         
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.writeToNBT: beaconName = {}, uniqueID = {}, {}, destination = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.writeToNBT: beaconName = {}, uniqueID = {}, pos = {}, destination = {}", 
                 beaconName, 
                 uniqueID, 
                 pos,

@@ -16,7 +16,7 @@ import net.minecraftforge.items.SlotItemHandler;
 public class ContainerTeleportCube extends Container
 {
     public static final int CUBE_SLOT_XPOS = 8;
-    public static final int CUBE_SLOT_YPOS = 52;
+    public static final int CUBE_SLOT_YPOS = 32;
     public static final int INVENTORY_SLOT_XPOS = 8;
     public static final int INVENTORY_SLOT_YPOS = 84;
     public static final int HOTBAR_SLOT_XPOS = 8;

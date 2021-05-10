@@ -55,8 +55,6 @@ public class PacketUpdateTeleportTileEntity implements IMessage
                     TileEntity te = world.getTileEntity(message.pos);
                     if (te instanceof ITeleportationTileEntity)
                     {
-                        TeleportationWorks.MOD_LOGGER.info("TP Block name on client: {}", ((ITeleportationTileEntity) te).getTeleportName());
-                        
                         if (message.isStored >= 0)
                         {
                             ((ITeleportationTileEntity) te).setStoredByPlayer(message.isStored != 0);

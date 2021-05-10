@@ -15,6 +15,8 @@ import org.bensam.tpworks.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
@@ -40,7 +42,10 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     public static final double PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING = 16.0D;
     public static final double PARTICLE_VORTEX_HEIGHT_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
+    private String railName = "";
     private boolean isSender = false; // true when a teleport destination is stored in this TE
+    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+    private UUID uniqueID = new UUID(0, 0);
     
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -52,9 +57,44 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
 
     // server-only data
     protected int coolDownTime = 0; // set to control rapid fire teleportations if a rail gets included in a tight teleport loop
-    private String railName = "";
-    private UUID uniqueID = new UUID(0, 0);
-    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate.
+     * Handled in client by {@link onDataPacket}.
+     */
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.getUpdatePacket: {} at pos {}", getName(), pos);
+        
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = getUpdateTag();
+        final int METADATA = 0;
+        return new SPacketUpdateTileEntity(this.pos, METADATA, updateTagDescribingTileEntityState);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.onDataPacket: {} at pos {}", getName(), pos);
+
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = pkt.getNbtCompound();
+        handleUpdateTag(updateTagDescribingTileEntityState);
+        
+        super.onDataPacket(net, pkt);
+    }
+
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to the client in TileEntity.handleUpdateTag.
+     */
+    @Override
+    public NBTTagCompound getUpdateTag()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.getUpdateTag: {} at pos {}", getName(), pos);
+        return writeToNBT(new NBTTagCompound());
+    }
 
     @Override
     public void onLoad()
@@ -124,19 +164,22 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public void readFromNBT(NBTTagCompound compound)
     {
-        if (FMLCommonHandler.instance().getEffectiveSide().isServer())
+        railName = compound.getString("railName");
+        uniqueID = compound.getUniqueId("uniqueID");
+        
+        if (compound.hasKey("tpHandler"))
         {
-            railName = compound.getString("railName");
-            uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
             isSender = teleportationHandler.hasActiveDestination();
-            
-            TeleportDestination destination = teleportationHandler.getActiveDestination();
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.readFromNBT: railName = {}, uniqueID = {}, destination = {}", 
-                    railName, 
-                    uniqueID, 
-                    destination == null ? "EMPTY" : destination);
         }
+        
+        TeleportDestination destination = teleportationHandler.getActiveDestination();
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.readFromNBT ({}): railName = {}, uniqueID = {}, pos = {}, destination = {}", 
+                FMLCommonHandler.instance().getEffectiveSide(),
+                railName, 
+                uniqueID, 
+                pos,
+                destination == null ? "EMPTY" : destination);
 
         super.readFromNBT(compound);
     }
@@ -144,7 +187,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        if (!railName.isEmpty())
+        if (hasCustomName())
         {
             compound.setString("railName", railName);
         }
@@ -152,7 +195,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         compound.setTag("tpHandler", teleportationHandler.serializeNBT());
         
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.writeToNBT: railName = {}, uniqueID = {}, {}, destination = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.writeToNBT: railName = {}, uniqueID = {}, pos = {}, destination = {}", 
                 railName, 
                 uniqueID, 
                 pos, 

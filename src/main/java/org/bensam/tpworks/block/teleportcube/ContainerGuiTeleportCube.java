@@ -22,7 +22,7 @@ public class ContainerGuiTeleportCube extends GuiContainer
     public static final int WIDTH = 176;
     public static final int HEIGHT = 166;
     public static final int CUBE_INVENTORY_LABEL_XPOS = 8;
-    public static final int CUBE_INVENTORY_LABEL_YPOS = 40;
+    public static final int CUBE_INVENTORY_LABEL_YPOS = 20;
     public static final int PLAYER_INVENTORY_LABEL_XPOS = 8;
     public static final int PLAYER_INVENTORY_LABEL_YPOS = 72;
 
@@ -51,8 +51,7 @@ public class ContainerGuiTeleportCube extends GuiContainer
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY)
     {
-        fontRenderer.drawString(ModBlocks.TELEPORT_CUBE.getLocalizedName(), CUBE_INVENTORY_LABEL_XPOS, CUBE_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
-        //fontRenderer.drawString(teTeleportCube.getName(), CUBE_INVENTORY_LABEL_XPOS, CUBE_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
+        fontRenderer.drawString(teTeleportCube.getName(), CUBE_INVENTORY_LABEL_XPOS, CUBE_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
         fontRenderer.drawString(inventoryName, PLAYER_INVENTORY_LABEL_XPOS, PLAYER_INVENTORY_LABEL_YPOS, Color.darkGray.getRGB());
     }
 }
