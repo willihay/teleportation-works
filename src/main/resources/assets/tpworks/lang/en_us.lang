@@ -1,8 +1,12 @@
 # English US language file
 
 # Config
+config.tpworks.mod=Mod Settings
+config.tpworks.mod.tooltip=General settings for this mod.
+config.tpworks.mod.log_level=Console Log Level
+config.tpworks.mod.log_level.tooltip=Amount of mod activity information sent to console.
 config.tpworks.equipped_item=Equipped Item Settings
-config.tpworks.equipped_item.tooltip=Settings specific to the use of equipped items included with this mod
+config.tpworks.equipped_item.tooltip=Settings specific to the use of equipped items included with this mod.
 config.tpworks.equipped_item.bow_destinations_include_rails=Bows Can Send To Rails
 config.tpworks.equipped_item.bow_destinations_include_rails.tooltip=When cycling through Bow of Teleportation destinations, include saved Teleport Rails.
 config.tpworks.equipped_item.wand_teleports_boats_ridden=Wands Teleport Boats Ridden

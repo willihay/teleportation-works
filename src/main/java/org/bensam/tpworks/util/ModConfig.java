@@ -161,7 +161,6 @@ public final class ModConfig
         @RequiresWorldRestart
         public boolean addItemsToSpawnChest = false;
         
-        // TODO: Move to ModSettings?
         public enum CraftingDifficulty 
         { 
             NORMAL, 
@@ -172,25 +171,26 @@ public final class ModConfig
         @LangKey(LANG_PREFIX + ".world.crafting_difficulty")
         public CraftingDifficulty craftingDifficulty = CraftingDifficulty.NORMAL;
     }
-    /*
-    @Name("Mod Settings")
+
+/*    @Name("Mod Settings")
     @LangKey(LANG_PREFIX + ".mod")
     public static ModSettings modSettings = new ModSettings();
     
     public static class ModSettings
     {
-        public enum DebugLevel
+        public enum LogLevel
         {
             OFF,
             MINIMAL,
             VERBOSE
         };
         
-        @Comment("Amount of mod activity information sent to debug log")
-        @LangKey(LANG_PREFIX + ".mod.debug_level")
-        public DebugLevel debugLevel = DebugLevel.OFF;
+        @Comment("Amount of mod activity information sent to console")
+        @LangKey(LANG_PREFIX + ".mod.log_level")
+        public LogLevel logLevel = LogLevel.MINIMAL;
     }
-    */
+*/
+
     @Mod.EventBusSubscriber(modid = TeleportationWorks.MODID)
     private static class EventHandler
     {
