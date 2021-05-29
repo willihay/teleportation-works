@@ -8,6 +8,8 @@ Teleport Cube:
 -Automatically mounts incoming players and other living entities to empty minecarts or boats stored in the cube's inventory.
 -If an unridden boat or empty minecart teleports to a Cube, the Cube will grab it and stick it in its inventory, if there is room.
 -Lapis edges of cube appear lit when a destination is defined.
+And also:
+-7 new mod configuration options.
 -Added support for cubes in /td commands.
 
 CHANGES
