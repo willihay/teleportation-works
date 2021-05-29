@@ -1,14 +1,21 @@
 FEATURE RELEASE includes:
-New Teleport Block:
--Cube indicates incoming teleportation with a vertical particle stream.
--Lapis edges of cube now appear lit when a destination is defined.
+
+NEW FEATURES
+Teleport Cube:
+-Teleports entities that are adjacent to its face to a teleport destination, if set.
+-Acts as a teleport destination, receiving teleported entities in the block adjacent to its face.
+-Can store items in its 9-slot inventory. Right-click to access cube inventory.
+-Automatically mounts incoming players and other living entities to empty minecarts or boats stored in the cube's inventory.
 -If an unridden boat or empty minecart teleports to a Cube, the Cube will grab it and stick it in its inventory, if there is room.
+-Lapis edges of cube appear lit when a destination is defined.
 -Added support for cubes in /td commands.
 
-Particle effect changes:
--Default effect is for sparkling teleport particles to appear above the beacon and rail, and adjacent to the facing side of the cube, instead of the particle vortex.
+CHANGES
+-All teleportation blocks (beacons, rails, cubes) must be powered by redstone in order to teleport entities to a destination. This requirement can be turned off in mod options screen.
+-All teleportation blocks emit light level 13 when powered, and light level 7 when not powered.
+-Teleport Rail has a new redstone rail texture alongside the lapis. The redstone appears lit when the rail is powered.
+-Teleport Rail crafting recipe has changed. Beacon ingredient position is now top center, and redstone is now required at bottom center.
+-Default particle effect is for sparkling teleport particles to appear above the beacon and rail, and adjacent to the facing side of the cube, instead of the particle vortex.
 -When a destination is defined, sparkling teleport particles will be pulled towards the base of the beacon and rail, and towards the facing side of the cube.
-
-Teleport Rail changes:
--Rail has a new redstone rail texture alongside the lapis. The redstone appears lit when the rail is powered.
--Rail crafting recipe has changed. Beacon ingredient position is now top center, and redstone is now required at bottom center.
+-Spinning vortex only appears above beacons and rails when there is an incoming teleportation in progress.
+-Code refactoring adds new ITeleportationBlock for every teleport block to implement, expands ITeleportationTileEntity interface, and simplifies PacketUpdateTeleportTileEntity and PacketRequestUpdateTeleportTileEntity network messages so that all teleport blocks can use.
