@@ -32,7 +32,8 @@ public class CommandTeleportation extends CommandBase
         NONE,
         INVALID,
         BEACONS,
-        RAILS
+        RAILS,
+        CUBES
     }
     
     /**
@@ -85,6 +86,10 @@ public class CommandTeleportation extends CommandBase
             else if (args[1].equalsIgnoreCase("rails"))
             {
                 targetType = TargetType.RAILS;
+            }
+            else if (args[1].equalsIgnoreCase("cubes"))
+            {
+                targetType = TargetType.CUBES;
             }
             else
             {
@@ -179,12 +184,14 @@ public class CommandTeleportation extends CommandBase
                     destinationType = DestinationType.BEACON;
                 else if (targetType == TargetType.RAILS)
                     destinationType = DestinationType.RAIL;
+                else if (targetType == TargetType.CUBES)
+                    destinationType = DestinationType.CUBE;
                 
                 TeleportDestination destination = null;
                 boolean foundOne = false;
                 do
                 {
-                     destination = TeleportationHelper.getNextDestination(player, destinationType, destination, null);
+                     destination = TeleportationHelper.getNextDestination(player, new DestinationType[] {destinationType}, destination, null);
                      if (destination != null)
                      {
                          if (targetType != TargetType.INVALID || !teleportationHandler.validateDestination(player, destination))
@@ -250,9 +257,11 @@ public class CommandTeleportation extends CommandBase
                     destinationType = DestinationType.BEACON;
                 else if (targetType == TargetType.RAILS)
                     destinationType = DestinationType.RAIL;
+                else if (targetType == TargetType.CUBES)
+                    destinationType = DestinationType.CUBE;
 
                 TeleportDestination prevDestination = null;
-                TeleportDestination destination = TeleportationHelper.getNextDestination(player, destinationType, null, null);
+                TeleportDestination destination = TeleportationHelper.getNextDestination(player, new DestinationType[] {destinationType}, null, null);
                 while (destination != null)
                 {
                     if (targetType != TargetType.INVALID || !teleportationHandler.validateDestination(player, destination))
@@ -266,7 +275,7 @@ public class CommandTeleportation extends CommandBase
                         prevDestination = destination;
                     }
                     
-                    destination = TeleportationHelper.getNextDestination(player, destinationType, prevDestination, null);
+                    destination = TeleportationHelper.getNextDestination(player, new DestinationType[] {destinationType}, prevDestination, null);
                 }
                 
                 if (!foundOne)
@@ -390,16 +399,16 @@ public class CommandTeleportation extends CommandBase
             if (args[0].equalsIgnoreCase("delete"))
             {
                 if (args[1].isEmpty())
-                    return Lists.newArrayList("2", "all", "beacons", "rails", "invalid");
+                    return Lists.newArrayList("2", "all", "beacons", "cubes", "rails", "invalid");
                 else
-                    return getListOfStringsMatchingLastWord(args, new String[] { "all", "beacons", "rails", "invalid" });
+                    return getListOfStringsMatchingLastWord(args, new String[] { "all", "beacons", "cubes", "rails", "invalid" });
             }
             else
             {
                 if (args[1].isEmpty())
-                    return Lists.newArrayList("2", "beacons", "rails", "invalid");
+                    return Lists.newArrayList("2", "beacons", "cubes", "rails", "invalid");
                 else
-                    return getListOfStringsMatchingLastWord(args, new String[] { "beacons", "rails", "invalid" });
+                    return getListOfStringsMatchingLastWord(args, new String[] { "beacons", "cubes", "rails", "invalid" });
             }
         }
 

@@ -101,4 +101,20 @@ public final class ModUtil
     {
         return FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(dimension);
     }
+    
+/*    public static void log()
+    {
+        switch (ModConfig.modSettings.logLevel)
+        {
+        case OFF:
+            return;
+        case MINIMAL:
+            break;
+        case VERBOSE:
+            break;
+        default:
+            break;
+        }
+    }
+*/
 }

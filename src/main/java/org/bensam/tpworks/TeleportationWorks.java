@@ -13,6 +13,7 @@ import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
 import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.proxy.IProxy;
+import org.bensam.tpworks.util.ModGuiHandler;
 
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.dispenser.BehaviorProjectileDispense;
@@ -55,7 +56,7 @@ public class TeleportationWorks
     public static final String MODID = "tpworks";
     public static final String NAME = "Teleportation Works";
     public static final String VERSION = "@VERSION@";
-    //public static final String VERSION = "1.12.2-2.1.0"; // used when debugging dedicated server
+    //public static final String VERSION = "1.12.2-2.2.0"; // used when debugging dedicated server
     public static final String ACCEPTED_MINECRAFT_VERSIONS = "[1.12.2]";
     public static final String FINGERPRINT = "@FINGERPRINT@";
     public static final String DEPENDENCIES = "" +
@@ -93,6 +94,10 @@ public class TeleportationWorks
         network.registerMessage(new PacketRequestUpdateTeleportTileEntity.Handler(), PacketRequestUpdateTeleportTileEntity.class, networkPacketID++,
                 Side.SERVER);
         network.registerMessage(new PacketUpdateTeleportIncoming.Handler(), PacketUpdateTeleportIncoming.class, networkPacketID++, Side.CLIENT);
+        
+        // Register GUI handlers.
+        NetworkRegistry.INSTANCE.registerGuiHandler(instance, new ModGuiHandler());
+        MOD_LOGGER.debug("GUI handlers registered");
 
         // Register additional loot tables.
         LootTableList.register(new ResourceLocation(MODID, "chests/spawn_bonus_chest"));

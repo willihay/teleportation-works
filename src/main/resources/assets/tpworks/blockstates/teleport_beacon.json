@@ -6,9 +6,13 @@
     "variants": {
         "normal": [{}],
         "inventory": [{}],
+        "powered": {
+            "true": { "textures": { "beacon_obsidian_base": "tpworks:blocks/beacon_obsidian_base_lit" } },
+            "false": {}
+        },
         "sender": {
-            "true": { "textures": { "lapis_block": "tpworks:blocks/lapis_block_lit", "beacon_obsidian_base": "tpworks:blocks/beacon_obsidian_base_lit" } },
-            "false": { "textures": { "lapis_block": "minecraft:blocks/lapis_block", "beacon_obsidian_base": "tpworks:blocks/beacon_obsidian_base_lit" } }
+            "true": { "textures": { "lapis_block": "tpworks:blocks/lapis_block_lit" } }, 
+            "false": {} 
         }
     }
 }

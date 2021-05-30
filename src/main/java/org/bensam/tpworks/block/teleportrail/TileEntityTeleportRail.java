@@ -15,6 +15,8 @@ import org.bensam.tpworks.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
@@ -31,17 +33,19 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  */
 public class TileEntityTeleportRail extends TileEntity implements ITeleportationTileEntity, IWorldNameable, ITickable
 {
-    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
 
     // particle path characteristics
-    public static final double PARTICLE_ANGULAR_VELOCITY = Math.PI / 10.0D; // (PI/10 radians/tick) x (20 ticks/sec) = 1 complete circle / second for each particle
-    public static final double PARTICLE_HORIZONTAL_RADIUS = 0.4D;
-    public static final double PARTICLE_VERTICAL_POSITIONS = 24.0D; // number of particle positions vertically, where particle moves vertically 1 position / tick
-    public static final double PARTICLE_HEIGHT_TO_BEGIN_SCALING = 16.0D;
-    public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
+    public static final double PARTICLE_ANGULAR_VELOCITY = Math.PI / 5.0D; // (PI/5 radians/tick) x (20 ticks/sec) = 2 complete circles / second for each particle
+    public static final double PARTICLE_PATH_RADIUS = 0.5D;
+    public static final double PARTICLE_VORTEX_HEIGHT_POSITIONS = 24.0D; // number of particle positions vertically, where particle moves vertically 1 position / tick
+    public static final double PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING = 16.0D;
+    public static final double PARTICLE_VORTEX_HEIGHT_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
+    private String railName = "";
     private boolean isSender = false; // true when a teleport destination is stored in this TE
+    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+    private UUID uniqueID = new UUID(0, 0);
     
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -53,9 +57,44 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
 
     // server-only data
     protected int coolDownTime = 0; // set to control rapid fire teleportations if a rail gets included in a tight teleport loop
-    private String railName = "";
-    private UUID uniqueID = new UUID(0, 0);
-    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate.
+     * Handled in client by {@link onDataPacket}.
+     */
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.getUpdatePacket: {} at pos {}", getName(), pos);
+        
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = getUpdateTag();
+        final int METADATA = 0;
+        return new SPacketUpdateTileEntity(this.pos, METADATA, updateTagDescribingTileEntityState);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.onDataPacket: {} at pos {}", getName(), pos);
+
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = pkt.getNbtCompound();
+        handleUpdateTag(updateTagDescribingTileEntityState);
+        
+        super.onDataPacket(net, pkt);
+    }
+
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to the client in TileEntity.handleUpdateTag.
+     */
+    @Override
+    public NBTTagCompound getUpdateTag()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.getUpdateTag: {} at pos {}", getName(), pos);
+        return writeToNBT(new NBTTagCompound());
+    }
 
     @Override
     public void onLoad()
@@ -73,27 +112,25 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public void update()
     {
-        long totalWorldTime = world.getTotalWorldTime();
-
-        if (world.isRemote)
+        if (world.isRemote) // running on client
         {
             if (incomingTeleportInProgress)
             {
-                // Spawn increased number of rail particles for an incoming teleport.
-                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY * 2.0D;
+                // Spawn vortex of teleportation particles for an incoming teleport.
+                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
                 double blockCenterX = (double) pos.getX() + 0.5D;
                 double blockY = (double) pos.getY() + 0.125D;
                 double blockCenterZ = (double) pos.getZ() + 0.5D;
-                double height = (double) (incomingTeleportTimer % PARTICLE_VERTICAL_POSITIONS);
-                float scaleModifier = (height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoord = blockY + (height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                double height = (double) (incomingTeleportTimer % PARTICLE_VORTEX_HEIGHT_POSITIONS);
+                float scaleModifier = (height <= PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (height - PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
+                double yCoord = blockY + (height / PARTICLE_VORTEX_HEIGHT_POSITIONS_PER_BLOCK);
                 
                 for (int i = 0; i < 8; i++)
                 {
                     // Particle i:
                     double particleISpawnAngle = particleSpawnAngle + ((Math.PI * ((double) i)) / 4.0D);
-                    double xCoord = blockCenterX + (Math.cos(particleISpawnAngle) * (PARTICLE_HORIZONTAL_RADIUS + 0.1D));
-                    double zCoord = blockCenterZ + (Math.sin(particleISpawnAngle) * (PARTICLE_HORIZONTAL_RADIUS + 0.1D));
+                    double xCoord = blockCenterX + (Math.cos(particleISpawnAngle) * PARTICLE_PATH_RADIUS);
+                    double zCoord = blockCenterZ + (Math.sin(particleISpawnAngle) * PARTICLE_PATH_RADIUS);
                     TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoord, zCoord, scaleModifier);
                 }
                 
@@ -105,30 +142,6 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
                     incomingTeleportTimer = 0;
                     incomingTeleportTimerStop = 0;
                 }
-            }
-            else if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
-            {
-                // Spawn normal teleport rail particles.
-                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
-                double blockCenterX = (double) pos.getX() + 0.5D;
-                double blockY = (double) pos.getY() + 0.125D;
-                double blockCenterZ = (double) pos.getZ() + 0.5D;
-                
-                // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
-                double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
-                float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-                
-                // Particle 1:
-                double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                double zCoord = blockCenterZ + (Math.sin(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
-                
-                // Particle 2:
-                double particle2SpawnAngle = particleSpawnAngle + Math.PI;
-                xCoord = blockCenterX + (Math.cos(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                zCoord = blockCenterZ + (Math.sin(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
             }
         }
         else // running on server
@@ -151,23 +164,22 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public void readFromNBT(NBTTagCompound compound)
     {
-        if (FMLCommonHandler.instance().getEffectiveSide().isServer())
+        railName = compound.getString("railName");
+        uniqueID = compound.getUniqueId("uniqueID");
+        
+        if (compound.hasKey("tpHandler"))
         {
-            railName = compound.getString("railName");
-            uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
             isSender = teleportationHandler.hasActiveDestination();
-            
-            TeleportDestination destination = teleportationHandler.getActiveDestination();
-            TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportRail.readFromNBT: railName = {}, uniqueID = {}, destination = {}", 
-                    railName, 
-                    uniqueID, 
-                    destination == null ? "EMPTY" : destination);
         }
-        else
-        {
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.readFromNBT: no NBT data to read on client side");
-        }
+        
+        TeleportDestination destination = teleportationHandler.getActiveDestination();
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.readFromNBT ({}): railName = {}, uniqueID = {}, pos = {}, destination = {}", 
+                FMLCommonHandler.instance().getEffectiveSide(),
+                railName, 
+                uniqueID, 
+                pos,
+                destination == null ? "EMPTY" : destination);
 
         super.readFromNBT(compound);
     }
@@ -175,7 +187,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        if (!railName.isEmpty())
+        if (hasCustomName())
         {
             compound.setString("railName", railName);
         }
@@ -183,7 +195,7 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         compound.setTag("tpHandler", teleportationHandler.serializeNBT());
         
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.info("TileEntityTeleportRail.writeToNBT: railName = {}, uniqueID = {}, {}, destination = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportRail.writeToNBT: railName = {}, uniqueID = {}, pos = {}, destination = {}", 
                 railName, 
                 uniqueID, 
                 pos, 
@@ -272,11 +284,11 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
     {
         incomingTeleportInProgress = true;
         
-        // Check if the current particle stop timer is complete or near-complete.  
-        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
+        // Check if the current particle stop timer is complete or near-complete, or if it hasn't started.  
+        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VORTEX_HEIGHT_POSITIONS) / 2))
         {
             // If so, add time to the stop timer.
-            incomingTeleportTimerStop += ((long) PARTICLE_VERTICAL_POSITIONS);
+            incomingTeleportTimerStop += ((long) PARTICLE_VORTEX_HEIGHT_POSITIONS);
         }
     }
     
@@ -298,13 +310,21 @@ public class TileEntityTeleportRail extends TileEntity implements ITeleportation
         return this.hasCustomName() ? new TextComponentString(this.getName()) : new TextComponentTranslation(this.getName());
     }
 
+    @Override
     public void addCoolDownTime(int coolDown)
     {
         coolDownTime += coolDown;
     }
-    
+
+    @Override
     public int getCoolDownTime()
     {
         return coolDownTime;
+    }
+
+    @Override
+    public void setCoolDownTime(int coolDown)
+    {
+        coolDownTime = coolDown;
     }
 }

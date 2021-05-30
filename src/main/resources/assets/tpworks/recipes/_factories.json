@@ -1,5 +1,5 @@
 {
-	"recipes": {
-		"teleportation_item_factory": "org.bensam.tpworks.recipe.RecipeTeleportationItem$Factory"
-	} 
+  "recipes": {
+    "teleportation_item_factory": "org.bensam.tpworks.recipe.RecipeTeleportationItem$Factory"
+  } 
 }

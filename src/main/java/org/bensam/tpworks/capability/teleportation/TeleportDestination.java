@@ -23,7 +23,8 @@ public class TeleportDestination implements INBTSerializable<NBTTagCompound>
         BLOCKPOS(0, "Block"),
         SPAWNBED(1, "Spawn Bed"),
         BEACON(2, "Beacon"),
-        RAIL(3, "Rail");
+        RAIL(3, "Rail"),
+        CUBE(4, "Cube");
         
         private final int destinationValue;
         private final String valueName;

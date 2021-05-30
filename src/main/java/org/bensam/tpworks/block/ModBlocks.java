@@ -5,6 +5,8 @@ import java.util.Arrays;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.teleportbeacon.BlockTeleportBeacon;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportcube.BlockTeleportCube;
+import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 import org.bensam.tpworks.block.teleportrail.BlockTeleportRail;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.util.ModSetup;
@@ -31,14 +33,17 @@ import net.minecraftforge.registries.IForgeRegistry;
 public class ModBlocks
 {
     public static final BlockTeleportBeacon TELEPORT_BEACON = null;
+    public static final BlockTeleportCube TELEPORT_CUBE = null;
     public static final BlockTeleportRail TELEPORT_RAIL = null;
     
     public static void register(IForgeRegistry<Block> registry)
     {
         registry.register(new BlockTeleportBeacon("teleport_beacon"));
+        registry.register(new BlockTeleportCube("teleport_cube"));
         registry.register(new BlockTeleportRail("teleport_rail"));
 
         GameRegistry.registerTileEntity(TileEntityTeleportBeacon.class, new ResourceLocation(TeleportationWorks.MODID, "teleport_beacon"));
+        GameRegistry.registerTileEntity(TileEntityTeleportCube.class, new ResourceLocation(TeleportationWorks.MODID, "teleport_cube"));
         GameRegistry.registerTileEntity(TileEntityTeleportRail.class, new ResourceLocation(TeleportationWorks.MODID, "teleport_rail"));
     }
 
@@ -48,6 +53,7 @@ public class ModBlocks
         Arrays.stream(new Block[]
                 {
                     TELEPORT_BEACON,
+                    TELEPORT_CUBE,
                     TELEPORT_RAIL
                 }).forEach(block -> 
                 {
@@ -63,6 +69,7 @@ public class ModBlocks
         Arrays.stream(new Block[]
                 {
                     TELEPORT_BEACON,
+                    TELEPORT_CUBE,
                     TELEPORT_RAIL
                 }).forEach(block -> 
                 {

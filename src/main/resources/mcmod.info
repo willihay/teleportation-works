@@ -2,7 +2,7 @@
 {
   "modid": "tpworks",
   "name": "Teleportation Works",
-  "description": "Adds new teleportation possibilities to your world using wands, beacons, rails, potions, bows, and arrows!",
+  "description": "Adds new teleportation possibilities to your world using wands, beacons, cubes, rails, potions, bows, and arrows!",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "https://minecraft.curseforge.com/projects/teleportation-works",

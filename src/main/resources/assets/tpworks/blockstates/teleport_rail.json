@@ -2,20 +2,20 @@
     "forge_marker": 1,
     "variants": {
         "powered": {
-            "true": {},
-            "false": {}
+            "true":  { "textures": { "base": "tpworks:blocks/rail_teleport_base_lit" } },
+            "false": { "textures": { "base": "tpworks:blocks/rail_teleport_base" } }
         },
         "shape": {
-            "north_south":  { "model": "tpworks:teleport_rail_flat" },
-            "east_west":  { "model": "tpworks:teleport_rail_flat", "y": 90 },
-            "ascending_east": { "model": "tpworks:teleport_rail_raised_ne", "y": 90 },
-            "ascending_west": { "model": "tpworks:teleport_rail_raised_sw", "y": 90 },
+            "north_south":     { "model": "tpworks:teleport_rail_flat" },
+            "east_west":       { "model": "tpworks:teleport_rail_flat", "y": 90 },
+            "ascending_east":  { "model": "tpworks:teleport_rail_raised_ne", "y": 90 },
+            "ascending_west":  { "model": "tpworks:teleport_rail_raised_sw", "y": 90 },
             "ascending_north": { "model": "tpworks:teleport_rail_raised_ne" },
             "ascending_south": { "model": "tpworks:teleport_rail_raised_sw" }
         },
         "sender": {
-            "true": { "textures": { "rail": "tpworks:blocks/rail_teleport_lit" } },
-            "false": { "textures": { "rail": "tpworks:blocks/rail_teleport" } }
+            "true":  { "textures": { "rail": "tpworks:blocks/rail_teleport_lapis_lit" } },
+            "false": { "textures": { "rail": "tpworks:blocks/rail_teleport_base" } }
         }
     }
 }

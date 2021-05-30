@@ -7,17 +7,28 @@ import javax.annotation.Nullable;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.util.INBTSerializable;
 
 /**
  * @author WilliHay
  * 
- * Implemented by TeleportationHandler
- * 
  */
-public interface ITeleportationHandler
+public interface ITeleportationHandler extends INBTSerializable<NBTTagCompound>
 {
+    @Override
+    default NBTTagCompound serializeNBT()
+    {
+        return null;
+    }
+
+    @Override
+    default void deserializeNBT(NBTTagCompound nbt)
+    {
+    }
+
     /**
      * Returns the current active TeleportDestination.
      */

@@ -8,8 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
-import org.bensam.tpworks.block.ModBlocks;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.capability.teleportation.ITeleportationBlock;
 import org.bensam.tpworks.capability.teleportation.ITeleportationHandler;
@@ -19,7 +19,6 @@ import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandlerCapabilityProvider;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
 import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
-import org.bensam.tpworks.network.PacketUpdateTeleportIncoming;
 import org.bensam.tpworks.network.PacketUpdateTeleportTileEntity;
 import org.bensam.tpworks.sound.ModSounds;
 import org.bensam.tpworks.util.ModConfig;
@@ -62,7 +61,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -211,7 +209,7 @@ public class ItemTeleportationWand extends Item
                         if (player.isSneaking())
                         {
                             // Set or clear destination for dispenser.
-                            TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, dispenserDestination, null);
+                            TeleportDestination nextDestination = TeleportationHelper.getNextDestination(player, new DestinationType[] {DestinationType.BEACON, DestinationType.CUBE}, dispenserDestination, null);
                             if (nextDestination != null)
                             {
                                 dispenserTeleportationHandler.replaceOrAddFirstDestination(nextDestination);
@@ -266,12 +264,12 @@ public class ItemTeleportationWand extends Item
                         TeleportDestination nextDestination = null;
                         if (te instanceof TileEntityTeleportRail)
                         {
-                            // For a rail, check config setting to see if next destination can include beacons
+                            // For a rail, check config setting to see if next destination can include beacons and cubes
                             // and call getNextDestination accordingly.
                             if (ModConfig.teleportBlockSettings.railDestinationsIncludeBeacons)
                                 nextDestination = TeleportationHelper.getNextDestination(player, null, destination, uuid);
                             else
-                                nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.RAIL, destination, uuid);
+                                nextDestination = TeleportationHelper.getNextDestination(player, new DestinationType[] {DestinationType.RAIL}, destination, uuid);
                         }
                         else if (te instanceof TileEntityTeleportBeacon)
                         {
@@ -282,7 +280,12 @@ public class ItemTeleportationWand extends Item
                             if (ModConfig.teleportBlockSettings.beaconDestinationsIncludeRails)
                                 nextDestination = TeleportationHelper.getNextDestination(player, null, destination, exceptThisID);
                             else
-                                nextDestination = TeleportationHelper.getNextDestination(player, DestinationType.BEACON, destination, exceptThisID);
+                                nextDestination = TeleportationHelper.getNextDestination(player, new DestinationType[] {DestinationType.BEACON, DestinationType.CUBE}, destination, exceptThisID);
+                        }
+                        else
+                        {
+                            // Other types of teleportation blocks allow all other teleportation block types as destinations.
+                            nextDestination = TeleportationHelper.getNextDestination(player, null, destination, uuid);
                         }
                         
                         if (nextDestination != null)
@@ -329,6 +332,12 @@ public class ItemTeleportationWand extends Item
                             messageDeleteConfirmation = "message.td.beacon.delete.confirmation";
                             destinationType = DestinationType.BEACON;
                         }
+                        else if (te instanceof TileEntityTeleportCube)
+                        {
+                            messageAddConfirmation = "message.td.cube.add.confirmation";
+                            messageDeleteConfirmation = "message.td.cube.delete.confirmation";
+                            destinationType = DestinationType.CUBE;
+                        }
                         
                         if (playerTeleportationHandler.hasDestination(uuid))
                         {
@@ -364,6 +373,11 @@ public class ItemTeleportationWand extends Item
 
                     // Set momentary cooldown as a flag for onPlayerStoppedUsing to ignore this click so it doesn't try to change the player's active destination.
                     player.getCooldownTracker().setCooldown(this, 1);
+                    
+                    if (te instanceof TileEntityTeleportCube)
+                    {
+                        return EnumActionResult.FAIL; // do not show cube's inventory when interacting with it using a wand
+                    }
                 }
             }
         }
@@ -429,8 +443,7 @@ public class ItemTeleportationWand extends Item
                 TeleportDestination destination = TeleportationHelper.getActiveDestination(player);
                 if (destination != null)
                 {
-                    TeleportationWorks.network.sendToAllAround(new PacketUpdateTeleportIncoming(destination.position, destination.dimension),
-                            new NetworkRegistry.TargetPoint(destination.dimension, destination.position.getX(), destination.position.getY(), destination.position.getZ(), 50.0D));
+                    TeleportationHelper.sendIncomingTeleportMessage(destination);
                 }
             }
         }

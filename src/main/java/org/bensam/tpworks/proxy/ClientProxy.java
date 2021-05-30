@@ -3,6 +3,8 @@ package org.bensam.tpworks.proxy;
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.teleportbeacon.RendererTeleportBeacon;
 import org.bensam.tpworks.block.teleportbeacon.TileEntityTeleportBeacon;
+import org.bensam.tpworks.block.teleportcube.RendererTeleportCube;
+import org.bensam.tpworks.block.teleportcube.TileEntityTeleportCube;
 import org.bensam.tpworks.block.teleportrail.RendererTeleportRail;
 import org.bensam.tpworks.block.teleportrail.TileEntityTeleportRail;
 import org.bensam.tpworks.entity.ModEntities;
@@ -27,6 +29,7 @@ public class ClientProxy implements IProxy
         TeleportationWorks.MOD_LOGGER.debug("ModEntities renderers registered");
         
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityTeleportBeacon.class, new RendererTeleportBeacon());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEntityTeleportCube.class, new RendererTeleportCube());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityTeleportRail.class, new RendererTeleportRail());
         TeleportationWorks.MOD_LOGGER.debug("TileEntity renderers registered");
     }
@@ -35,6 +38,7 @@ public class ClientProxy implements IProxy
     public void init(FMLInitializationEvent event)
     {
         TileEntityTeleportBeacon.TOPPER_ITEM_WHEN_STORED = new ItemStack(ModItems.ENDER_EYE_TRANSLUCENT);
+        TileEntityTeleportCube.TOPPER_ITEM_WHEN_STORED = new ItemStack(ModItems.ENDER_EYE_TRANSLUCENT);
         TileEntityTeleportRail.TOPPER_ITEM_WHEN_STORED = new ItemStack(ModItems.ENDER_EYE_TRANSLUCENT);
     }
 

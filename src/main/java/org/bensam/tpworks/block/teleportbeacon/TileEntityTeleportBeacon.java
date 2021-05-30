@@ -7,24 +7,29 @@ import javax.annotation.Nullable;
 
 import org.bensam.tpworks.TeleportationWorks;
 import org.bensam.tpworks.block.ModBlocks;
+import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.capability.teleportation.TeleportDestination;
 import org.bensam.tpworks.capability.teleportation.TeleportationHandler;
 import org.bensam.tpworks.capability.teleportation.TeleportationHelper;
-import org.bensam.tpworks.capability.teleportation.ITeleportationTileEntity;
 import org.bensam.tpworks.network.PacketRequestUpdateTeleportTileEntity;
+import org.bensam.tpworks.util.ModConfig;
 import org.bensam.tpworks.util.ModUtil;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.IWorldNameable;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 /**
@@ -33,18 +38,19 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  */
 public class TileEntityTeleportBeacon extends TileEntity implements ITeleportationTileEntity, IWorldNameable, ITickable
 {
-    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
     public static ItemStack TOPPER_ITEM_WHEN_STORED = null; // set by client proxy init
-    public static Vec3d TELEPORTER_DETECTION_RANGE = new Vec3d(0.5D, 0.5D, 0.5D);
     
     // particle path characteristics
-    public static final double PARTICLE_ANGULAR_VELOCITY = Math.PI / 10.0D; // (PI/10 radians/tick) x (20 ticks/sec) = 1 complete circle / second for each particle
-    public static final double PARTICLE_HORIZONTAL_RADIUS = 0.4D;
-    public static final double PARTICLE_VERTICAL_POSITIONS = 40.0D; // number of particle positions vertically, where particle moves vertically 1 position / tick
-    public static final double PARTICLE_HEIGHT_TO_BEGIN_SCALING = 32.0D;
-    public static final double PARTICLE_VERTICAL_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
+    public static final double PARTICLE_ANGULAR_VELOCITY = Math.PI / 5.0D; // (PI/5 radians/tick) x (20 ticks/sec) = 2 complete circles / second for each particle
+    public static final double PARTICLE_PATH_RADIUS = 0.4D;
+    public static final double PARTICLE_VORTEX_HEIGHT_POSITIONS = 40.0D; // number of particle positions vertically, where particle moves vertically 1 position / tick
+    public static final double PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING = 32.0D;
+    public static final double PARTICLE_VORTEX_HEIGHT_POSITIONS_PER_BLOCK = 16.0D; // = 1/16 of a block per vertical position of a particle
 
+    private String beaconName = "";
     private boolean isSender = false; // true when a teleport destination is stored in this TE
+    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+    private UUID uniqueID = new UUID(0, 0);
 
     // client-only data
     public long blockPlacedTime = 0; // world time when block was placed
@@ -55,10 +61,45 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     protected double particleSpawnAngle = 0.0D; // particle spawn angle
     
     // server-only data
-    private String beaconName = "";
     protected int coolDownTime = 0; // set to dampen chain-teleportation involving multiple beacons
-    private UUID uniqueID = new UUID(0, 0);
-    protected final TeleportationHandler teleportationHandler = new TeleportationHandler();
+
+    /**
+     * Retrieves packet to send to the client whenever this Tile Entity is resynced via World.notifyBlockUpdate.
+     * Handled in client by {@link onDataPacket}.
+     */
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.getUpdatePacket: {} at pos {}", getName(), pos);
+        
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = getUpdateTag();
+        final int METADATA = 0;
+        return new SPacketUpdateTileEntity(this.pos, METADATA, updateTagDescribingTileEntityState);
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.onDataPacket: {} at pos {}", getName(), pos);
+
+        // Thanks to brandon3055 for this code from "Minecraft by Example" (#31).
+        NBTTagCompound updateTagDescribingTileEntityState = pkt.getNbtCompound();
+        handleUpdateTag(updateTagDescribingTileEntityState);
+        
+        super.onDataPacket(net, pkt);
+    }
+
+    /**
+     * Get an NBT compound to sync to the client with SPacketChunkData, used for initial loading of the chunk or when
+     * many blocks change at once. This compound comes back to the client in TileEntity.handleUpdateTag.
+     */
+    @Override
+    public NBTTagCompound getUpdateTag()
+    {
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.getUpdateTag: {} at pos {}", getName(), pos);
+        return writeToNBT(new NBTTagCompound());
+    }
 
     @Override
     public void onLoad()
@@ -78,25 +119,26 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     {
         long totalWorldTime = world.getTotalWorldTime();
 
-        if (world.isRemote)
+        if (world.isRemote) // running on client
         {
+            // Handle particle generation and updates.
             if (incomingTeleportInProgress)
             {
-                // Spawn increased number of beacon particles for an incoming teleport.
-                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY * 2.0D;
+                // Spawn vortex of teleportation particles for an incoming teleport.
+                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
                 double blockCenterX = (double) pos.getX() + 0.5D;
                 double blockY = (double) pos.getY() + 0.125D;
                 double blockCenterZ = (double) pos.getZ() + 0.5D;
-                double height = (double) (incomingTeleportTimer % PARTICLE_VERTICAL_POSITIONS);
-                float scaleModifier = (height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoord = blockY + (height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
+                double height = (double) (incomingTeleportTimer % PARTICLE_VORTEX_HEIGHT_POSITIONS);
+                float scaleModifier = (height <= PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (height - PARTICLE_VORTEX_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
+                double yCoord = blockY + (height / PARTICLE_VORTEX_HEIGHT_POSITIONS_PER_BLOCK);
                 
                 for (int i = 0; i < 8; i++)
                 {
                     // Particle i:
                     double particleISpawnAngle = particleSpawnAngle + ((Math.PI * ((double) i)) / 4.0D);
-                    double xCoord = blockCenterX + (Math.cos(particleISpawnAngle) * (PARTICLE_HORIZONTAL_RADIUS + 0.1D));
-                    double zCoord = blockCenterZ + (Math.sin(particleISpawnAngle) * (PARTICLE_HORIZONTAL_RADIUS + 0.1D));
+                    double xCoord = blockCenterX + (Math.cos(particleISpawnAngle) * PARTICLE_PATH_RADIUS);
+                    double zCoord = blockCenterZ + (Math.sin(particleISpawnAngle) * PARTICLE_PATH_RADIUS);
                     TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoord, zCoord, scaleModifier);
                 }
                 
@@ -109,65 +151,39 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
                     incomingTeleportTimerStop = 0;
                 }
             }
-            else if (totalWorldTime >= blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
-            {
-                // Spawn normal beacon particles.
-                particleSpawnAngle += PARTICLE_ANGULAR_VELOCITY;
-                double blockCenterX = (double) pos.getX() + 0.5D;
-                double blockY = (double) pos.getY() + 0.125D;
-                double blockCenterZ = (double) pos.getZ() + 0.5D;
-                
-                // Particle group 1 = Particle 1 & Particle 2. They share the same height, but appear opposite each other.
-                double group1Height = (double) (totalWorldTime % PARTICLE_VERTICAL_POSITIONS);
-                float group1ScaleModifier = (group1Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group1Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup1 = blockY + (group1Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-
-                // Particle group 2 = Particle 3 & Particle 4. They also share the same height and appear opposite each other.
-                double group2Height = (double) ((totalWorldTime + 16) % PARTICLE_VERTICAL_POSITIONS);
-                float group2ScaleModifier = (group2Height <= PARTICLE_HEIGHT_TO_BEGIN_SCALING) ? 1.0F : (100.0F - (8.0F * ((float) (group2Height - PARTICLE_HEIGHT_TO_BEGIN_SCALING)))) / 100.0F; 
-                double yCoordGroup2 = blockY + (group2Height / PARTICLE_VERTICAL_POSITIONS_PER_BLOCK);
-
-                // Particle 1:
-                double xCoord = blockCenterX + (Math.cos(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                double zCoord = blockCenterZ + (Math.sin(particleSpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
-                
-                // Particle 3:
-                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup2, zCoord, group2ScaleModifier);
-                
-                // Particle 2:
-                double particle2SpawnAngle = particleSpawnAngle + Math.PI;
-                xCoord = blockCenterX + (Math.cos(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                zCoord = blockCenterZ + (Math.sin(particle2SpawnAngle) * PARTICLE_HORIZONTAL_RADIUS);
-                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup1, zCoord, group1ScaleModifier);
-                
-                // Particle 4:
-                TeleportationWorks.particles.addTeleportationParticleEffect(world, xCoord, yCoordGroup2, zCoord, group2ScaleModifier);
-            }
         }
         else // running on server
         {
-            if (totalWorldTime % 10 == 0 && teleportationHandler.hasActiveDestination() && coolDownTime <= 0)
+            if ((ModConfig.teleportBlockSettings.beaconTeleportsImmediately || totalWorldTime % 10 == 0) 
+                && teleportationHandler.hasActiveDestination() 
+                && coolDownTime <= 0)
             {
-                // Find all the teleportable entities inside the beacon block. 
-                AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
-                List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
-
-                if (!entitiesInBB.isEmpty())
+                // Is the beacon powered?
+                IBlockState blockState = world.getBlockState(pos);
+                if (blockState.getValue(BlockTeleportBeacon.POWERED) || !ModConfig.teleportBlockSettings.beaconRequiresPowerToTeleport)
                 {
-                    TeleportDestination destination = teleportationHandler.getActiveDestination();
-                    if (teleportationHandler.validateDestination(null, destination))
+                    // Find all the teleportable entities inside the beacon block. 
+                    AxisAlignedBB teleporterRangeBB = new AxisAlignedBB(pos).shrink(0.1D);
+                    List<Entity> entitiesInBB = this.world.<Entity>getEntitiesWithinAABB(Entity.class, teleporterRangeBB, null);
+
+                    if (!entitiesInBB.isEmpty())
                     {
-                        for (Entity entityInBB : entitiesInBB)
+                        TeleportDestination destination = teleportationHandler.getActiveDestination();
+                        if (teleportationHandler.validateDestination(null, destination))
                         {
-                            if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                            for (Entity entityInBB : entitiesInBB)
                             {
-                                TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
-                                break; // for-loop probably now has entities that have already teleported, so break here and catch remaining entities in BB next time
-                            }
-                            else
-                            {
-                                TeleportationHelper.teleport(entityInBB, destination);
+                                if (entityInBB.isDead)
+                                    continue;
+                                
+                                if (entityInBB.isBeingRidden() || entityInBB.isRiding())
+                                {
+                                    TeleportationHelper.teleportEntityAndPassengers(entityInBB, destination);
+                                }
+                                else
+                                {
+                                    TeleportationHelper.teleport(entityInBB, destination);
+                                }
                             }
                         }
                     }
@@ -182,25 +198,31 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     }
 
     @Override
+    public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState)
+    {
+        // Need to override this method to prevent this TE from getting removed in Chunk.setBlockState when state changes (e.g. powered <-> unpowered)!
+        return oldState.getBlock() != newState.getBlock();
+    }
+
+    @Override
     public void readFromNBT(NBTTagCompound compound)
     {
-        if (FMLCommonHandler.instance().getEffectiveSide().isServer())
+        beaconName = compound.getString("beaconName");
+        uniqueID = compound.getUniqueId("uniqueID");
+        
+        if (compound.hasKey("tpHandler"))
         {
-            beaconName = compound.getString("beaconName");
-            uniqueID = compound.getUniqueId("uniqueID");
             teleportationHandler.deserializeNBT(compound.getCompoundTag("tpHandler"));
             isSender = teleportationHandler.hasActiveDestination();
-            
-            TeleportDestination destination = teleportationHandler.getActiveDestination();
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: beaconName = {}, uniqueID = {}, destination = {}", 
-                    beaconName, 
-                    uniqueID,
-                    destination == null ? "EMPTY" : destination);
         }
-        else
-        {
-            TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT: no NBT data to read on client side");
-        }
+        
+        TeleportDestination destination = teleportationHandler.getActiveDestination();
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.readFromNBT ({}): beaconName = {}, uniqueID = {}, pos = {}, destination = {}", 
+                FMLCommonHandler.instance().getEffectiveSide(),
+                beaconName, 
+                uniqueID,
+                pos,
+                destination == null ? "EMPTY" : destination);
 
         super.readFromNBT(compound);
     }
@@ -208,7 +230,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        if (!beaconName.isEmpty())
+        if (hasCustomName())
         {
             compound.setString("beaconName", beaconName);
         }
@@ -216,7 +238,7 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         compound.setTag("tpHandler", teleportationHandler.serializeNBT());
         
         TeleportDestination destination = teleportationHandler.getActiveDestination();
-        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.writeToNBT: beaconName = {}, uniqueID = {}, {}, destination = {}", 
+        TeleportationWorks.MOD_LOGGER.debug("TileEntityTeleportBeacon.writeToNBT: beaconName = {}, uniqueID = {}, pos = {}, destination = {}", 
                 beaconName, 
                 uniqueID, 
                 pos,
@@ -305,11 +327,11 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
     {
         incomingTeleportInProgress = true;
         
-        // Check if the current particle stop timer is complete or near-complete.  
-        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VERTICAL_POSITIONS) / 2))
+        // Check if the current particle stop timer is complete or near-complete, or if it hasn't started.  
+        if ((incomingTeleportTimerStop - incomingTeleportTimer) < (((long) PARTICLE_VORTEX_HEIGHT_POSITIONS) / 2))
         {
             // If so, add time to the stop timer.
-            incomingTeleportTimerStop += ((long) PARTICLE_VERTICAL_POSITIONS);
+            incomingTeleportTimerStop += ((long) PARTICLE_VORTEX_HEIGHT_POSITIONS);
         }
     }
     
@@ -331,16 +353,19 @@ public class TileEntityTeleportBeacon extends TileEntity implements ITeleportati
         return hasCustomName() ? new TextComponentString(getName()) : new TextComponentTranslation(getName());
     }
 
+    @Override
     public void addCoolDownTime(int coolDown)
     {
         coolDownTime += coolDown;
     }
     
+    @Override
     public int getCoolDownTime()
     {
         return coolDownTime;
     }
     
+    @Override
     public void setCoolDownTime(int coolDown)
     {
         coolDownTime = coolDown;

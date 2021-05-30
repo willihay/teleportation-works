@@ -1,31 +1,31 @@
 {
-	"type": "tpworks:teleportation_item_factory",
-	"pattern": [
-		"L#S",
-		"#ES",
-		"L#S"
-	],
-	"key": {
-		"E": [
-			{
-				"item": "minecraft:ender_pearl"
-			},
-			{
-				"item": "minecraft:ender_eye"
-			}
-		],
-		"L": {
-			"item": "minecraft:dye",
-			"data": 4
-		},
+  "type": "tpworks:teleportation_item_factory",
+  "pattern": [
+    "L#S",
+    "#ES",
+    "L#S"
+  ],
+  "key": {
+    "E": [
+      {
+        "item": "minecraft:ender_pearl"
+      },
+      {
+        "item": "minecraft:ender_eye"
+      }
+    ],
+    "L": {
+      "item": "minecraft:dye",
+      "data": 4
+    },
     "S": {
       "item": "minecraft:string"
     },
-		"#": {
-			"item": "minecraft:stick"
-		}
-	},
-	"result": {
-		"item": "tpworks:teleportation_bow"
-	}
+    "#": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "tpworks:teleportation_bow"
+  }
 }

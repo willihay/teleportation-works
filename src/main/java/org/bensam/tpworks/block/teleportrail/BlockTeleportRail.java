@@ -1,6 +1,7 @@
 package org.bensam.tpworks.block.teleportrail;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -59,6 +60,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class BlockTeleportRail extends BlockRailPowered implements ITeleportationBlock
 {
     public static final PropertyBool SENDER = PropertyBool.create("sender");
+    public static final long PARTICLE_APPEARANCE_DELAY = 50; // how many ticks after block placement until particles should start spawning
 
     public BlockTeleportRail(@Nonnull String name)
     {
@@ -128,22 +130,25 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
     @Override
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return 13;
+        return state.getValue(POWERED) ? 13 : 7;
     }
 
     @Override
     public void onMinecartPass(World world, EntityMinecart cart, BlockPos pos)
     {
-        TileEntityTeleportRail te = getTileEntity(world, pos);
-        
-        if (te.getCoolDownTime() <= 0 && te.teleportationHandler.hasActiveDestination())
+        IBlockState blockState = world.getBlockState(pos);
+        if (blockState.getValue(POWERED) || !ModConfig.teleportBlockSettings.railRequiresPowerToTeleport)
         {
-            TeleportDestination destination = te.teleportationHandler.getActiveDestination();
-            
-            if (te.teleportationHandler.validateDestination(null, destination))
+            TileEntityTeleportRail te = getTileEntity(world, pos);
+            if (te.getCoolDownTime() <= 0 && te.teleportationHandler.hasActiveDestination())
             {
-                TeleportationHelper.teleportEntityAndPassengers(cart, destination);
-                te.addCoolDownTime(ModConfig.teleportBlockSettings.railCooldownTime);
+                TeleportDestination destination = te.teleportationHandler.getActiveDestination();
+                
+                if (te.teleportationHandler.validateDestination(null, destination))
+                {
+                    TeleportationHelper.teleportEntityAndPassengers(cart, destination);
+                    te.addCoolDownTime(ModConfig.teleportBlockSettings.railCooldownTime);
+                }
             }
         }
     }
@@ -163,12 +168,9 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
 
             if (uuid == null || uuid.equals(new UUID(0, 0)) || name == null || name.isEmpty())
             {
-                TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Rail block activated with invalid UUID or name fields. Setting to defaults...");
+                TeleportationWorks.MOD_LOGGER.warn("Something went wrong! Teleport Rail block activated with invalid UUID or name field. Setting to defaults...");
                 te.setDefaultUUID();
                 te.setTeleportName(null);
-                
-                uuid = te.getUniqueID();
-                name = te.getTeleportName();
             }
             
             if (player.getHeldItem(hand).getItem() == ModItems.TELEPORTATION_WAND)
@@ -226,6 +228,12 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
     {
         TileEntityTeleportRail te = getTileEntity(world, pos);
 
+        if (stack.hasDisplayName())
+        {
+            // Make sure rail name is updated with any changes in the item stack (e.g. was renamed in anvil).
+            te.setTeleportName(stack.getDisplayName());
+        }
+
         if (world.isRemote) // running on client
         {
             te.blockPlacedTime = world.getTotalWorldTime();
@@ -234,24 +242,18 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
             double centerX = pos.getX() + 0.5D;
             double centerY = pos.getY() + 1.0D;
             double centerZ = pos.getZ() + 0.5D;
-
             for (int i = 0; i < 64; ++i)
             {
                 double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 double ySpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (1.0D + (ModUtil.RANDOM.nextDouble() * 3.0D));
                 
+                // EnumParticleTypes.PORTAL spawns net.minecraft.client.particle.ParticlePortal
                 world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
             }
         }
         else // running on server
         {
-            if (stack.hasDisplayName())
-            {
-                // Make sure rail name is updated with any changes in the item stack (e.g. was renamed in anvil).
-                te.setTeleportName(stack.getDisplayName());
-            }
-
             String name = te.getTeleportName();
             UUID uuid = te.getUniqueID();
             
@@ -294,6 +296,49 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
             world.playSound((EntityPlayer) null, pos, ModSounds.ACTIVATE_TELEPORT_BEACON,
                     SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random rand)
+    {
+        TileEntityTeleportRail te = getTileEntity(world, pos);
+        if (!te.incomingTeleportInProgress 
+                && world.getTotalWorldTime() >= te.blockPlacedTime + PARTICLE_APPEARANCE_DELAY)
+        {
+            if ((state.getValue(POWERED) || !ModConfig.teleportBlockSettings.railRequiresPowerToTeleport) && te.isSender())
+            {
+                // Spawn sparkling teleport particles that are pulled towards rails.
+                double centerY = (double) pos.getY() + 0.125D;
+
+                for (int i = 0; i < 5; ++i)
+                {
+                    double centerX = (double) pos.getX() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                    double centerZ = (double) pos.getZ() + 0.5D + ((ModUtil.RANDOM.nextDouble() - 0.5D) * 0.25D);
+                    double xSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (0.5D + (ModUtil.RANDOM.nextDouble() * 1.5D));
+                    double ySpeed = ModUtil.RANDOM.nextDouble();
+                    double zSpeed = (ModUtil.RANDOM.nextBoolean() ? 1.0D : -1.0D) * (0.5D + (ModUtil.RANDOM.nextDouble() * 1.5D));
+
+                    // EnumParticleTypes.PORTAL spawns net.minecraft.client.particle.ParticlePortal
+                    world.spawnParticle(EnumParticleTypes.PORTAL, centerX, centerY, centerZ, xSpeed, ySpeed, zSpeed);
+                }
+            }
+            else
+            {
+                // Spawn sparkling teleportation particles.
+                double particleX = (double) pos.getX() + ModUtil.RANDOM.nextDouble();
+                double particleY = (double) pos.getY() + 0.125D + ModUtil.RANDOM.nextDouble();
+                double particleZ = (double) pos.getZ() + ModUtil.RANDOM.nextDouble();
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+
+                particleX = (double) pos.getX() + ModUtil.RANDOM.nextDouble();
+                particleY = (double) pos.getY() + 0.125D + ModUtil.RANDOM.nextDouble();
+                particleZ = (double) pos.getZ() + ModUtil.RANDOM.nextDouble();
+                TeleportationWorks.particles.addTeleportationParticleEffect(world, particleX, particleY, particleZ, 1.0F);
+            }
+        }
+
+        super.randomDisplayTick(state, world, pos, rand);
     }
 
     @Override
@@ -363,15 +408,15 @@ public class BlockTeleportRail extends BlockRailPowered implements ITeleportatio
      */
     @SideOnly(Side.CLIENT)
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+    public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
     {
         String sneakBind = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
         String attackBind = Minecraft.getMinecraft().gameSettings.keyBindAttack.getDisplayName();
         String useItemBind = Minecraft.getMinecraft().gameSettings.keyBindUseItem.getDisplayName();
         
         tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine1"));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine2", sneakBind, useItemBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine3", sneakBind, attackBind));
-        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine4"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine2"));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine3", sneakBind, useItemBind));
+        tooltip.add(TextFormatting.DARK_GREEN + I18n.format("tile.teleport_rail.tipLine4", sneakBind, attackBind));
     }
 }

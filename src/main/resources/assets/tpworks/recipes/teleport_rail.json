@@ -1,23 +1,26 @@
 {
-	"type": "minecraft:crafting_shaped",
-	"pattern": [
-		"L L",
-		"LSL",
-		"LBL"
-	],
-	"key": {
-		"B": {
-			"item": "tpworks:teleport_beacon"
-		},
-		"S": {
-			"item": "minecraft:stick"
-		},
-		"L": {
-			"item": "minecraft:dye",
-			"data": 4
-		}
-	},
-	"result": {
-		"item": "tpworks:teleport_rail"
-	}
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LTL",
+    "LSL",
+    "LRL"
+  ],
+  "key": {
+    "T": {
+      "item": "tpworks:teleport_beacon"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "L": {
+      "item": "minecraft:dye",
+      "data": 4
+    }
+  },
+  "result": {
+    "item": "tpworks:teleport_rail"
+  }
 }

@@ -60,4 +60,22 @@ public interface ITeleportationTileEntity
      * (used on CLIENT only)
      */
     void setIncomingTeleportInProgress();
+
+    /**
+     * Add time (in ticks) to the cooldown timer.
+     * Cooldown timers can be used to prevent teleportation from a teleportation block until the timer is <= 0.
+     */
+    void addCoolDownTime(int coolDown);
+
+    /**
+     * Get the time remaining (in ticks) on the cooldown timer.
+     * Cooldown timers can be used to prevent teleportation from a teleportation block until the timer is <= 0.
+     */
+    int getCoolDownTime();
+
+    /**
+     * Set the cooldown timer to a value (in ticks).
+     * Cooldown timers can be used to prevent teleportation from a teleportation block until the timer is <= 0.
+     */
+    void setCoolDownTime(int coolDown);
 }
